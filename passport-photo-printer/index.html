@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passport Photo Print Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cropper.js for professional cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <style>
+        /* Print-specific styles - Optimized to fix "page within a page" issue */
+        @media print {
+
+            /* Completely hide the UI elements from the layout */
+            body>*:not(#printArea) {
+                display: none !important;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white;
+            }
+
+            #printArea {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 210mm;
+                height: 297mm;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .a4-preview {
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 10mm !important;
+                /* Controlled margin for the grid */
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            /* Maintain visibility of grid and images */
+            #photoGrid {
+                display: grid !important;
+            }
+
+            .photo-cell {
+                border: 0.1pt solid #eee !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* Screen Styles */
+        .photo-cell {
+            width: 35mm;
+            height: 45mm;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            background-color: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .photo-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Cutting Guides / Crop Marks */
+        .photo-cell::before,
+        .photo-cell::after {
+            content: '';
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Horizontal Ticks */
+        .photo-cell::before {
+            top: 0;
+            bottom: 0;
+            left: -2mm;
+            right: -2mm;
+            border-top: 0.5pt solid #bbb;
+            border-bottom: 0.5pt solid #bbb;
+        }
+
+        /* Vertical Ticks */
+        .photo-cell::after {
+            left: 0;
+            right: 0;
+            top: -2mm;
+            bottom: -2mm;
+            border-left: 0.5pt solid #bbb;
+            border-right: 0.5pt solid #bbb;
+        }
+
+        .a4-preview {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            border: 1px solid #e2e8f0;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 35mm);
+            gap: 8mm 6mm;
+            justify-content: start;
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+        }
+
+        .cropper-container {
+            max-height: 60vh;
+            width: 100%;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div class="max-w-5xl mx-auto p-6 no-print">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-black text-slate-800 tracking-tight">Passport Photo Grid Maker</h1>
+            <p class="text-slate-500 mt-2">Professional 35mm x 45mm prints from your home printer.</p>
+        </header>
+
+        <!-- Instructions Section -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8 flex gap-4">
+            <div class="bg-amber-100 p-3 rounded-xl h-fit">
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="font-bold text-amber-900">Printing & Cutting Guide</h2>
+                <ul class="text-sm text-amber-800 mt-1 list-disc list-inside space-y-1">
+                    <li>Use <strong>Glossy Photo Paper</strong> (approx. 200gsm) for best results.</li>
+                    <li>In Print Settings: Set <strong>Scale to 100%</strong> (Actual Size). <u>Do not</u> "Fit to
+                        Page".</li>
+                    <li>Use a <strong>Steel Ruler</strong> and a <strong>Utility Knife</strong> for the cleanest cuts.
+                    </li>
+                    <li>The gray "tick" marks guide your blade outside the photo area.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Upload Card -->
+            <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    Add Photos
+                </h2>
+                <label
+                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <p class="text-sm text-slate-500 font-medium">Select Image Files</p>
+                    </div>
+                    <input type="file" id="imageInput" class="hidden" accept="image/*" multiple />
+                </label>
+                <div class="mt-4 flex justify-between items-center">
+                    <button id="clearAll" class="text-sm text-red-500 hover:text-red-700 font-semibold">Clear
+                        All</button>
+                    <span class="px-2 py-1 bg-slate-100 text-[10px] font-bold text-slate-500 rounded uppercase">Private
+                        / Local</span>
+                </div>
+            </div>
+
+            <!-- Manage List -->
+            <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                        </path>
+                    </svg>
+                    Review & Set Quantities
+                </h2>
+                <div id="imageList" class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                    <p class="text-slate-400 italic text-center py-12">No photos uploaded yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div
+            class="flex flex-wrap justify-between items-center bg-slate-900 text-white p-6 rounded-2xl shadow-xl mb-12 gap-4">
+            <div class="flex gap-8">
+                <div>
+                    <p class="text-slate-400 text-xs uppercase tracking-widest font-bold">Paper Size</p>
+                    <p class="font-bold text-xl">A4</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-xs uppercase tracking-widest font-bold">Photo Size</p>
+                    <p class="font-bold text-xl">35 &times; 45mm</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-slate-400 text-xs uppercase tracking-widest font-bold">Total Prints</p>
+                    <p id="totalCount" class="text-3xl font-black text-indigo-400">0</p>
+                </div>
+            </div>
+            <button onclick="window.print()"
+                class="bg-indigo-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-indigo-500 transition-all flex items-center shadow-lg active:scale-95">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                Generate Print Sheet
+            </button>
+        </div>
+    </div>
+
+    <!-- Preview Area -->
+    <div id="printArea" class="mb-20">
+        <div class="a4-preview">
+            <div id="photoGrid" class="grid-container">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropping Modal -->
+    <div id="cropModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold">Crop to Passport Size</h3>
+                <button id="closeModal" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="cropper-container bg-slate-100 rounded-xl overflow-hidden">
+                    <img id="cropTarget" src="" class="max-w-full">
+                </div>
+                <p class="text-sm text-slate-500 mt-4 text-center">
+                    The aspect ratio is locked to <strong>35:45</strong>. Align your face within the guide.
+                </p>
+            </div>
+            <div class="p-6 bg-slate-50 flex justify-end space-x-3">
+                <button id="cancelCrop"
+                    class="px-6 py-2 rounded-xl font-medium text-slate-600 hover:bg-slate-200 transition-colors">Cancel</button>
+                <button id="saveCrop"
+                    class="px-8 py-2 rounded-xl font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md">Apply
+                    Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const imageList = document.getElementById('imageList');
+        const photoGrid = document.getElementById('photoGrid');
+        const totalCountDisplay = document.getElementById('totalCount');
+        const clearAllBtn = document.getElementById('clearAll');
+
+        const cropModal = document.getElementById('cropModal');
+        const cropTarget = document.getElementById('cropTarget');
+        const saveCropBtn = document.getElementById('saveCrop');
+        const cancelCropBtn = document.getElementById('cancelCrop');
+        const closeModalBtn = document.getElementById('closeModal');
+
+        let uploadedPhotos = [];
+        let currentCropper = null;
+        let editingId = null;
+
+        imageInput.addEventListener('change', handleUpload);
+        clearAllBtn.addEventListener('click', () => {
+            uploadedPhotos = [];
+            renderAll();
+        });
+
+        function handleUpload(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const newPhoto = {
+                        id: Date.now() + Math.random(),
+                        originalSrc: event.target.result,
+                        croppedSrc: event.target.result,
+                        count: 1
+                    };
+                    uploadedPhotos.push(newPhoto);
+                    renderAll();
+                    openCropper(newPhoto.id);
+                };
+                reader.readAsDataURL(file);
+            });
+            imageInput.value = '';
+        }
+
+        function openCropper(id) {
+            const photo = uploadedPhotos.find(p => p.id === id);
+            if (!photo) return;
+
+            editingId = id;
+            cropTarget.src = photo.originalSrc;
+            cropModal.classList.remove('hidden');
+
+            if (currentCropper) currentCropper.destroy();
+
+            currentCropper = new Cropper(cropTarget, {
+                aspectRatio: 35 / 45,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.9,
+                responsive: true,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        }
+
+        saveCropBtn.addEventListener('click', () => {
+            if (!currentCropper || !editingId) return;
+            const canvas = currentCropper.getCroppedCanvas({
+                width: 700,
+                height: 900,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            const photo = uploadedPhotos.find(p => p.id === editingId);
+            if (photo) {
+                photo.croppedSrc = canvas.toDataURL('image/jpeg', 0.9);
+                renderAll();
+            }
+            closeModal();
+        });
+
+        function closeModal() {
+            cropModal.classList.add('hidden');
+            if (currentCropper) {
+                currentCropper.destroy();
+                currentCropper = null;
+            }
+            editingId = null;
+        }
+
+        [cancelCropBtn, closeModalBtn].forEach(btn => btn.addEventListener('click', closeModal));
+
+        function updateCount(id, delta) {
+            const photo = uploadedPhotos.find(p => p.id === id);
+            if (photo) {
+                photo.count = Math.max(0, photo.count + delta);
+                if (photo.count === 0) {
+                    uploadedPhotos = uploadedPhotos.filter(p => p.id !== id);
+                }
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            renderControls();
+            renderGrid();
+            updateTotal();
+        }
+
+        function renderControls() {
+            if (uploadedPhotos.length === 0) {
+                imageList.innerHTML = '<p class="text-slate-400 italic text-center py-12">No photos added yet.</p>';
+                return;
+            }
+
+            imageList.innerHTML = uploadedPhotos.map(photo => `
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all group">
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <img src="${photo.croppedSrc}" class="w-14 h-18 rounded-lg object-cover border-2 border-white shadow-sm" />
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Image</span>
+                            <button onclick="openCropper(${photo.id})" class="text-indigo-600 hover:text-indigo-800 text-sm font-bold flex items-center mt-1">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                Adjust Crop
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 bg-white p-1 rounded-xl border border-slate-200 shadow-sm group-hover:shadow-md transition-shadow">
+                        <button onclick="updateCount(${photo.id}, -1)" class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors font-bold text-xl">-</button>
+                        <span class="w-8 text-center font-black text-slate-800 text-lg">${photo.count}</span>
+                        <button onclick="updateCount(${photo.id}, 1)" class="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:bg-green-50 hover:text-green-500 transition-colors font-bold text-xl">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGrid() {
+            photoGrid.innerHTML = '';
+            uploadedPhotos.forEach(photo => {
+                for (let i = 0; i < photo.count; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'photo-cell';
+                    const img = document.createElement('img');
+                    img.src = photo.croppedSrc;
+                    cell.appendChild(img);
+                    photoGrid.appendChild(cell);
+                }
+            });
+        }
+
+        function updateTotal() {
+            const total = uploadedPhotos.reduce((sum, p) => sum + p.count, 0);
+            totalCountDisplay.innerText = total;
+        }
+
+        renderAll();
+    </script>
+</body>
+
+</html>
