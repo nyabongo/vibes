@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import Calc from "./calc.js";
 
 beforeEach(() => {
@@ -135,11 +135,17 @@ describe("loadFromStorage rejects bad input and can't pollute the prototype (reg
     expect(Calc.V.term).toBe(Calc.DEFAULTS.term);
   });
 
-  it("applies and clamps legitimate stored values", () => {
+  it("applies legitimate stored values", () => {
     Calc.loadFromStorage(JSON.stringify({ V: { price: 99999999 }, mode: "let", cur: "GBP" }));
     expect(Calc.V.price).toBe(99999999);
     expect(Calc.mode).toBe("let");
     expect(Calc.cur.code).toBe("GBP");
+  });
+
+  it("clamps out-of-range stored values instead of trusting them (a value could predate URL clamping)", () => {
+    Calc.loadFromStorage(JSON.stringify({ V: { price: 5e15, downPct: 500 } }));
+    expect(Calc.V.price).toBe(1e12);
+    expect(Calc.V.downPct).toBe(100);
   });
 
   it("cannot pollute Object.prototype via a __proto__ key in the stored JSON", () => {
@@ -152,6 +158,49 @@ describe("loadFromStorage rejects bad input and can't pollute the prototype (reg
   it("does not throw on malformed JSON, and leaves state untouched", () => {
     expect(() => Calc.loadFromStorage("{not valid json")).not.toThrow();
     expect(Calc.V.price).toBe(Calc.DEFAULTS.price);
+  });
+});
+
+describe("paramKey/hasScenarioParams don't resolve inherited Object.prototype members (regression: 8abe213)", () => {
+  it("paramKey returns undefined for keys only present via the prototype chain", () => {
+    expect(Calc.paramKey("constructor")).toBeUndefined();
+    expect(Calc.paramKey("toString")).toBeUndefined();
+    expect(Calc.paramKey("hasOwnProperty")).toBeUndefined();
+  });
+
+  it("hasScenarioParams doesn't false-positive on a plain visit carrying an unrelated ?constructor= param", () => {
+    expect(Calc.hasScenarioParams("?constructor=1")).toBe(false);
+  });
+});
+
+describe("a shared link doesn't clobber the viewer's saved scenario until they edit it (regression: 8abe213)", () => {
+  const STORAGE_KEY = "rentOrBuy.v1";
+  let store;
+
+  beforeEach(() => {
+    store = {};
+    global.localStorage = {
+      getItem: (k) => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
+      setItem: (k, v) => { store[k] = v; }
+    };
+  });
+
+  afterEach(() => {
+    delete global.localStorage;
+  });
+
+  it("updateURL skips the localStorage write while suppressPersist is set", () => {
+    Calc.V.price = 99000000;
+    Calc.suppressPersist = true;
+    Calc.updateURL();
+    expect(store[STORAGE_KEY]).toBeUndefined();
+  });
+
+  it("updateURL persists normally once suppressPersist is cleared", () => {
+    Calc.V.price = 99000000;
+    Calc.suppressPersist = false;
+    Calc.updateURL();
+    expect(JSON.parse(store[STORAGE_KEY]).V.price).toBe(99000000);
   });
 });
 
