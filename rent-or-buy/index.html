@@ -3,7 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rent or buy — the crossover</title>
+<title>Rent or buy — the crossover calculator</title>
+<meta name="description" content="A rent-vs-buy calculator that models net worth over time for both paths and shows the exact year buying overtakes renting — or doesn't.">
+<link rel="canonical" href="https://vibes.obel.dev/rent-or-buy/">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibes.obel.dev/rent-or-buy/">
+<meta property="og:title" content="Rent or buy — the crossover calculator">
+<meta property="og:description" content="A rent-vs-buy calculator that models net worth over time for both paths and shows the exact year buying overtakes renting — or doesn't.">
+<meta property="og:image" content="https://vibes.obel.dev/rent-or-buy/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rent or buy — the crossover calculator">
+<meta name="twitter:description" content="A rent-vs-buy calculator that models net worth over time for both paths and shows the exact year buying overtakes renting — or doesn't.">
+<meta name="twitter:image" content="https://vibes.obel.dev/rent-or-buy/og.svg">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300;9..144,600,50,1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -41,12 +53,15 @@ body{
 }
 .rule{height:1px;background:var(--ink);margin:14px 0 22px;}
 
-select.currency{
+.mast-actions{display:flex;gap:8px;align-items:center;}
+select.currency,.linkbtn{
   font:500 12px/1 "IBM Plex Mono",monospace;
   background:transparent;border:1px solid var(--line);
   padding:7px 9px;color:var(--ink);cursor:pointer;
 }
-select.currency:focus-visible{outline:2px solid var(--buy);outline-offset:2px;}
+.linkbtn{min-width:78px;text-align:center;}
+.linkbtn:hover{border-color:var(--muted);}
+select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--buy);outline-offset:2px;}
 
 /* ---------- verdict ---------- */
 .verdict h1{
@@ -168,17 +183,20 @@ footer b{color:var(--ink);font-weight:600;}
     <div>
       <div class="eyebrow">Rent vs buy · crossover model</div>
     </div>
-    <select class="currency" id="cur" aria-label="Currency">
-      <option value="KES|KSh|1">KES — Kenyan shilling</option>
-      <option value="UGX|USh|28.7">UGX — Ugandan shilling</option>
-      <option value="USD|$|0.0077">USD — US dollar</option>
-      <option value="GBP|£|0.0061">GBP — pound</option>
-      <option value="EUR|€|0.0071">EUR — euro</option>
-      <option value="ZAR|R|0.14">ZAR — rand</option>
-      <option value="NGN|₦|11.6">NGN — naira</option>
-      <option value="INR|₹|0.65">INR — rupee</option>
-      <option value="AED|AED |0.028">AED — dirham</option>
-    </select>
+    <div class="mast-actions">
+      <button class="linkbtn" id="copyLink" type="button">Copy link</button>
+      <select class="currency" id="cur" aria-label="Currency">
+        <option value="KES|KSh|1">KES — Kenyan shilling</option>
+        <option value="UGX|USh|28.7">UGX — Ugandan shilling</option>
+        <option value="USD|$|0.0077">USD — US dollar</option>
+        <option value="GBP|£|0.0061">GBP — pound</option>
+        <option value="EUR|€|0.0071">EUR — euro</option>
+        <option value="ZAR|R|0.14">ZAR — rand</option>
+        <option value="NGN|₦|11.6">NGN — naira</option>
+        <option value="INR|₹|0.65">INR — rupee</option>
+        <option value="AED|AED |0.028">AED — dirham</option>
+      </select>
+    </div>
   </div>
   <div class="rule"></div>
 
@@ -283,6 +301,62 @@ var V = {
   appr:8, rentGrowth:5, invest:10, inflation:6, horizon:10, sellPct:3,
   marginal:30, reliefCap:300000, cgt:15
 };
+var DEFAULTS = {};
+Object.keys(V).forEach(function(k){ DEFAULTS[k] = V[k]; });
+
+/* ===================== sharing / persistence ===================== */
+var STORAGE_KEY = "rentOrBuy.v1";
+var PARAM_MAP = { price:"p", downPct:"dp", rate:"mr", term:"term", closingPct:"cc",
+  taxPct:"tx", insurance:"ins", maintPct:"mp", hoa:"hoa", rent:"rent",
+  income:"inc", vacancy:"vac", mgmt:"mgmt", appr:"appr", rentGrowth:"rg",
+  invest:"inv", inflation:"infl", horizon:"h", sellPct:"sp",
+  marginal:"tax", reliefCap:"rc", cgt:"cgt" };
+var PARAM_MAP_REV = {};
+Object.keys(PARAM_MAP).forEach(function(k){ PARAM_MAP_REV[PARAM_MAP[k]] = k; });
+
+function applyCurrency(code){
+  var sel = document.getElementById("cur");
+  for(var i=0;i<sel.options.length;i++){
+    var p = sel.options[i].value.split("|");
+    if(p[0]===code){ cur = { code:p[0], sym:p[1], rate:parseFloat(p[2]) }; sel.value = sel.options[i].value; return true; }
+  }
+  return false;
+}
+
+function updateURL(){
+  var params = new URLSearchParams();
+  Object.keys(PARAM_MAP).forEach(function(k){
+    if(Math.abs(V[k]-DEFAULTS[k]) > 1e-9) params.set(PARAM_MAP[k], V[k]);
+  });
+  if(mode !== "live") params.set("m", mode);
+  if(cur.code !== "KES") params.set("c", cur.code);
+  var qs = params.toString();
+  history.replaceState(null, "", location.pathname + (qs?("?"+qs):"") + location.hash);
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ V:V, mode:mode, cur:cur.code })); }catch(e){}
+}
+
+function loadFromStorage(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    var data = JSON.parse(raw);
+    if(data.V) Object.keys(data.V).forEach(function(k){
+      if(k in V && typeof data.V[k]==="number" && isFinite(data.V[k])) V[k] = data.V[k];
+    });
+    if(data.mode==="live"||data.mode==="let") mode = data.mode;
+    if(data.cur) applyCurrency(data.cur);
+  }catch(e){}
+}
+
+function loadFromURL(){
+  var params = new URLSearchParams(location.search);
+  params.forEach(function(val, key){
+    if(key==="m"){ mode = (val==="let") ? "let" : "live"; return; }
+    if(key==="c"){ applyCurrency(val); return; }
+    var k = PARAM_MAP_REV[key];
+    if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = num; }
+  });
+}
 
 /* ===================== field definitions ===================== */
 function money(k,label,note){ return {k:k,label:label,note:note,type:"money"}; }
@@ -694,17 +768,21 @@ function render(){
   document.getElementById("horizonHint").textContent = V.horizon+"-year horizon";
   document.getElementById("fnH").textContent = V.horizon;
   document.getElementById("curhint").textContent = cur.code;
+  updateURL();
 }
 
 /* ===================== wiring ===================== */
 document.getElementById("mLive").addEventListener("click", function(){ setMode("live"); });
 document.getElementById("mLet").addEventListener("click", function(){ setMode("let"); });
+function applyModeUI(){
+  document.getElementById("mLive").setAttribute("aria-pressed", mode==="live");
+  document.getElementById("mLet").setAttribute("aria-pressed", mode==="let");
+  document.getElementById("secRent").classList.toggle("hidden", mode!=="live");
+  document.getElementById("secLet").classList.toggle("hidden", mode!=="let");
+}
 function setMode(m){
   mode = m;
-  document.getElementById("mLive").setAttribute("aria-pressed", m==="live");
-  document.getElementById("mLet").setAttribute("aria-pressed", m==="let");
-  document.getElementById("secRent").classList.toggle("hidden", m!=="live");
-  document.getElementById("secLet").classList.toggle("hidden", m!=="let");
+  applyModeUI();
   render();
 }
 document.getElementById("cur").addEventListener("change", function(e){
@@ -713,7 +791,33 @@ document.getElementById("cur").addEventListener("change", function(e){
   render();
 });
 
+function fallbackCopy(text, cb){
+  try{
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    cb(ok);
+  }catch(e){ cb(false); }
+}
+document.getElementById("copyLink").addEventListener("click", function(){
+  var btn = this;
+  function done(ok){
+    btn.textContent = ok ? "Copied" : "Copy failed";
+    setTimeout(function(){ btn.textContent = "Copy link"; }, 1500);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(location.href).then(function(){ done(true); }, function(){ fallbackCopy(location.href, done); });
+  } else {
+    fallbackCopy(location.href, done);
+  }
+});
+
 buildFields();
+loadFromStorage();
+loadFromURL();
+applyModeUI();
 render();
 </script>
 </body>
