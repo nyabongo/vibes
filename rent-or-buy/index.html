@@ -868,8 +868,14 @@ document.getElementById("copyLink").addEventListener("click", function(){
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 
 buildFields();
-loadFromStorage();
-loadFromURL();
+if(location.search){
+  Object.keys(DEFAULTS).forEach(function(k){ V[k] = DEFAULTS[k]; });
+  mode = "live";
+  applyCurrency("KES");
+  loadFromURL();
+} else {
+  loadFromStorage();
+}
 applyModeUI();
 render();
 </script>
