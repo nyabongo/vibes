@@ -315,8 +315,11 @@ footer b{color:var(--ink);font-weight:600;}
 "use strict";
 
 /* ===================== state ===================== */
-var mode = "live"; // "live" | "let"
+var DEFAULT_MODE = "live";
+var DEFAULT_CUR_CODE = "KES";
+var mode = DEFAULT_MODE; // "live" | "let"
 var cur  = { code:"KES", sym:"KSh", rate:1 };
+var suppressPersist = false;
 
 var V = {
   price:12000000, downPct:20, rate:14.5, term:20, closingPct:5,
@@ -353,11 +356,13 @@ function updateURL(){
   Object.keys(PARAM_MAP).forEach(function(k){
     if(Math.abs(V[k]-DEFAULTS[k]) > 1e-9) params.set(PARAM_MAP[k], V[k]);
   });
-  if(mode !== "live") params.set("m", mode);
-  if(cur.code !== "KES") params.set("c", cur.code);
+  if(mode !== DEFAULT_MODE) params.set("m", mode);
+  if(cur.code !== DEFAULT_CUR_CODE) params.set("c", cur.code);
   var qs = params.toString();
   history.replaceState(null, "", location.pathname + (qs?("?"+qs):"") + location.hash);
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ V:V, mode:mode, cur:cur.code })); }catch(e){}
+  if(!suppressPersist){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ V:V, mode:mode, cur:cur.code })); }catch(e){}
+  }
 }
 
 function loadFromStorage(){
@@ -366,11 +371,35 @@ function loadFromStorage(){
     if(!raw) return;
     var data = JSON.parse(raw);
     if(data.V) Object.keys(data.V).forEach(function(k){
-      if(k in V && typeof data.V[k]==="number" && isFinite(data.V[k])) V[k] = data.V[k];
+      if(k in V && typeof data.V[k]==="number" && isFinite(data.V[k])) V[k] = clampToField(k, data.V[k]);
     });
     if(data.mode==="live"||data.mode==="let") mode = data.mode;
     if(data.cur) applyCurrency(data.cur);
   }catch(e){}
+}
+
+function clampToField(k, num){
+  var f = FIELD_BY_KEY[k];
+  if(!f) return num;
+  if(f.type==="pct"){
+    if(typeof f.min==="number") num = Math.max(f.min, num);
+    if(typeof f.max==="number") num = Math.min(f.max, num);
+  } else if(f.type==="money"){
+    num = Math.max(0, Math.min(num, 1e12));
+  }
+  return num;
+}
+
+function paramKey(key){
+  return Object.prototype.hasOwnProperty.call(PARAM_MAP_REV, key) ? PARAM_MAP_REV[key] : undefined;
+}
+
+function hasScenarioParams(){
+  var found = false;
+  new URLSearchParams(location.search).forEach(function(val, key){
+    if(key==="m" || key==="c" || paramKey(key)) found = true;
+  });
+  return found;
 }
 
 function loadFromURL(){
@@ -378,8 +407,8 @@ function loadFromURL(){
   params.forEach(function(val, key){
     if(key==="m"){ mode = (val==="let") ? "let" : "live"; return; }
     if(key==="c"){ applyCurrency(val); return; }
-    var k = PARAM_MAP_REV[key];
-    if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = num; }
+    var k = paramKey(key);
+    if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = clampToField(k, num); }
   });
 }
 
@@ -423,6 +452,10 @@ var FIELDS = {
     pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt.")
   ]
 };
+var FIELD_BY_KEY = {};
+Object.keys(FIELDS).forEach(function(id){
+  FIELDS[id].forEach(function(f){ FIELD_BY_KEY[f.k] = f; });
+});
 
 /* ===================== formatting ===================== */
 function fmt(n){
@@ -455,6 +488,7 @@ function simulate(o){
   var n       = Math.round(V.term*12);
 
   var pay = r > 0 ? loan * r / (1 - Math.pow(1+r, -n)) : (n>0 ? loan/n : 0);
+  var loanInterest = r > 0 ? pay*n - loan : 0;
 
   var gAppr = mrate(appr), gInv = mrate(invest), gRent = mrate(V.rentGrowth), gInf = mrate(V.inflation);
 
@@ -462,7 +496,7 @@ function simulate(o){
   var buyPot = 0, rentPot = down + closing;
   var months = Math.round(horizon*12);
 
-  var series = [], totalInterest = 0, yr1 = null;
+  var series = [], yr1 = null;
   var accInterest = 0, accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
 
   function snapshot(y){
@@ -482,7 +516,6 @@ function simulate(o){
       principal = payment - interest;
       bal = Math.max(0, bal - principal);
     } else { interest = 0; }
-    totalInterest += interest;
 
     var tax = home * V.taxPct/100/12;
     var ins = V.insurance/12 * Math.pow(1+gInf, m);
@@ -534,7 +567,7 @@ function simulate(o){
     if(series[i].buy >= series[i].rent){ be = series[i].y; break; }
   }
   var last = series[series.length-1];
-  return { series:series, payment:pay, totalInterest:totalInterest, yr1:yr1,
+  return { series:series, payment:pay, loanInterest:loanInterest, yr1:yr1,
            breakEven:be, finalBuy:last.buy, finalRent:last.rent,
            equity:last.equity, loan:loan, upfront:down+closing };
 }
@@ -714,7 +747,7 @@ function drawTiles(s, cash){
   var t = [
     {k:"Monthly repayment", v:fmt(s.payment), s:"On "+fmt(s.loan)+" over "+V.term+" years"},
     {k:"Cash needed on day one", v:fmt(s.upfront), s:"Deposit plus purchase costs"},
-    {k:"Interest over the loan", v:fmt(s.totalInterest), s:pctS(s.totalInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
+    {k:"Interest over the loan", v:fmt(s.loanInterest), s:pctS(s.loanInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
     {k:"Gap at year "+V.horizon, v:(gap>=0?"+":"−")+fmt(Math.abs(gap)).replace(cur.sym,cur.sym), s:(gap>=0?"in favour of buying":"in favour of renting")}
   ];
   document.getElementById("tiles").innerHTML = t.map(function(x){
@@ -742,10 +775,11 @@ function drawFlip(s){
     now: "now "+pctS(V.invest)
   });
 
+  var be40 = simulate({horizon:40}).breakEven;
   items.push({
-    lever: s.breakEven ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
-    target: s.breakEven ? s.breakEven + (s.breakEven===1?" year":" years") : null,
-    now: s.breakEven ? "you plan on "+V.horizon : "at these assumptions"
+    lever: be40 ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
+    target: be40 ? be40 + (be40===1?" year":" years") : null,
+    now: be40 ? "you plan on "+V.horizon : "at these assumptions"
   });
 
   document.getElementById("flip").innerHTML = items.map(function(i){
@@ -866,10 +900,18 @@ document.getElementById("copyLink").addEventListener("click", function(){
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 
 buildFields();
-loadFromStorage();
-loadFromURL();
+if(hasScenarioParams()){
+  Object.keys(DEFAULTS).forEach(function(k){ V[k] = DEFAULTS[k]; });
+  mode = DEFAULT_MODE;
+  applyCurrency(DEFAULT_CUR_CODE);
+  loadFromURL();
+  suppressPersist = true;
+} else {
+  loadFromStorage();
+}
 applyModeUI();
 render();
+suppressPersist = false;
 </script>
 </body>
 </html>
