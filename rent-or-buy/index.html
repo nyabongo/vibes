@@ -743,10 +743,11 @@ function drawFlip(s){
     now: "now "+pctS(V.invest)
   });
 
+  var be40 = simulate({horizon:40}).breakEven;
   items.push({
-    lever: s.breakEven ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
-    target: s.breakEven ? s.breakEven + (s.breakEven===1?" year":" years") : null,
-    now: s.breakEven ? "you plan on "+V.horizon : "at these assumptions"
+    lever: be40 ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
+    target: be40 ? be40 + (be40===1?" year":" years") : null,
+    now: be40 ? "you plan on "+V.horizon : "at these assumptions"
   });
 
   document.getElementById("flip").innerHTML = items.map(function(i){
