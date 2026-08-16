@@ -385,6 +385,14 @@ function clampToField(k, num){
   return num;
 }
 
+function hasScenarioParams(){
+  var found = false;
+  new URLSearchParams(location.search).forEach(function(val, key){
+    if(key==="m" || key==="c" || PARAM_MAP_REV[key]) found = true;
+  });
+  return found;
+}
+
 function loadFromURL(){
   var params = new URLSearchParams(location.search);
   params.forEach(function(val, key){
@@ -479,7 +487,7 @@ function simulate(o){
   var buyPot = 0, rentPot = down + closing;
   var months = Math.round(horizon*12);
 
-  var series = [], totalInterest = 0, yr1 = null;
+  var series = [], yr1 = null;
   var accInterest = 0, accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
 
   function snapshot(y){
@@ -499,7 +507,6 @@ function simulate(o){
       principal = payment - interest;
       bal = Math.max(0, bal - principal);
     } else { interest = 0; }
-    totalInterest += interest;
 
     var tax = home * V.taxPct/100/12;
     var ins = V.insurance/12 * Math.pow(1+gInf, m);
@@ -551,7 +558,7 @@ function simulate(o){
     if(series[i].buy >= series[i].rent){ be = series[i].y; break; }
   }
   var last = series[series.length-1];
-  return { series:series, payment:pay, totalInterest:totalInterest, loanInterest:loanInterest, yr1:yr1,
+  return { series:series, payment:pay, loanInterest:loanInterest, yr1:yr1,
            breakEven:be, finalBuy:last.buy, finalRent:last.rent,
            equity:last.equity, loan:loan, upfront:down+closing };
 }
@@ -884,7 +891,7 @@ document.getElementById("copyLink").addEventListener("click", function(){
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 
 buildFields();
-if(location.search){
+if(hasScenarioParams()){
   Object.keys(DEFAULTS).forEach(function(k){ V[k] = DEFAULTS[k]; });
   mode = "live";
   applyCurrency("KES");
