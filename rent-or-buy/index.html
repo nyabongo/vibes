@@ -174,6 +174,28 @@ footer b{color:var(--ink);font-weight:600;}
 @media(prefers-reduced-motion:no-preference){
   .pathline{transition:d .25s ease;}
 }
+
+/* ---------- print report ---------- */
+.print-summary{display:none;}
+.ps-head{margin-bottom:14px;}
+.ps-head h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px;}
+.ps-head span{font-size:11px;color:var(--muted);}
+.ps-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;border:1px solid var(--line-soft);padding:14px;}
+.ps-col h3{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600;}
+.ps-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;border-top:1px solid var(--line-soft);}
+.ps-row:first-of-type{border-top:0;}
+.ps-row .num{font-family:"IBM Plex Mono",monospace;white-space:nowrap;}
+
+@media print{
+  @page{margin:14mm;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body{background:#fff;}
+  .wrap{max-width:100%;padding:0;}
+  .mast-actions,.controls{display:none!important;}
+  .grid{grid-template-columns:1fr;margin-top:16px;}
+  .print-summary{display:block;margin-top:22px;}
+  .panel,.tile,.cfrow,.flip .item{break-inside:avoid;}
+}
 </style>
 </head>
 <body>
@@ -184,6 +206,7 @@ footer b{color:var(--ink);font-weight:600;}
       <div class="eyebrow">Rent vs buy · crossover model</div>
     </div>
     <div class="mast-actions">
+      <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
       <button class="linkbtn" id="copyLink" type="button">Copy link</button>
       <select class="currency" id="cur" aria-label="Currency">
         <option value="KES|KSh|1">KES — Kenyan shilling</option>
@@ -204,6 +227,8 @@ footer b{color:var(--ink);font-weight:600;}
     <h1 id="headline">…</h1>
     <p id="subline"></p>
   </div>
+
+  <div class="print-summary" id="printSummary"></div>
 
   <div class="grid">
 
@@ -756,6 +781,30 @@ function drawVerdict(s){
   }
 }
 
+function buildPrintSummary(){
+  var groups = [
+    { name:"The purchase", id:"fPurchase" },
+    { name:"Cost of owning it", id:"fOwn" },
+    { name: mode==="live" ? "Renting instead" : "Letting it out", id: mode==="live" ? "fRent" : "fLet" },
+    { name:"What the future does", id:"fMarket" },
+    { name:"Tax", id:"fTax" }
+  ];
+  var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  var html = '<div class="ps-head"><h2>Rent vs buy report</h2><span>'+
+    (mode==="live"?"Living in it":"Letting it out")+" &middot; "+cur.code+" &middot; generated "+today+'</span></div>';
+  html += '<div class="ps-grid">';
+  groups.forEach(function(g){
+    html += '<div class="ps-col"><h3>'+g.name+'</h3>';
+    FIELDS[g.id].forEach(function(f){
+      var shown = f.type==="money" ? fmt(V[f.k]) : ((f.k==="term"||f.k==="horizon") ? V[f.k] : pctS(V[f.k]));
+      html += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+shown+'</span></div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById("printSummary").innerHTML = html;
+}
+
 function render(){
   syncFields();
   var s = simulate();
@@ -764,6 +813,7 @@ function render(){
   var cash = drawCashflow(s);
   drawTiles(s, cash);
   drawFlip(s);
+  buildPrintSummary();
   document.getElementById("chartHint").textContent = "Years 0–"+V.horizon;
   document.getElementById("horizonHint").textContent = V.horizon+"-year horizon";
   document.getElementById("fnH").textContent = V.horizon;
@@ -813,6 +863,7 @@ document.getElementById("copyLink").addEventListener("click", function(){
     fallbackCopy(location.href, done);
   }
 });
+document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 
 buildFields();
 loadFromStorage();
