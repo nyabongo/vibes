@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vibes</title>
+<style>
+  :root{
+    --ink:#15181C;
+    --paper:#E7E9E3;
+    --surface:#FBFBF9;
+    --line:#CBCEC5;
+    --muted:#6B7069;
+    --accent:#1B4F8A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:64px 20px;}
+  .eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;margin-bottom:10px;
+  }
+  h1{font-size:clamp(28px,6vw,40px);margin:0 0 10px;letter-spacing:-.02em;}
+  p.lede{color:var(--muted);margin:0 0 36px;max-width:52ch;}
+  .list{border-top:1px solid var(--line);}
+  .item{
+    display:block;padding:18px 4px;border-bottom:1px solid var(--line);
+    text-decoration:none;color:inherit;
+  }
+  .item:hover .name{color:var(--accent);}
+  .item .name{font-size:17px;font-weight:600;transition:color .15s ease;}
+  .item .desc{font-size:13.5px;color:var(--muted);margin-top:3px;}
+  footer{margin-top:40px;font-size:12px;color:var(--muted);}
+  footer a{color:inherit;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">nyabongo/vibes</div>
+  <h1>Small tools, vibe-coded.</h1>
+  <p class="lede">A monorepo of standalone, single-file web tools. No build step, no dependencies — just open a folder.</p>
+
+  <div class="list">
+    <a class="item" href="rent-or-buy/">
+      <div class="name">Rent or buy</div>
+      <div class="desc">A crossover model comparing net worth over time for buying versus renting.</div>
+    </a>
+    <a class="item" href="passport-photo-printer/">
+      <div class="name">Passport photo printer</div>
+      <div class="desc">Print-optimized grid generator for passport photos.</div>
+    </a>
+  </div>
+
+  <footer>Source on <a href="https://github.com/nyabongo/vibes">GitHub</a>.</footer>
+</div>
+</body>
+</html>
