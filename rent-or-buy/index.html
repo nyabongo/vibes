@@ -373,13 +373,25 @@ function loadFromStorage(){
   }catch(e){}
 }
 
+function clampToField(k, num){
+  var f = FIELD_BY_KEY[k];
+  if(!f) return num;
+  if(f.type==="pct"){
+    if(typeof f.min==="number") num = Math.max(f.min, num);
+    if(typeof f.max==="number") num = Math.min(f.max, num);
+  } else if(f.type==="money"){
+    num = Math.max(0, num);
+  }
+  return num;
+}
+
 function loadFromURL(){
   var params = new URLSearchParams(location.search);
   params.forEach(function(val, key){
     if(key==="m"){ mode = (val==="let") ? "let" : "live"; return; }
     if(key==="c"){ applyCurrency(val); return; }
     var k = PARAM_MAP_REV[key];
-    if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = num; }
+    if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = clampToField(k, num); }
   });
 }
 
@@ -423,6 +435,10 @@ var FIELDS = {
     pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt.")
   ]
 };
+var FIELD_BY_KEY = {};
+Object.keys(FIELDS).forEach(function(id){
+  FIELDS[id].forEach(function(f){ FIELD_BY_KEY[f.k] = f; });
+});
 
 /* ===================== formatting ===================== */
 function fmt(n){
