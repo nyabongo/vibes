@@ -75,6 +75,26 @@ test.describe("rent-or-buy", () => {
     expect(clipboardText).toBe(page.url());
   });
 
+  test("the 40-year flip claim reflects an actual 40-year run, not the chosen horizon (regression: e2baf39)", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+
+    // At these settings there's no crossover within the chosen 5-year horizon,
+    // but a real 40-year simulation does cross over at year 9. The pre-fix
+    // code read the 5-year run's breakEven (null) and claimed "buying never
+    // pulls ahead within 40 years" — a false claim it never actually checked.
+    await page.locator("#i_invest").fill("3");
+    await page.locator("#i_invest").dispatchEvent("input");
+    await page.locator("#i_horizon").fill("5");
+    await page.locator("#i_horizon").dispatchEvent("input");
+
+    const flipRows = page.locator("#flip .item");
+    await expect(flipRows).toHaveCount(3);
+    const thirdRow = flipRows.nth(2);
+    await expect(thirdRow).not.toContainText("Within 40 years, buying never pulls ahead");
+    await expect(thirdRow).toContainText("Buying pulls ahead once you've held it for");
+    await expect(thirdRow.locator(".target")).toHaveText("9 years");
+  });
+
   test("print summary stays populated with the current field values", async ({ page }) => {
     await page.goto("/rent-or-buy/");
     await page.locator("#i_price").fill("18500000");
