@@ -315,8 +315,11 @@ footer b{color:var(--ink);font-weight:600;}
 "use strict";
 
 /* ===================== state ===================== */
-var mode = "live"; // "live" | "let"
+var DEFAULT_MODE = "live";
+var DEFAULT_CUR_CODE = "KES";
+var mode = DEFAULT_MODE; // "live" | "let"
 var cur  = { code:"KES", sym:"KSh", rate:1 };
+var suppressPersist = false;
 
 var V = {
   price:12000000, downPct:20, rate:14.5, term:20, closingPct:5,
@@ -353,11 +356,13 @@ function updateURL(){
   Object.keys(PARAM_MAP).forEach(function(k){
     if(Math.abs(V[k]-DEFAULTS[k]) > 1e-9) params.set(PARAM_MAP[k], V[k]);
   });
-  if(mode !== "live") params.set("m", mode);
-  if(cur.code !== "KES") params.set("c", cur.code);
+  if(mode !== DEFAULT_MODE) params.set("m", mode);
+  if(cur.code !== DEFAULT_CUR_CODE) params.set("c", cur.code);
   var qs = params.toString();
   history.replaceState(null, "", location.pathname + (qs?("?"+qs):"") + location.hash);
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ V:V, mode:mode, cur:cur.code })); }catch(e){}
+  if(!suppressPersist){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ V:V, mode:mode, cur:cur.code })); }catch(e){}
+  }
 }
 
 function loadFromStorage(){
@@ -366,7 +371,7 @@ function loadFromStorage(){
     if(!raw) return;
     var data = JSON.parse(raw);
     if(data.V) Object.keys(data.V).forEach(function(k){
-      if(k in V && typeof data.V[k]==="number" && isFinite(data.V[k])) V[k] = data.V[k];
+      if(k in V && typeof data.V[k]==="number" && isFinite(data.V[k])) V[k] = clampToField(k, data.V[k]);
     });
     if(data.mode==="live"||data.mode==="let") mode = data.mode;
     if(data.cur) applyCurrency(data.cur);
@@ -380,15 +385,19 @@ function clampToField(k, num){
     if(typeof f.min==="number") num = Math.max(f.min, num);
     if(typeof f.max==="number") num = Math.min(f.max, num);
   } else if(f.type==="money"){
-    num = Math.max(0, num);
+    num = Math.max(0, Math.min(num, 1e12));
   }
   return num;
+}
+
+function paramKey(key){
+  return Object.prototype.hasOwnProperty.call(PARAM_MAP_REV, key) ? PARAM_MAP_REV[key] : undefined;
 }
 
 function hasScenarioParams(){
   var found = false;
   new URLSearchParams(location.search).forEach(function(val, key){
-    if(key==="m" || key==="c" || PARAM_MAP_REV[key]) found = true;
+    if(key==="m" || key==="c" || paramKey(key)) found = true;
   });
   return found;
 }
@@ -398,7 +407,7 @@ function loadFromURL(){
   params.forEach(function(val, key){
     if(key==="m"){ mode = (val==="let") ? "let" : "live"; return; }
     if(key==="c"){ applyCurrency(val); return; }
-    var k = PARAM_MAP_REV[key];
+    var k = paramKey(key);
     if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = clampToField(k, num); }
   });
 }
@@ -893,14 +902,16 @@ document.getElementById("printBtn").addEventListener("click", function(){ window
 buildFields();
 if(hasScenarioParams()){
   Object.keys(DEFAULTS).forEach(function(k){ V[k] = DEFAULTS[k]; });
-  mode = "live";
-  applyCurrency("KES");
+  mode = DEFAULT_MODE;
+  applyCurrency(DEFAULT_CUR_CODE);
   loadFromURL();
+  suppressPersist = true;
 } else {
   loadFromStorage();
 }
 applyModeUI();
 render();
+suppressPersist = false;
 </script>
 </body>
 </html>
