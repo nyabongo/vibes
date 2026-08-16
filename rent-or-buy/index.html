@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rent or buy — the crossover</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300;9..144,600,50,1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#15181C;
+  --paper:#E7E9E3;
+  --surface:#FBFBF9;
+  --line:#CBCEC5;
+  --line-soft:#DDE0D8;
+  --muted:#6B7069;
+  --buy:#1B4F8A;
+  --buy-soft:#1B4F8A1A;
+  --rent:#C0611A;
+  --rent-soft:#C0611A1A;
+  --s:8px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 72px;}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.eyebrow{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;
+}
+.rule{height:1px;background:var(--ink);margin:14px 0 22px;}
+
+select.currency{
+  font:500 12px/1 "IBM Plex Mono",monospace;
+  background:transparent;border:1px solid var(--line);
+  padding:7px 9px;color:var(--ink);cursor:pointer;
+}
+select.currency:focus-visible{outline:2px solid var(--buy);outline-offset:2px;}
+
+/* ---------- verdict ---------- */
+.verdict h1{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;font-variation-settings:"SOFT" 50,"WONK" 1;
+  font-size:clamp(30px,5.4vw,52px);
+  line-height:1.06;letter-spacing:-.015em;
+  margin:0 0 10px;max-width:19ch;
+}
+.verdict h1 em{font-style:normal;}
+.verdict h1 .b{color:var(--buy);}
+.verdict h1 .r{color:var(--rent);}
+.verdict p{margin:0;max-width:56ch;color:var(--muted);font-size:15px;}
+.verdict p b{color:var(--ink);font-weight:600;}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:320px 1fr;gap:26px;margin-top:30px;align-items:start;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+
+.panel{background:var(--surface);border:1px solid var(--line-soft);}
+.panel-hd{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:12px 16px;border-bottom:1px solid var(--line-soft);
+}
+.panel-hd h2{
+  margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;
+}
+.panel-hd .hint{font-size:11px;color:var(--muted);}
+
+/* ---------- controls ---------- */
+.controls{position:sticky;top:20px;}
+@media(max-width:900px){.controls{position:static;order:2;}}
+.results{min-width:0;}
+@media(max-width:900px){.results{order:1;}}
+
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);}
+.mode button{
+  font:500 12px/1.3 "IBM Plex Sans",sans-serif;
+  background:var(--surface);border:0;padding:11px 8px;cursor:pointer;color:var(--muted);
+}
+.mode button[aria-pressed="true"]{background:var(--ink);color:var(--surface);}
+.mode button:focus-visible{outline:2px solid var(--buy);outline-offset:-2px;}
+
+fieldset{border:0;border-top:1px solid var(--line-soft);margin:0;padding:14px 16px 16px;}
+fieldset:first-of-type{border-top:0;}
+legend{
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;padding:0;margin-bottom:10px;
+}
+.f{margin-bottom:13px;}
+.f:last-child{margin-bottom:2px;}
+.f label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:4px;}
+.f label .val{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;}
+.f .note{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35;}
+input[type=number]{
+  width:100%;font:500 14px/1 "IBM Plex Mono",monospace;
+  padding:8px 9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
+}
+input[type=number]:focus-visible{outline:2px solid var(--buy);outline-offset:-1px;border-color:var(--buy);}
+input[type=range]{width:100%;accent-color:var(--ink);height:20px;}
+input[type=range]:focus-visible{outline:2px solid var(--buy);outline-offset:3px;}
+
+/* ---------- chart ---------- */
+.chartbox{padding:16px 12px 8px;}
+svg{display:block;width:100%;height:auto;}
+.axis{font:500 10px "IBM Plex Mono",monospace;fill:var(--muted);}
+.gridline{stroke:var(--line-soft);stroke-width:1;}
+.zeroline{stroke:var(--line);stroke-width:1;}
+.pathline{fill:none;stroke-width:2.25;stroke-linejoin:round;stroke-linecap:round;}
+.marker text{font:500 10px "IBM Plex Mono",monospace;fill:var(--ink);}
+.legend{display:flex;gap:18px;padding:4px 16px 14px;flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+.legend i{width:14px;height:3px;display:block;}
+
+/* ---------- key figures ---------- */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);}
+@media(max-width:720px){.tiles{grid-template-columns:repeat(2,1fr);}}
+.tile{background:var(--surface);padding:14px 16px;}
+.tile .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.tile .v{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500;letter-spacing:-.02em;}
+.tile .s{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ---------- cashflow ---------- */
+.cf{padding:16px;}
+.cfrow{margin-bottom:16px;}
+.cfrow:last-child{margin-bottom:0;}
+.cfhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.cfhead .who{font-size:12.5px;font-weight:600;}
+.cfhead .amt{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:500;}
+.bar{display:flex;height:22px;background:var(--paper);overflow:hidden;}
+.bar div{height:100%;}
+.keys{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:7px;}
+.keys span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.keys i{width:9px;height:9px;display:block;}
+.credit{font-size:11.5px;color:var(--muted);margin-top:7px;}
+
+/* ---------- flip ---------- */
+.flip{padding:4px 16px 16px;}
+.flip .item{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line-soft);align-items:baseline;}
+.flip .item:first-child{border-top:0;}
+.flip .lever{flex:1;font-size:13px;}
+.flip .lever b{font-weight:600;}
+.flip .target{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;white-space:nowrap;}
+.flip .target.na{font-size:12px;color:var(--muted);}
+
+footer{margin-top:26px;font-size:11.5px;color:var(--muted);max-width:74ch;line-height:1.55;}
+footer b{color:var(--ink);font-weight:600;}
+.hidden{display:none;}
+@media(prefers-reduced-motion:no-preference){
+  .pathline{transition:d .25s ease;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <div class="eyebrow">Rent vs buy · crossover model</div>
+    </div>
+    <select class="currency" id="cur" aria-label="Currency">
+      <option value="KES|KSh|1">KES — Kenyan shilling</option>
+      <option value="UGX|USh|28.7">UGX — Ugandan shilling</option>
+      <option value="USD|$|0.0077">USD — US dollar</option>
+      <option value="GBP|£|0.0061">GBP — pound</option>
+      <option value="EUR|€|0.0071">EUR — euro</option>
+      <option value="ZAR|R|0.14">ZAR — rand</option>
+      <option value="NGN|₦|11.6">NGN — naira</option>
+      <option value="INR|₹|0.65">INR — rupee</option>
+      <option value="AED|AED |0.028">AED — dirham</option>
+    </select>
+  </div>
+  <div class="rule"></div>
+
+  <div class="verdict">
+    <h1 id="headline">…</h1>
+    <p id="subline"></p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="controls">
+      <div class="panel">
+        <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">KES</span></div>
+
+        <div class="mode" role="group" aria-label="What is the property for">
+          <button id="mLive" aria-pressed="true">I'd live in it</button>
+          <button id="mLet" aria-pressed="false">I'd rent it out</button>
+        </div>
+
+        <fieldset>
+          <legend>The purchase</legend>
+          <div id="fPurchase"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Cost of owning it</legend>
+          <div id="fOwn"></div>
+        </fieldset>
+
+        <fieldset id="secRent">
+          <legend>Renting instead</legend>
+          <div id="fRent"></div>
+        </fieldset>
+
+        <fieldset id="secLet" class="hidden">
+          <legend>Letting it out</legend>
+          <div id="fLet"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>What the future does</legend>
+          <div id="fMarket"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tax</legend>
+          <div id="fTax"></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="panel">
+        <div class="panel-hd"><h2>Net worth if you sell that year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="chartbox"><svg id="chart" viewBox="0 0 760 340" role="img" aria-label="Net worth over time for buying versus renting"></svg></div>
+        <div class="legend">
+          <span><i style="background:var(--buy)"></i> Buy</span>
+          <span><i style="background:var(--rent)"></i> Rent &amp; invest the difference</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Where the money goes each month</h2><span class="hint">Year one average</span></div>
+        <div class="cf" id="cf"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>What would flip this</h2><span class="hint">Everything else held still</span></div>
+        <div class="flip" id="flip"></div>
+      </div>
+
+      <footer>
+        <b>How this works.</b> Both paths start with the same cash. The renter invests the deposit and purchase costs on day one, and whichever path has the cheaper month invests the difference. Net worth at year <span id="fnH">10</span> is the sale price minus selling costs, remaining loan and capital gains tax, plus whatever's in the investment pot. When the property is a let, your own rent is the same either way, so it's left out entirely — the comparison is the rental property against the same money in the market.
+        <br><br>
+        <b>Not modelled:</b> mortgage insurance, service charge arrears, ground rent, the cost of moving, or the fact that a landlord can raise your rent and a bank can't raise your fixed repayment. Appreciation and returns are steady averages here; real ones arrive in lumps.
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ===================== state ===================== */
+var mode = "live"; // "live" | "let"
+var cur  = { code:"KES", sym:"KSh", rate:1 };
+
+var V = {
+  price:12000000, downPct:20, rate:14.5, term:20, closingPct:5,
+  taxPct:0.2, insurance:24000, maintPct:1, hoa:8000,
+  rent:55000,
+  income:70000, vacancy:8, mgmt:8,
+  appr:8, rentGrowth:5, invest:10, inflation:6, horizon:10, sellPct:3,
+  marginal:30, reliefCap:300000, cgt:15
+};
+
+/* ===================== field definitions ===================== */
+function money(k,label,note){ return {k:k,label:label,note:note,type:"money"}; }
+function pct(k,label,min,max,step,note){ return {k:k,label:label,min:min,max:max,step:step,note:note,type:"pct"}; }
+
+var FIELDS = {
+  fPurchase:[
+    money("price","Property price"),
+    pct("downPct","Deposit",0,100,1,null),
+    pct("rate","Mortgage rate",0,30,0.1,"Annual, on the balance."),
+    pct("term","Loan term (years)",1,35,1,null),
+    pct("closingPct","Purchase costs",0,15,0.25,"Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered.")
+  ],
+  fOwn:[
+    pct("taxPct","Land rates / property tax",0,4,0.05,"Per year, as a share of the property's value."),
+    money("insurance","Insurance","Per year."),
+    pct("maintPct","Repairs & upkeep",0,5,0.1,"Per year, as a share of value. 1% is the usual rule of thumb."),
+    money("hoa","Service charge","Per month.")
+  ],
+  fRent:[
+    money("rent","Rent you'd pay","Per month, for a comparable home.")
+  ],
+  fLet:[
+    money("income","Rent you'd collect","Per month, when occupied."),
+    pct("vacancy","Empty months",0,40,1,"Share of the year with no tenant."),
+    pct("mgmt","Agent's cut",0,25,0.5,"Letting and management fees on rent collected.")
+  ],
+  fMarket:[
+    pct("appr","Property appreciation",-5,20,0.25,"Per year."),
+    pct("rentGrowth","Rent growth",-5,20,0.25,"Per year."),
+    pct("invest","Return if invested instead",0,25,0.25,"What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
+    pct("inflation","Inflation",0,20,0.25,"Pushes up insurance and service charge."),
+    pct("horizon","Years before you sell",1,40,1,"Short stays punish buyers — the purchase costs haven't been earned back yet."),
+    pct("sellPct","Selling costs",0,15,0.25,"Agent and legal fees when you sell.")
+  ],
+  fTax:[
+    pct("marginal","Your income tax rate",0,60,1,"Applied to net rental profit."),
+    money("reliefCap","Interest you can deduct","Per year, cap. Owner-occupier relief — set to 0 if you don't get it."),
+    pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt.")
+  ]
+};
+
+/* ===================== formatting ===================== */
+function fmt(n){
+  var x = n * cur.rate;
+  return cur.sym + Math.round(x).toLocaleString("en-US");
+}
+function fmtC(n){ // compact, for axes
+  var x = n * cur.rate, s = x<0?"-":"", a = Math.abs(x);
+  if(a>=1e9) return s+cur.sym+(a/1e9).toFixed(1).replace(/\.0$/,"")+"B";
+  if(a>=1e6) return s+cur.sym+(a/1e6).toFixed(1).replace(/\.0$/,"")+"M";
+  if(a>=1e3) return s+cur.sym+Math.round(a/1e3)+"k";
+  return s+cur.sym+Math.round(a);
+}
+function pctS(x){ return (Math.round(x*10)/10) + "%"; }
+
+/* ===================== the model ===================== */
+function mrate(annualPct){ return Math.pow(1+annualPct/100, 1/12) - 1; }
+
+function simulate(o){
+  o = o || {};
+  var appr    = o.appr    !== undefined ? o.appr    : V.appr;
+  var invest  = o.invest  !== undefined ? o.invest  : V.invest;
+  var horizon = o.horizon !== undefined ? o.horizon : V.horizon;
+
+  var price   = V.price;
+  var down    = price * V.downPct/100;
+  var closing = price * V.closingPct/100;
+  var loan    = price - down;
+  var r       = V.rate/100/12;
+  var n       = Math.round(V.term*12);
+
+  var pay = r > 0 ? loan * r / (1 - Math.pow(1+r, -n)) : (n>0 ? loan/n : 0);
+
+  var gAppr = mrate(appr), gInv = mrate(invest), gRent = mrate(V.rentGrowth), gInf = mrate(V.inflation);
+
+  var home = price, bal = loan;
+  var buyPot = 0, rentPot = down + closing;
+  var months = Math.round(horizon*12);
+
+  var series = [], totalInterest = 0, yr1 = null;
+  var accInterest = 0, accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
+
+  function snapshot(y){
+    var sale  = home * (1 - V.sellPct/100);
+    var basis = price + closing;
+    var gain  = Math.max(0, sale - basis);
+    var net   = sale - bal - gain * V.cgt/100 + buyPot;
+    series.push({ y:y, buy:net, rent:rentPot, equity:sale - bal, pot:buyPot });
+  }
+  snapshot(0);
+
+  for(var m=1; m<=months; m++){
+    var interest = bal * r;
+    var principal = 0, payment = 0;
+    if(bal > 0.5 && m <= n){
+      payment = Math.min(pay, bal + interest);
+      principal = payment - interest;
+      bal = Math.max(0, bal - principal);
+    } else { interest = 0; }
+    totalInterest += interest;
+
+    var tax = home * V.taxPct/100/12;
+    var ins = V.insurance/12 * Math.pow(1+gInf, m);
+    var mnt = home * V.maintPct/100/12;
+    var hoa = V.hoa * Math.pow(1+gInf, m);
+
+    var grossIncome = 0, netIncome = 0, incomeTax = 0, relief = 0;
+    if(mode === "let"){
+      grossIncome = V.income * Math.pow(1+gRent, m);
+      netIncome = grossIncome * (1 - V.vacancy/100) * (1 - V.mgmt/100);
+      var profit = netIncome - interest - tax - ins - mnt - hoa;
+      if(profit > 0) incomeTax = profit * V.marginal/100;
+    } else {
+      var cap = V.reliefCap/12;
+      relief = Math.min(interest, cap) * V.marginal/100;
+    }
+
+    var buyOut  = payment + tax + ins + mnt + hoa + incomeTax - netIncome - relief;
+    var rentNow = mode === "live" ? V.rent * Math.pow(1+gRent, m) : 0;
+    var rentOut = rentNow;
+
+    var diff = buyOut - rentOut;
+    if(diff > 0) rentPot += diff; else buyPot += -diff;
+
+    buyPot  *= (1+gInv);
+    rentPot *= (1+gInv);
+    home    *= (1+gAppr);
+
+    if(m <= 12){
+      accCosts.int += interest; accCosts.pri += principal; accCosts.tax += tax;
+      accCosts.ins += ins; accCosts.mnt += mnt; accCosts.hoa += hoa;
+      accCosts.inc += netIncome; accCosts.itax += incomeTax; accCosts.relief += relief;
+      accRent += rentNow;
+    }
+    if(m % 12 === 0) snapshot(m/12);
+  }
+  if(months % 12 !== 0) snapshot(horizon);
+
+  var d = Math.min(12, months||1);
+  yr1 = {
+    interest:accCosts.int/d, principal:accCosts.pri/d, tax:accCosts.tax/d,
+    ins:accCosts.ins/d, mnt:accCosts.mnt/d, hoa:accCosts.hoa/d,
+    income:accCosts.inc/d, itax:accCosts.itax/d, relief:accCosts.relief/d,
+    rent:accRent/d
+  };
+
+  var be = null;
+  for(var i=1;i<series.length;i++){
+    if(series[i].buy >= series[i].rent){ be = series[i].y; break; }
+  }
+  var last = series[series.length-1];
+  return { series:series, payment:pay, totalInterest:totalInterest, yr1:yr1,
+           breakEven:be, finalBuy:last.buy, finalRent:last.rent,
+           equity:last.equity, loan:loan, upfront:down+closing };
+}
+
+/* find the value of one knob at which buy == rent */
+function solve(key, lo, hi){
+  function f(x){ var o={}; o[key]=x; var s=simulate(o); return s.finalBuy - s.finalRent; }
+  var a=f(lo), b=f(hi);
+  if(isNaN(a)||isNaN(b)) return null;
+  if((a>0&&b>0)||(a<0&&b<0)) return null;
+  for(var i=0;i<60;i++){
+    var mid=(lo+hi)/2, v=f(mid);
+    if((v>0)===(a>0)){ lo=mid; a=v; } else { hi=mid; }
+  }
+  return (lo+hi)/2;
+}
+
+/* ===================== rendering ===================== */
+function buildFields(){
+  Object.keys(FIELDS).forEach(function(id){
+    var host = document.getElementById(id);
+    host.innerHTML = "";
+    FIELDS[id].forEach(function(f){
+      var w = document.createElement("div"); w.className="f";
+      var lab = document.createElement("label");
+      lab.setAttribute("for","i_"+f.k);
+      var name = document.createElement("span"); name.textContent = f.label;
+      lab.appendChild(name);
+      if(f.type==="pct"){
+        var val = document.createElement("span"); val.className="val"; val.id="v_"+f.k;
+        lab.appendChild(val);
+      }
+      w.appendChild(lab);
+      var inp = document.createElement("input");
+      inp.id = "i_"+f.k;
+      if(f.type==="money"){ inp.type="number"; inp.step="any"; inp.inputMode="decimal"; }
+      else { inp.type="range"; inp.min=f.min; inp.max=f.max; inp.step=f.step; }
+      inp.addEventListener("input", function(){
+        var raw = parseFloat(inp.value);
+        if(isNaN(raw)) return;
+        V[f.k] = f.type==="money" ? raw / cur.rate : raw;
+        render();
+      });
+      w.appendChild(inp);
+      if(f.note){ var nt=document.createElement("div"); nt.className="note"; nt.textContent=f.note; w.appendChild(nt); }
+      host.appendChild(w);
+    });
+  });
+}
+
+function syncFields(){
+  Object.keys(FIELDS).forEach(function(id){
+    FIELDS[id].forEach(function(f){
+      var inp = document.getElementById("i_"+f.k);
+      if(!inp) return;
+      if(f.type==="money"){
+        var shown = Math.round(V[f.k]*cur.rate);
+        if(document.activeElement !== inp) inp.value = shown;
+      } else {
+        inp.value = V[f.k];
+        var v = document.getElementById("v_"+f.k);
+        if(v) v.textContent = (f.k==="term"||f.k==="horizon") ? V[f.k] : pctS(V[f.k]);
+      }
+    });
+  });
+}
+
+function drawChart(s){
+  var W=760,H=340,L=64,R=16,T=18,B=34;
+  var pts = s.series;
+  var maxY = 0, minY = 0;
+  pts.forEach(function(p){ maxY=Math.max(maxY,p.buy,p.rent); minY=Math.min(minY,p.buy,p.rent); });
+  if(maxY===minY) maxY = minY+1;
+  var pad=(maxY-minY)*0.08; maxY+=pad; minY-=pad;
+  var xmax = pts[pts.length-1].y || 1;
+  function X(y){ return L + (y/xmax)*(W-L-R); }
+  function Y(v){ return T + (1-(v-minY)/(maxY-minY))*(H-T-B); }
+
+  var o = [];
+  // horizontal gridlines
+  var ticks=5;
+  for(var i=0;i<=ticks;i++){
+    var v = minY + (maxY-minY)*i/ticks, y = Y(v);
+    o.push('<line class="'+(Math.abs(v)<(maxY-minY)/200?"zeroline":"gridline")+'" x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'"/>');
+    o.push('<text class="axis" x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+fmtC(v)+'</text>');
+  }
+  // x labels
+  var step = xmax<=10?1:(xmax<=20?2:5);
+  for(var yv=0; yv<=xmax; yv+=step){
+    o.push('<text class="axis" x="'+X(yv).toFixed(1)+'" y="'+(H-B+18)+'" text-anchor="middle">'+yv+'</text>');
+  }
+  o.push('<text class="axis" x="'+X(xmax/2).toFixed(1)+'" y="'+(H-2)+'" text-anchor="middle" style="letter-spacing:.12em">YEARS HELD</text>');
+
+  // shaded gap between the two paths
+  var top=[], bot=[];
+  pts.forEach(function(p){ top.push(X(p.y).toFixed(1)+","+Y(p.buy).toFixed(1)); });
+  for(var j=pts.length-1;j>=0;j--){ bot.push(X(pts[j].y).toFixed(1)+","+Y(pts[j].rent).toFixed(1)); }
+  var ahead = pts[pts.length-1].buy >= pts[pts.length-1].rent ? "var(--buy)" : "var(--rent)";
+  o.push('<polygon points="'+top.concat(bot).join(" ")+'" fill="'+ahead+'" opacity="0.10"/>');
+
+  function line(key,color){
+    var d = pts.map(function(p,i){ return (i?"L":"M")+X(p.y).toFixed(1)+" "+Y(p[key]).toFixed(1); }).join(" ");
+    return '<path class="pathline" d="'+d+'" stroke="'+color+'"/>';
+  }
+  o.push(line("rent","var(--rent)"));
+  o.push(line("buy","var(--buy)"));
+
+  // crossover marker
+  if(s.breakEven){
+    var bx = X(s.breakEven);
+    o.push('<g class="marker">');
+    o.push('<line x1="'+bx.toFixed(1)+'" y1="'+T+'" x2="'+bx.toFixed(1)+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.25" stroke-dasharray="4 4"/>');
+    var anchor = bx > W*0.72 ? "end" : "start";
+    var dx = anchor==="end" ? -7 : 7;
+    o.push('<text x="'+(bx+dx).toFixed(1)+'" y="'+(T+12)+'" text-anchor="'+anchor+'">CROSSOVER · YEAR '+s.breakEven+'</text>');
+    o.push('</g>');
+  }
+  // end dots
+  var lastP = pts[pts.length-1];
+  o.push('<circle cx="'+X(lastP.y).toFixed(1)+'" cy="'+Y(lastP.buy).toFixed(1)+'" r="4" fill="var(--buy)"/>');
+  o.push('<circle cx="'+X(lastP.y).toFixed(1)+'" cy="'+Y(lastP.rent).toFixed(1)+'" r="4" fill="var(--rent)"/>');
+
+  document.getElementById("chart").innerHTML = o.join("");
+}
+
+function drawCashflow(s){
+  var y = s.yr1;
+  var buyParts = [
+    {n:"Interest",   v:y.interest, c:"var(--buy)"},
+    {n:"Principal",  v:y.principal, c:"#7EA3CC"},
+    {n:"Rates & tax",v:y.tax,      c:"#4C6B4A"},
+    {n:"Insurance",  v:y.ins,      c:"#8A9B7E"},
+    {n:"Upkeep",     v:y.mnt,      c:"#B3A98C"},
+    {n:"Service charge", v:y.hoa,  c:"#6B7069"}
+  ];
+  if(mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
+  var buyTotal = buyParts.reduce(function(a,b){return a+b.v;},0);
+  var credit = mode==="let" ? y.income : y.relief;
+  var net = buyTotal - credit;
+
+  var rentParts = [{n:"Rent", v:y.rent, c:"var(--rent)"}];
+  var rentTotal = y.rent;
+  var scale = Math.max(buyTotal, rentTotal, 1);
+
+  function block(title, parts, total, netAmt, creditLabel, creditAmt){
+    var bar = parts.map(function(p){
+      return '<div style="width:'+(p.v/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
+    }).join("");
+    var keys = parts.map(function(p){
+      return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+fmt(p.v)+'</span>';
+    }).join("");
+    var extra = creditAmt>0
+      ? '<div class="credit">Less '+creditLabel+' '+fmt(creditAmt)+' → <b class="num">'+fmt(netAmt)+' out of pocket</b></div>'
+      : '';
+    return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
+           '<span class="amt num">'+fmt(total)+'</span></div>'+
+           '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+extra+'</div>';
+  }
+
+  var html = block(mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
+                   mode==="let" ? "rent collected, after voids, agent and tax" : "tax relief on interest", credit);
+  if(mode==="live"){
+    html += block("Renting", rentParts, rentTotal, rentTotal, "", 0);
+  } else {
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">Not buying</span>'+
+            '<span class="amt num">'+fmt(0)+'</span></div>'+
+            '<div class="bar"></div>'+
+            '<div class="credit">Your own rent is identical either way, so it drops out. What you\'re comparing is '+
+            fmt(s.upfront)+' plus '+fmt(Math.max(0,net))+' a month going into a mortgage, or into the market.</div></div>';
+  }
+  document.getElementById("cf").innerHTML = html;
+  return {buyNet:net, rentTotal:rentTotal};
+}
+
+function drawTiles(s, cash){
+  var gap = s.finalBuy - s.finalRent;
+  var t = [
+    {k:"Monthly repayment", v:fmt(s.payment), s:"On "+fmt(s.loan)+" over "+V.term+" years"},
+    {k:"Cash needed on day one", v:fmt(s.upfront), s:"Deposit plus purchase costs"},
+    {k:"Interest over the loan", v:fmt(s.totalInterest), s:pctS(s.totalInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
+    {k:"Gap at year "+V.horizon, v:(gap>=0?"+":"−")+fmt(Math.abs(gap)).replace(cur.sym,cur.sym), s:(gap>=0?"in favour of buying":"in favour of renting")}
+  ];
+  document.getElementById("tiles").innerHTML = t.map(function(x){
+    return '<div class="tile"><div class="k">'+x.k+'</div><div class="v">'+x.v+'</div><div class="s">'+x.s+'</div></div>';
+  }).join("");
+}
+
+function drawFlip(s){
+  var buying = s.finalBuy >= s.finalRent;
+  var items = [];
+
+  var a = solve("appr", -8, 30);
+  items.push({
+    lever: buying ? "Buying stops winning if the property appreciates slower than"
+                  : "Buying starts winning if the property appreciates faster than",
+    target: a===null ? null : pctS(a)+" a year",
+    now: "now "+pctS(V.appr)
+  });
+
+  var iv = solve("invest", 0, 30);
+  items.push({
+    lever: buying ? "Buying stops winning if your investments return more than"
+                  : "Buying starts winning if your investments return less than",
+    target: iv===null ? null : pctS(iv)+" a year",
+    now: "now "+pctS(V.invest)
+  });
+
+  items.push({
+    lever: s.breakEven ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
+    target: s.breakEven ? s.breakEven + (s.breakEven===1?" year":" years") : null,
+    now: s.breakEven ? "you plan on "+V.horizon : "at these assumptions"
+  });
+
+  document.getElementById("flip").innerHTML = items.map(function(i){
+    var tg = i.target ? '<span class="target">'+i.target+'</span>'
+                      : '<span class="target na">no crossover in range</span>';
+    return '<div class="item"><span class="lever">'+i.lever+
+           ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
+  }).join("");
+}
+
+function drawVerdict(s){
+  var gap = s.finalBuy - s.finalRent;
+  var buying = gap >= 0;
+  var h = document.getElementById("headline");
+  var p = document.getElementById("subline");
+  var word = buying ? '<span class="b">Buy</span>' : '<span class="r">Rent</span>';
+  var amt = fmt(Math.abs(gap));
+
+  if(mode==="live"){
+    h.innerHTML = word + ", by " + amt + " over " + V.horizon + (V.horizon===1?" year":" years") + ".";
+    p.innerHTML = buying
+      ? "Owning leaves you <b>"+amt+"</b> better off by year "+V.horizon+", after selling costs and tax. "+
+        (s.breakEven ? "You cross over in <b>year "+s.breakEven+"</b> — leave earlier and buying loses." : "")
+      : "Renting and investing the difference leaves you <b>"+amt+"</b> ahead by year "+V.horizon+". "+
+        (s.breakEven ? "" : "At these assumptions the two lines don't cross within your horizon.");
+  } else {
+    h.innerHTML = (buying ? '<span class="b">Buy the let</span>' : '<span class="r">Skip it</span>') +
+                  ", by " + amt + " over " + V.horizon + (V.horizon===1?" year":" years") + ".";
+    p.innerHTML = buying
+      ? "The rental property beats putting the same money in the market by <b>"+amt+"</b>. "+
+        (s.breakEven ? "It turns positive in <b>year "+s.breakEven+"</b>." : "")
+      : "The same cash in the market beats the rental property by <b>"+amt+"</b> — the rent collected doesn't cover the cost of the money.";
+  }
+}
+
+function render(){
+  syncFields();
+  var s = simulate();
+  drawVerdict(s);
+  drawChart(s);
+  var cash = drawCashflow(s);
+  drawTiles(s, cash);
+  drawFlip(s);
+  document.getElementById("chartHint").textContent = "Years 0–"+V.horizon;
+  document.getElementById("horizonHint").textContent = V.horizon+"-year horizon";
+  document.getElementById("fnH").textContent = V.horizon;
+  document.getElementById("curhint").textContent = cur.code;
+}
+
+/* ===================== wiring ===================== */
+document.getElementById("mLive").addEventListener("click", function(){ setMode("live"); });
+document.getElementById("mLet").addEventListener("click", function(){ setMode("let"); });
+function setMode(m){
+  mode = m;
+  document.getElementById("mLive").setAttribute("aria-pressed", m==="live");
+  document.getElementById("mLet").setAttribute("aria-pressed", m==="let");
+  document.getElementById("secRent").classList.toggle("hidden", m!=="live");
+  document.getElementById("secLet").classList.toggle("hidden", m!=="let");
+  render();
+}
+document.getElementById("cur").addEventListener("change", function(e){
+  var p = e.target.value.split("|");
+  cur = { code:p[0], sym:p[1], rate:parseFloat(p[2]) };
+  render();
+});
+
+buildFields();
+render();
+</script>
+</body>
+</html>
