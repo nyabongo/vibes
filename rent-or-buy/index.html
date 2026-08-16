@@ -455,6 +455,7 @@ function simulate(o){
   var n       = Math.round(V.term*12);
 
   var pay = r > 0 ? loan * r / (1 - Math.pow(1+r, -n)) : (n>0 ? loan/n : 0);
+  var loanInterest = r > 0 ? pay*n - loan : 0;
 
   var gAppr = mrate(appr), gInv = mrate(invest), gRent = mrate(V.rentGrowth), gInf = mrate(V.inflation);
 
@@ -534,7 +535,7 @@ function simulate(o){
     if(series[i].buy >= series[i].rent){ be = series[i].y; break; }
   }
   var last = series[series.length-1];
-  return { series:series, payment:pay, totalInterest:totalInterest, yr1:yr1,
+  return { series:series, payment:pay, totalInterest:totalInterest, loanInterest:loanInterest, yr1:yr1,
            breakEven:be, finalBuy:last.buy, finalRent:last.rent,
            equity:last.equity, loan:loan, upfront:down+closing };
 }
@@ -714,7 +715,7 @@ function drawTiles(s, cash){
   var t = [
     {k:"Monthly repayment", v:fmt(s.payment), s:"On "+fmt(s.loan)+" over "+V.term+" years"},
     {k:"Cash needed on day one", v:fmt(s.upfront), s:"Deposit plus purchase costs"},
-    {k:"Interest over the loan", v:fmt(s.totalInterest), s:pctS(s.totalInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
+    {k:"Interest over the loan", v:fmt(s.loanInterest), s:pctS(s.loanInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
     {k:"Gap at year "+V.horizon, v:(gap>=0?"+":"−")+fmt(Math.abs(gap)).replace(cur.sym,cur.sym), s:(gap>=0?"in favour of buying":"in favour of renting")}
   ];
   document.getElementById("tiles").innerHTML = t.map(function(x){
