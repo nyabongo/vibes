@@ -16,6 +16,9 @@ and they can hit numeric edge cases a browser test can't easily set up.
   extracted out of the inline `<script>` into a UMD-style module that works
   both as a plain `<script src>` (still zero build step) and as a Node import
   for tests.
+- `build-or-invest/model.js` + `build-or-invest/model.test.js` follows the same
+  shape, and was written module-first: the engine was built and unit tested
+  before a line of its HTML existed.
 
 **If an app is primarily DOM/canvas/interaction with no meaningful pure
 logic** — rely on Playwright E2E instead; there's nothing worth extracting.

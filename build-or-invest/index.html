@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build or invest — the development calculator</title>
+<meta name="description" content="Compare building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth.">
+<link rel="canonical" href="https://vibes.obel.dev/build-or-invest/">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibes.obel.dev/build-or-invest/">
+<meta property="og:title" content="Build or invest — the development calculator">
+<meta property="og:description" content="Compare building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth.">
+<meta property="og:image" content="https://vibes.obel.dev/build-or-invest/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Build or invest — the development calculator">
+<meta name="twitter:description" content="Compare building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth.">
+<meta name="twitter:image" content="https://vibes.obel.dev/build-or-invest/og.svg">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300;9..144,600,50,1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#15181C;
+  --paper:#E7E9E3;
+  --surface:#FBFBF9;
+  --line:#CBCEC5;
+  --line-soft:#DDE0D8;
+  --muted:#6B7069;
+  --build:#1B4F8A;
+  --build-soft:#1B4F8A1A;
+  --mkt:#C0611A;
+  --mkt-soft:#C0611A1A;
+  --warn:#8A3324;
+  --s:8px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 72px;}
+
+/* ---------- masthead ---------- */
+.masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.eyebrow{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;
+}
+.rule{height:1px;background:var(--ink);margin:14px 0 22px;}
+
+.mast-actions{display:flex;gap:8px;align-items:center;}
+select.currency,.linkbtn{
+  font:500 12px/1 "IBM Plex Mono",monospace;
+  background:transparent;border:1px solid var(--line);
+  padding:7px 9px;color:var(--ink);cursor:pointer;
+}
+.linkbtn{min-width:78px;text-align:center;}
+.linkbtn:hover{border-color:var(--muted);}
+select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--build);outline-offset:2px;}
+
+/* ---------- verdict ---------- */
+.verdict h1{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;font-variation-settings:"SOFT" 50,"WONK" 1;
+  font-size:clamp(30px,5.4vw,52px);
+  line-height:1.06;letter-spacing:-.015em;
+  margin:0 0 10px;max-width:19ch;
+}
+.verdict h1 em{font-style:normal;}
+.verdict h1 .b{color:var(--build);}
+.verdict h1 .r{color:var(--mkt);}
+.verdict p{margin:0;max-width:56ch;color:var(--muted);font-size:15px;}
+.verdict p b{color:var(--ink);font-weight:600;}
+
+/* ---------- shortfall warning ---------- */
+.warn{
+  margin-top:18px;padding:11px 14px;
+  border:1px solid var(--warn);border-left-width:3px;
+  background:#8A33240D;font-size:13px;max-width:74ch;
+}
+.warn b{font-weight:600;}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:320px 1fr;gap:26px;margin-top:30px;align-items:start;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+
+.panel{background:var(--surface);border:1px solid var(--line-soft);}
+.panel-hd{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:12px 16px;border-bottom:1px solid var(--line-soft);
+}
+.panel-hd h2{
+  margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;
+}
+.panel-hd .hint{font-size:11px;color:var(--muted);}
+
+/* ---------- controls ---------- */
+.controls{position:sticky;top:20px;}
+@media(max-width:900px){.controls{position:static;order:2;}}
+.results{min-width:0;}
+@media(max-width:900px){.results{order:1;}}
+
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);}
+.mode button{
+  font:500 12px/1.3 "IBM Plex Sans",sans-serif;
+  background:var(--surface);border:0;padding:11px 8px;cursor:pointer;color:var(--muted);
+}
+.mode button[aria-pressed="true"]{background:var(--ink);color:var(--surface);}
+.mode button:focus-visible{outline:2px solid var(--build);outline-offset:-2px;}
+
+fieldset{border:0;border-top:1px solid var(--line-soft);margin:0;padding:14px 16px 16px;}
+fieldset:first-of-type{border-top:0;}
+legend{
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;padding:0;margin-bottom:10px;
+}
+.f{margin-bottom:13px;}
+.f:last-child{margin-bottom:2px;}
+.f label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:4px;}
+.f label .val{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;}
+.f .note{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35;}
+input[type=number]{
+  width:100%;font:500 14px/1 "IBM Plex Mono",monospace;
+  padding:8px 9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
+}
+input[type=number]:focus-visible{outline:2px solid var(--build);outline-offset:-1px;border-color:var(--build);}
+input[type=range]{width:100%;accent-color:var(--ink);height:20px;}
+input[type=range]:focus-visible{outline:2px solid var(--build);outline-offset:3px;}
+
+/* ---------- chart ---------- */
+.chartbox{padding:16px 12px 8px;}
+svg{display:block;width:100%;height:auto;}
+.axis{font:500 10px "IBM Plex Mono",monospace;fill:var(--muted);}
+.gridline{stroke:var(--line-soft);stroke-width:1;}
+.zeroline{stroke:var(--line);stroke-width:1;}
+.pathline{fill:none;stroke-width:2.25;stroke-linejoin:round;stroke-linecap:round;}
+.marker text{font:500 10px "IBM Plex Mono",monospace;fill:var(--ink);}
+.marker text.soft{fill:var(--muted);}
+.legend{display:flex;gap:18px;padding:4px 16px 14px;flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+.legend i{width:14px;height:3px;display:block;}
+
+/* ---------- key figures ---------- */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);}
+@media(max-width:720px){.tiles{grid-template-columns:repeat(2,1fr);}}
+.tile{background:var(--surface);padding:14px 16px;}
+.tile .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.tile .v{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500;letter-spacing:-.02em;}
+.tile .s{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ---------- money bars ---------- */
+.cf{padding:16px;}
+.cfrow{margin-bottom:16px;}
+.cfrow:last-child{margin-bottom:0;}
+.cfhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.cfhead .who{font-size:12.5px;font-weight:600;}
+.cfhead .amt{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:500;}
+.bar{display:flex;height:22px;background:var(--paper);overflow:hidden;}
+.bar div{height:100%;}
+.keys{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:7px;}
+.keys span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.keys i{width:9px;height:9px;display:block;}
+.credit{font-size:11.5px;color:var(--muted);margin-top:7px;}
+
+/* ---------- flip ---------- */
+.flip{padding:4px 16px 16px;}
+.flip .item{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line-soft);align-items:baseline;}
+.flip .item:first-child{border-top:0;}
+.flip .lever{flex:1;font-size:13px;}
+.flip .lever b{font-weight:600;}
+.flip .target{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;white-space:nowrap;}
+.flip .target.na{font-size:12px;color:var(--muted);}
+
+footer{margin-top:26px;font-size:11.5px;color:var(--muted);max-width:74ch;line-height:1.55;}
+footer b{color:var(--ink);font-weight:600;}
+.hidden{display:none;}
+@media(prefers-reduced-motion:no-preference){
+  .pathline{transition:d .25s ease;}
+}
+
+/* ---------- print report ---------- */
+.print-summary{display:none;}
+.ps-head{margin-bottom:14px;}
+.ps-head h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px;}
+.ps-head span{font-size:11px;color:var(--muted);}
+.ps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;border:1px solid var(--line-soft);padding:14px;}
+.ps-col h3{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600;}
+.ps-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;border-top:1px solid var(--line-soft);}
+.ps-row:first-of-type{border-top:0;}
+.ps-row .num{font-family:"IBM Plex Mono",monospace;white-space:nowrap;}
+
+@media print{
+  @page{margin:14mm;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body{background:#fff;}
+  .wrap{max-width:100%;padding:0;}
+  .mast-actions,.controls{display:none!important;}
+  .grid{grid-template-columns:1fr;margin-top:16px;}
+  .print-summary{display:block;margin-top:22px;}
+  .panel,.tile,.cfrow,.flip .item{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <div class="eyebrow">Build vs invest &middot; development model</div>
+    </div>
+    <div class="mast-actions">
+      <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
+      <button class="linkbtn" id="copyLink" type="button">Copy link</button>
+      <select class="currency" id="cur" aria-label="Currency">
+        <option value="KES|KSh|1">KES — Kenyan shilling</option>
+        <option value="UGX|USh|28.7">UGX — Ugandan shilling</option>
+        <option value="USD|$|0.0077">USD — US dollar</option>
+        <option value="GBP|£|0.0061">GBP — pound</option>
+        <option value="EUR|€|0.0071">EUR — euro</option>
+        <option value="ZAR|R|0.14">ZAR — rand</option>
+        <option value="NGN|₦|11.6">NGN — naira</option>
+        <option value="INR|₹|0.65">INR — rupee</option>
+        <option value="AED|AED |0.028">AED — dirham</option>
+      </select>
+    </div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="verdict">
+    <h1 id="headline">…</h1>
+    <p id="subline"></p>
+  </div>
+
+  <div class="warn hidden" id="shortfallWarn"></div>
+
+  <div class="print-summary" id="printSummary"></div>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="controls">
+      <div class="panel">
+        <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">KES</span></div>
+
+        <div class="mode" role="group" aria-label="How rental income is taxed">
+          <button id="mGross" aria-pressed="true">Flat rate on rent</button>
+          <button id="mNet" aria-pressed="false">Tax on profit</button>
+        </div>
+
+        <fieldset>
+          <legend>What you're deploying</legend>
+          <div id="fCapital"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>The project</legend>
+          <div id="fProject"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>What it earns</legend>
+          <div id="fIncome"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Cost of running it</legend>
+          <div id="fOperating"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Getting out</legend>
+          <div id="fExit"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>The alternative</legend>
+          <div id="fInvest"></div>
+        </fieldset>
+
+        <fieldset id="secGross">
+          <legend>Tax on rent</legend>
+          <div id="fGross"></div>
+        </fieldset>
+
+        <fieldset id="secNet" class="hidden">
+          <legend>Tax on profit</legend>
+          <div id="fNet"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tax &amp; inflation</legend>
+          <div id="fTax"></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="panel">
+        <div class="panel-hd"><h2>Net worth if you sell that year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="chartbox"><svg id="chart" viewBox="0 0 760 340" role="img" aria-label="Net worth over time for building versus investing"></svg></div>
+        <div class="legend">
+          <span><i style="background:var(--build)"></i> Build the block</span>
+          <span><i style="background:var(--mkt)"></i> Leave it invested</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover &amp; completion</span>
+          <span><i style="background:var(--muted);opacity:.25;height:10px"></i> Under construction</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Where the money goes</h2><span class="hint" id="cfHint"></span></div>
+        <div class="cf" id="cf"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>What would flip this</h2><span class="hint">Everything else held still</span></div>
+        <div class="flip" id="flip"></div>
+      </div>
+
+      <footer>
+        <b>How this works.</b> Both paths start with the same lump sum. The build path pays for the land on day one and draws the rest of the project cost evenly over the construction months; whatever hasn't been spent yet keeps earning the investment return, and so does every shilling of rent the finished building throws off. While it's under construction the building is worth what you've sunk into it — no more. Once complete it's worth a year's stabilised net income divided by your exit yield, which is where a development actually makes or loses its money. Net worth at year <span id="fnH">10</span> is that value less selling costs and capital gains tax, plus the cash pot.
+        <br><br>
+        <b>Why the lump sum doesn't move the verdict.</b> It enters both paths identically, so it cancels out of the gap between them — change it and the headline number stays put. What it decides is whether you can fund the thing at all, which is what the warning above is for. To change the answer, move the rent, the exit yield, the build cost or the market return.
+        <br><br>
+        <b>Not modelled:</b> construction finance or interest during the build, phased or pre-sold units, selling units off individually, VAT and capital allowances, or the cost of a project that stalls. Drawdown is even across the build months, and a finished building is priced on stabilised income from its first month even while it's still filling. Land rates are charged on site value only. Rent growth and investment returns are steady averages here; real ones arrive in lumps, and a half-built block earns nothing while you argue with a contractor. If the project costs more than you have, the gap is charged at the same rate your investments earn — a stand-in for finance you'd actually have to go and raise.
+        <br><br>
+        <b>This is a model, not advice.</b> It does what you tell it to. The numbers you put in matter far more than the arithmetic it does with them.
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="model.js"></script>
+<script>
+"use strict";
+
+/* ===================== rendering ===================== */
+/* Dragging a slider fires `input` faster than the browser paints, and a render
+   costs a few milliseconds — almost all of it the four bisections behind the
+   "what would flip this" panel. Measured at ~3.6ms here, which fits in a frame
+   comfortably, but that's a desktop; the same work on a cheap phone is where it
+   would start dropping frames. Coalescing bursts into one render per frame makes
+   the handler frame-bound by construction, whatever it's running on.
+   Discrete events — the mode toggle, the currency select — still call render()
+   directly, since one click can't burst. */
+var renderQueued = false;
+function scheduleRender(){
+  if(renderQueued) return;
+  renderQueued = true;
+  function run(){ renderQueued = false; render(); }
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+  else setTimeout(run, 16);
+}
+
+function fieldDisplay(f){
+  var v = Model.V[f.k];
+  if(f.type==="money") return Model.fmt(v);
+  if(f.type==="num")   return v + (f.unit || "");
+  return Model.pctS(v);
+}
+
+function buildFields(){
+  Object.keys(Model.FIELDS).forEach(function(id){
+    var host = document.getElementById(id);
+    host.innerHTML = "";
+    Model.FIELDS[id].forEach(function(f){
+      var w = document.createElement("div"); w.className="f";
+      var lab = document.createElement("label");
+      lab.setAttribute("for","i_"+f.k);
+      var name = document.createElement("span"); name.textContent = f.label;
+      lab.appendChild(name);
+      if(f.type!=="money"){
+        var val = document.createElement("span"); val.className="val"; val.id="v_"+f.k;
+        lab.appendChild(val);
+      }
+      w.appendChild(lab);
+      var inp = document.createElement("input");
+      inp.id = "i_"+f.k;
+      if(f.type==="money"){ inp.type="number"; inp.step="any"; inp.inputMode="decimal"; }
+      else { inp.type="range"; inp.min=f.min; inp.max=f.max; inp.step=f.step; }
+      inp.addEventListener("input", function(){
+        var raw = parseFloat(inp.value);
+        if(isNaN(raw)) return;
+        Model.V[f.k] = f.type==="money" ? raw / Model.cur.rate : raw;
+        scheduleRender();
+      });
+      w.appendChild(inp);
+      if(f.note){ var nt=document.createElement("div"); nt.className="note"; nt.textContent=f.note; w.appendChild(nt); }
+      host.appendChild(w);
+    });
+  });
+}
+
+function syncFields(){
+  Object.keys(Model.FIELDS).forEach(function(id){
+    Model.FIELDS[id].forEach(function(f){
+      var inp = document.getElementById("i_"+f.k);
+      if(!inp) return;
+      if(f.type==="money"){
+        var shown = Math.round(Model.V[f.k]*Model.cur.rate);
+        if(document.activeElement !== inp) inp.value = shown;
+      } else {
+        inp.value = Model.V[f.k];
+        var v = document.getElementById("v_"+f.k);
+        if(v) v.textContent = fieldDisplay(f);
+      }
+    });
+  });
+}
+
+function drawChart(s){
+  var W=760,H=340,L=64,R=16,T=18,B=34;
+  var pts = s.series;
+  /* Scale to the data, not to zero. Both paths start at the same lump sum and diverge
+     slowly, so a forced zero floor would squash the whole comparison into a sliver. */
+  var maxY = pts[0].build, minY = pts[0].build;
+  pts.forEach(function(p){ maxY=Math.max(maxY,p.build,p.invest); minY=Math.min(minY,p.build,p.invest); });
+  if(maxY===minY) maxY = minY+1;
+  var pad=(maxY-minY)*0.08; maxY+=pad; minY-=pad;
+  var xmax = pts[pts.length-1].y || 1;
+  function X(y){ return L + (y/xmax)*(W-L-R); }
+  function Y(v){ return T + (1-(v-minY)/(maxY-minY))*(H-T-B); }
+
+  var o = [];
+  // shaded band over the months the site is a hole in the ground
+  if(s.completionYear > 0){
+    var bw = X(Math.min(s.completionYear, xmax)) - L;
+    if(bw > 0) o.push('<rect x="'+L+'" y="'+T+'" width="'+bw.toFixed(1)+'" height="'+(H-T-B)+'" fill="var(--muted)" opacity="0.08"/>');
+  }
+  // horizontal gridlines
+  var ticks=5;
+  for(var i=0;i<=ticks;i++){
+    var v = minY + (maxY-minY)*i/ticks, y = Y(v);
+    o.push('<line class="'+(Math.abs(v)<(maxY-minY)/200?"zeroline":"gridline")+'" x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'"/>');
+    o.push('<text class="axis" x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+Model.fmtC(v)+'</text>');
+  }
+  // x labels
+  var step = xmax<=10?1:(xmax<=20?2:5);
+  for(var yv=0; yv<=xmax; yv+=step){
+    o.push('<text class="axis" x="'+X(yv).toFixed(1)+'" y="'+(H-B+18)+'" text-anchor="middle">'+yv+'</text>');
+  }
+  o.push('<text class="axis" x="'+X(xmax/2).toFixed(1)+'" y="'+(H-2)+'" text-anchor="middle" style="letter-spacing:.12em">YEARS HELD</text>');
+
+  // shaded gap between the two paths
+  var top=[], bot=[];
+  pts.forEach(function(p){ top.push(X(p.y).toFixed(1)+","+Y(p.build).toFixed(1)); });
+  for(var j=pts.length-1;j>=0;j--){ bot.push(X(pts[j].y).toFixed(1)+","+Y(pts[j].invest).toFixed(1)); }
+  var ahead = pts[pts.length-1].build >= pts[pts.length-1].invest ? "var(--build)" : "var(--mkt)";
+  o.push('<polygon points="'+top.concat(bot).join(" ")+'" fill="'+ahead+'" opacity="0.10"/>');
+
+  function line(key,color){
+    var d = pts.map(function(p,i){ return (i?"L":"M")+X(p.y).toFixed(1)+" "+Y(p[key]).toFixed(1); }).join(" ");
+    return '<path class="pathline" d="'+d+'" stroke="'+color+'"/>';
+  }
+  o.push(line("invest","var(--mkt)"));
+  o.push(line("build","var(--build)"));
+
+  // completion marker — where the building stops being a hole in the ground
+  if(s.completionYear > 0 && s.completionYear < xmax){
+    var cx = X(s.completionYear);
+    o.push('<g class="marker">');
+    o.push('<line x1="'+cx.toFixed(1)+'" y1="'+T+'" x2="'+cx.toFixed(1)+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1.25" stroke-dasharray="2 4"/>');
+    var ca = cx > W*0.72 ? "end" : "start";
+    o.push('<text class="soft" x="'+(cx+(ca==="end"?-7:7)).toFixed(1)+'" y="'+(H-B-8)+'" text-anchor="'+ca+'">COMPLETE</text>');
+    o.push('</g>');
+  }
+
+  // crossover marker
+  if(s.breakEven){
+    var bx = X(s.breakEven);
+    o.push('<g class="marker">');
+    o.push('<line x1="'+bx.toFixed(1)+'" y1="'+T+'" x2="'+bx.toFixed(1)+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.25" stroke-dasharray="4 4"/>');
+    var anchor = bx > W*0.72 ? "end" : "start";
+    var dx = anchor==="end" ? -7 : 7;
+    o.push('<text x="'+(bx+dx).toFixed(1)+'" y="'+(T+12)+'" text-anchor="'+anchor+'">CROSSOVER · YEAR '+s.breakEven+'</text>');
+    o.push('</g>');
+  }
+  // end dots
+  var lastP = pts[pts.length-1];
+  o.push('<circle cx="'+X(lastP.y).toFixed(1)+'" cy="'+Y(lastP.build).toFixed(1)+'" r="4" fill="var(--build)"/>');
+  o.push('<circle cx="'+X(lastP.y).toFixed(1)+'" cy="'+Y(lastP.invest).toFixed(1)+'" r="4" fill="var(--mkt)"/>');
+
+  document.getElementById("chart").innerHTML = o.join("");
+}
+
+function block(title, parts, total, extraHTML){
+  var scale = Math.max(total, 1);
+  var bar = parts.map(function(p){
+    return '<div style="width:'+(Math.max(0,p.v)/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
+  }).join("");
+  var keys = parts.map(function(p){
+    return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+Model.fmt(p.v)+'</span>';
+  }).join("");
+  return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
+         '<span class="amt num">'+Model.fmt(total)+'</span></div>'+
+         '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+
+         (extraHTML||'')+'</div>';
+}
+
+function drawCashflow(s){
+  var costParts = [
+    {n:"Land",         v:s.land,        c:"var(--build)"},
+    {n:"Construction", v:s.buildCost,   c:"#7EA3CC"},
+    {n:"Fees & approvals", v:s.softCost, c:"#4C6B4A"},
+    {n:"Contingency",  v:s.contingency, c:"#B3A98C"}
+  ];
+  var left = Model.V.capital - s.projectCost;
+  var costExtra = left >= 0
+    ? '<div class="credit">Leaves <b class="num">'+Model.fmt(left)+'</b> of your capital, which stays invested.</div>'
+    : '<div class="credit">That is <b class="num">'+Model.fmt(-left)+'</b> more than you have.</div>';
+  var html = block("What it costs to build", costParts, s.projectCost, costExtra);
+
+  var y = s.stabYear;
+  if(y){
+    var runParts = [
+      {n:"Agent's cut", v:y.agent,  c:"var(--mkt)"},
+      {n:"Land rates",  v:y.rates,  c:"#4C6B4A"},
+      {n:"Insurance",   v:y.ins,    c:"#8A9B7E"},
+      {n:"Repairs",     v:y.rep,    c:"#B3A98C"},
+      {n:"Common areas",v:y.common, c:"#6B7069"},
+      {n:"Tax",         v:y.tax,    c:"#3A3F45"}
+    ];
+    var outgoings = runParts.reduce(function(a,b){return a+b.v;},0);
+    var extra = '<div class="credit">Out of <b class="num">'+Model.fmt(y.gross)+'</b> collected → '+
+                '<b class="num">'+Model.fmt(y.net)+'</b> in your pocket that month.</div>';
+    /* what the other tax regime would have cost over the whole hold */
+    var other = Model.simulate({ mode: Model.mode==="gross" ? "net" : "gross" });
+    var otherName = Model.mode==="gross" ? "taxing profit instead" : "the flat rate on gross rent instead";
+    extra += '<div class="credit">Over '+Model.V.horizon+' years this regime takes <b class="num">'+
+             Model.fmt(s.totalTax)+'</b> in rental tax. With '+otherName+' it would be <b class="num">'+
+             Model.fmt(other.totalTax)+'</b>.</div>';
+    html += block("A month once it's full", runParts, outgoings, extra);
+  } else {
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">A month once it\'s full</span></div>'+
+            '<div class="credit">The building isn\'t finished and let within your '+Model.V.horizon+
+            '-year horizon, so there\'s no settled month to show.</div></div>';
+  }
+  document.getElementById("cf").innerHTML = html;
+}
+
+function drawTiles(s){
+  var gap = s.finalBuild - s.finalInvest;
+  var irr = Model.irr(s.cashflows);
+  var netInv = Model.netInvestReturn();
+  var margin = s.devMargin;
+  var t = [
+    {k:"Total project cost", v:Model.fmt(s.projectCost),
+     s:"Land, build, fees and contingency"},
+    {k:"Yield on cost", v:Model.pctS(s.yieldOnCost),
+     s:"Against an exit yield of "+Model.pctS(Model.V.capRate)+" — "+
+       (margin>=0 ? "worth "+Model.fmt(margin)+" more than it cost"
+                  : "worth "+Model.fmt(-margin)+" less than it cost")},
+    {k:"Project return", v: irr===null ? "—" : Model.pctS(irr),
+     s: irr===null ? "No rate fits these cashflows"
+                   : "Against "+Model.pctS(netInv)+" net from the market"},
+    {k:"Gap at year "+Model.V.horizon, v:(gap>=0?"+":"−")+Model.fmt(Math.abs(gap)),
+     s:(gap>=0?"in favour of building":"in favour of investing")}
+  ];
+  document.getElementById("tiles").innerHTML = t.map(function(x){
+    return '<div class="tile"><div class="k">'+x.k+'</div><div class="v">'+x.v+'</div><div class="s">'+x.s+'</div></div>';
+  }).join("");
+}
+
+function drawFlip(s){
+  var building = s.finalBuild >= s.finalInvest;
+  var V = Model.V;
+  var items = [];
+
+  var r = Model.solve("rentUnit", 0, Math.max(100000, V.rentUnit*5));
+  items.push({
+    lever: building ? "Building stops winning if a unit rents for less than"
+                    : "Building starts winning if a unit rents for more than",
+    target: r===null ? null : Model.fmt(r)+" a month",
+    now: "now "+Model.fmt(V.rentUnit)
+  });
+
+  var cr = Model.solve("capRate", 1, 20);
+  items.push({
+    lever: building ? "Building stops winning if buyers demand a yield above"
+                    : "Building starts winning if buyers accept a yield below",
+    target: cr===null ? null : Model.pctS(cr),
+    now: "now "+Model.pctS(V.capRate)
+  });
+
+  var iv = Model.solve("invest", 0, 25);
+  items.push({
+    lever: building ? "Building stops winning if the market returns more than"
+                    : "Building starts winning if the market returns less than",
+    target: iv===null ? null : Model.pctS(iv)+" a year",
+    now: "now "+Model.pctS(V.invest)
+  });
+
+  var cpu = Model.solve("costPerUnit", 0, Math.max(1000000, V.costPerUnit*4));
+  items.push({
+    lever: building ? "Building stops winning if each unit costs more than"
+                    : "Building starts winning if each unit costs less than",
+    target: cpu===null ? null : Model.fmt(cpu)+" to build",
+    now: "now "+Model.fmt(V.costPerUnit)
+  });
+
+  document.getElementById("flip").innerHTML = items.map(function(i){
+    var tg = i.target ? '<span class="target">'+i.target+'</span>'
+                      : '<span class="target na">no crossover in range</span>';
+    return '<div class="item"><span class="lever">'+i.lever+
+           ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
+  }).join("");
+}
+
+function drawVerdict(s){
+  var gap = s.finalBuild - s.finalInvest;
+  var building = gap >= 0;
+  var h = document.getElementById("headline");
+  var p = document.getElementById("subline");
+  var word = building ? '<span class="b">Build</span>' : '<span class="r">Invest</span>';
+  var amt = Model.fmt(Math.abs(gap));
+  var yrs = Model.V.horizon + (Model.V.horizon===1?" year":" years");
+
+  h.innerHTML = word + ", by " + amt + " over " + yrs + ".";
+  p.innerHTML = building
+    ? "The block leaves you <b>"+amt+"</b> ahead of the same money left in the market, after selling costs and tax. "+
+      (s.breakEven
+        ? "You cross over in <b>year "+s.breakEven+"</b> — sell before that and building loses."
+        : "The lines don't actually cross within your horizon; building only gets there at the very end.")
+    : "The same lump sum left invested beats the block by <b>"+amt+"</b>. "+
+      (s.devMargin < 0
+        ? "At this exit yield the finished building is worth less than it costs to put up, so the rent never makes that back."
+        : "The rent it earns doesn't cover the years it spends earning nothing.");
+}
+
+function drawWarning(s){
+  var el = document.getElementById("shortfallWarn");
+  var msgs = [];
+  if(s.shortfall > 0){
+    msgs.push("<b>This project costs "+Model.fmt(s.shortfall)+" more than you have.</b> "+
+      "There's no construction loan in this model, so the gap is charged at the same rate your "+
+      "investments earn. Real finance costs more — treat the build side as optimistic until you close it.");
+  }
+  if(s.horizonBeforeCompletion){
+    msgs.push("<b>Your horizon ends before the block is finished.</b> "+
+      "It's sold as a part-built site, valued at what you've sunk into it — which is the most "+
+      "generous thing you can assume about an unfinished building.");
+  }
+  if(msgs.length){
+    el.classList.remove("hidden");
+    el.innerHTML = msgs.join("<br><br>");
+  } else {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+  }
+}
+
+function buildPrintSummary(){
+  var groups = [
+    { name:"The project", ids:["fCapital","fProject"] },
+    { name:"Income & running costs", ids:["fIncome","fOperating"] },
+    { name:"Getting out", ids:["fExit"] },
+    { name:"Alternative & tax", ids:["fInvest", Model.mode==="gross" ? "fGross" : "fNet", "fTax"] }
+  ];
+  var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  var html = '<div class="ps-head"><h2>Build vs invest report</h2><span>'+
+    (Model.mode==="gross"?"Flat rate on gross rent":"Tax on net profit")+" &middot; "+Model.cur.code+" &middot; generated "+today+'</span></div>';
+  html += '<div class="ps-grid">';
+  groups.forEach(function(g){
+    html += '<div class="ps-col"><h3>'+g.name+'</h3>';
+    g.ids.forEach(function(id){
+      Model.FIELDS[id].forEach(function(f){
+        html += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+fieldDisplay(f)+'</span></div>';
+      });
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById("printSummary").innerHTML = html;
+}
+
+function render(){
+  syncFields();
+  var s = Model.simulate();
+  drawVerdict(s);
+  drawWarning(s);
+  drawChart(s);
+  drawCashflow(s);
+  drawTiles(s);
+  drawFlip(s);
+  buildPrintSummary();
+  document.getElementById("chartHint").textContent = "Years 0–"+Model.V.horizon;
+  document.getElementById("horizonHint").textContent = Model.V.horizon+"-year horizon";
+  document.getElementById("cfHint").textContent = Model.V.buildMonths+" months to build";
+  document.getElementById("fnH").textContent = Model.V.horizon;
+  document.getElementById("curhint").textContent = Model.cur.code;
+  Model.updateURL();
+}
+
+/* ===================== wiring ===================== */
+document.getElementById("mGross").addEventListener("click", function(){ setMode("gross"); });
+document.getElementById("mNet").addEventListener("click", function(){ setMode("net"); });
+function applyModeUI(){
+  document.getElementById("mGross").setAttribute("aria-pressed", Model.mode==="gross");
+  document.getElementById("mNet").setAttribute("aria-pressed", Model.mode==="net");
+  document.getElementById("secGross").classList.toggle("hidden", Model.mode!=="gross");
+  document.getElementById("secNet").classList.toggle("hidden", Model.mode!=="net");
+}
+function setMode(m){
+  Model.mode = m;
+  applyModeUI();
+  render();
+}
+function syncCurrencySelect(){
+  var sel = document.getElementById("cur");
+  for(var i=0;i<sel.options.length;i++){
+    if(sel.options[i].value.split("|")[0] === Model.cur.code){ sel.value = sel.options[i].value; return; }
+  }
+}
+document.getElementById("cur").addEventListener("change", function(e){
+  Model.applyCurrency(e.target.value.split("|")[0]);
+  render();
+});
+
+function fallbackCopy(text, cb){
+  try{
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    cb(ok);
+  }catch(e){ cb(false); }
+}
+document.getElementById("copyLink").addEventListener("click", function(){
+  var btn = this;
+  function done(ok){
+    btn.textContent = ok ? "Copied" : "Copy failed";
+    setTimeout(function(){ btn.textContent = "Copy link"; }, 1500);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(location.href).then(function(){ done(true); }, function(){ fallbackCopy(location.href, done); });
+  } else {
+    fallbackCopy(location.href, done);
+  }
+});
+document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+
+buildFields();
+if(Model.hasScenarioParams()){
+  Model.resetToDefaults();
+  Model.loadFromURL();
+  Model.suppressPersist = true;
+} else {
+  Model.loadFromStorage();
+}
+syncCurrencySelect();
+applyModeUI();
+render();
+Model.suppressPersist = false;
+</script>
+</body>
+</html>

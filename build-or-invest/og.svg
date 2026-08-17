@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+<rect width="1200" height="630" fill="#E7E9E3"/>
+
+<text x="80" y="112" font-family="'IBM Plex Mono', ui-monospace, monospace" font-size="20" letter-spacing="3" fill="#6B7069">BUILD VS INVEST &#183; DEVELOPMENT MODEL</text>
+<rect x="80" y="132" width="1040" height="1" fill="#15181C"/>
+
+<text x="78" y="232" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#15181C">Put up a block, or</text>
+<text x="78" y="304" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#15181C">let it <tspan fill="#C0611A">compound</tspan>.</text>
+<text x="80" y="360" font-family="'IBM Plex Sans', system-ui, sans-serif" font-size="24" fill="#6B7069">Costs the construction years, the empty months, and what it's worth at the end.</text>
+
+<g transform="translate(880,440)">
+  <rect width="240" height="140" fill="#FBFBF9" stroke="#CBCEC5"/>
+  <rect x="14" y="14" width="62" height="112" fill="#6B7069" opacity="0.12"/>
+  <path d="M18 112 L 76 110 L 130 58 L 222 20" fill="none" stroke="#1B4F8A" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M18 104 C 90 96, 150 74, 222 44" fill="none" stroke="#C0611A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="76" y1="14" x2="76" y2="126" stroke="#CBCEC5" stroke-width="1.5" stroke-dasharray="3 5"/>
+</g>
+
+<text x="80" y="580" font-family="'IBM Plex Mono', ui-monospace, monospace" font-size="20" fill="#6B7069">vibes.obel.dev/build-or-invest</text>
+</svg>
