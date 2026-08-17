@@ -128,6 +128,40 @@ describe.each(TOOLS)("specText for %s", (_name, calc) => {
   });
 });
 
+describe("a cached engine older than this script fails by name, not by TypeError (regression: 69f09b1)", () => {
+  // Reported from a live browser after the merge: spec-text.js was brand new so
+  // it loaded fresh, while calc.js came from a 10-minute cache without
+  // MODE_META. The crash was "Cannot read properties of undefined (reading
+  // 'values')" four frames deep, and the button did nothing at all.
+  const stale = (drop) => {
+    const clone = Object.create(Object.getPrototypeOf(Calc));
+    Object.assign(clone, Calc);
+    delete clone[drop];
+    return clone;
+  };
+
+  it("names the missing metadata and tells the reader to reload", () => {
+    expect(() => specText(stale("MODE_META"), BASE)).toThrow(/MODE_META/);
+    expect(() => specText(stale("MODE_META"), BASE)).toThrow(/reload the page/i);
+  });
+
+  it("reports every piece it needs, not just the first one missing", () => {
+    ["PARAM_MAP", "FIELDS", "DEFAULTS", "SECTION_META", "EXAMPLES", "CURRENCIES"].forEach((k) => {
+      expect(() => specText(stale(k), BASE), k).toThrow(new RegExp(k));
+    });
+  });
+
+  it("throws a named error so a caller can tell it from a real bug", () => {
+    expect(() => specText(stale("EXAMPLES"), BASE)).toThrow(
+      expect.objectContaining({ name: "StaleEngineError" })
+    );
+  });
+
+  it("still renders normally when the engine is complete", () => {
+    expect(() => specText(Calc, BASE)).not.toThrow();
+  });
+});
+
 describe("specText output is stable", () => {
   it("does not change between calls, so the golden file can't flake", () => {
     Calc.resetToDefaults();

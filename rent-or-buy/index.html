@@ -392,7 +392,18 @@ function aiPrompt(){
   ]).join("\n");
 }
 document.getElementById("copyPrompt").addEventListener("click", function(){
-  copyWithFeedback(this, aiPrompt(), "Copy prompt");
+  var prompt;
+  try{
+    prompt = aiPrompt();
+  }catch(e){
+    /* Almost always a cached calc.js older than spec-text.js. Leaving the
+       button silent would just look broken, so name the fix. */
+    var btn = this;
+    btn.textContent = "Reload the page";
+    setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
+    throw e;
+  }
+  copyWithFeedback(this, prompt, "Copy prompt");
 });
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 
