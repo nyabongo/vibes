@@ -311,286 +311,16 @@ footer b{color:var(--ink);font-weight:600;}
   </div>
 </div>
 
+<script src="calc.js"></script>
 <script>
 "use strict";
 
-/* ===================== state ===================== */
-var DEFAULT_MODE = "live";
-var DEFAULT_CUR_CODE = "KES";
-var mode = DEFAULT_MODE; // "live" | "let"
-var cur  = { code:"KES", sym:"KSh", rate:1 };
-var suppressPersist = false;
-
-var V = {
-  price:12000000, downPct:20, rate:14.5, term:20, closingPct:5,
-  taxPct:0.2, insurance:24000, maintPct:1, hoa:8000,
-  rent:55000,
-  income:70000, vacancy:8, mgmt:8,
-  appr:8, rentGrowth:5, invest:10, inflation:6, horizon:10, sellPct:3,
-  marginal:30, reliefCap:300000, cgt:15
-};
-var DEFAULTS = {};
-Object.keys(V).forEach(function(k){ DEFAULTS[k] = V[k]; });
-
-/* ===================== sharing / persistence ===================== */
-var STORAGE_KEY = "rentOrBuy.v1";
-var PARAM_MAP = { price:"p", downPct:"dp", rate:"mr", term:"term", closingPct:"cc",
-  taxPct:"tx", insurance:"ins", maintPct:"mp", hoa:"hoa", rent:"rent",
-  income:"inc", vacancy:"vac", mgmt:"mgmt", appr:"appr", rentGrowth:"rg",
-  invest:"inv", inflation:"infl", horizon:"h", sellPct:"sp",
-  marginal:"tax", reliefCap:"rc", cgt:"cgt" };
-var PARAM_MAP_REV = {};
-Object.keys(PARAM_MAP).forEach(function(k){ PARAM_MAP_REV[PARAM_MAP[k]] = k; });
-
-function applyCurrency(code){
-  var sel = document.getElementById("cur");
-  for(var i=0;i<sel.options.length;i++){
-    var p = sel.options[i].value.split("|");
-    if(p[0]===code){ cur = { code:p[0], sym:p[1], rate:parseFloat(p[2]) }; sel.value = sel.options[i].value; return true; }
-  }
-  return false;
-}
-
-function updateURL(){
-  var params = new URLSearchParams();
-  Object.keys(PARAM_MAP).forEach(function(k){
-    if(Math.abs(V[k]-DEFAULTS[k]) > 1e-9) params.set(PARAM_MAP[k], V[k]);
-  });
-  if(mode !== DEFAULT_MODE) params.set("m", mode);
-  if(cur.code !== DEFAULT_CUR_CODE) params.set("c", cur.code);
-  var qs = params.toString();
-  history.replaceState(null, "", location.pathname + (qs?("?"+qs):"") + location.hash);
-  if(!suppressPersist){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ V:V, mode:mode, cur:cur.code })); }catch(e){}
-  }
-}
-
-function loadFromStorage(){
-  try{
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-    var data = JSON.parse(raw);
-    if(data.V) Object.keys(data.V).forEach(function(k){
-      if(k in V && typeof data.V[k]==="number" && isFinite(data.V[k])) V[k] = clampToField(k, data.V[k]);
-    });
-    if(data.mode==="live"||data.mode==="let") mode = data.mode;
-    if(data.cur) applyCurrency(data.cur);
-  }catch(e){}
-}
-
-function clampToField(k, num){
-  var f = FIELD_BY_KEY[k];
-  if(!f) return num;
-  if(f.type==="pct"){
-    if(typeof f.min==="number") num = Math.max(f.min, num);
-    if(typeof f.max==="number") num = Math.min(f.max, num);
-  } else if(f.type==="money"){
-    num = Math.max(0, Math.min(num, 1e12));
-  }
-  return num;
-}
-
-function paramKey(key){
-  return Object.prototype.hasOwnProperty.call(PARAM_MAP_REV, key) ? PARAM_MAP_REV[key] : undefined;
-}
-
-function hasScenarioParams(){
-  var found = false;
-  new URLSearchParams(location.search).forEach(function(val, key){
-    if(key==="m" || key==="c" || paramKey(key)) found = true;
-  });
-  return found;
-}
-
-function loadFromURL(){
-  var params = new URLSearchParams(location.search);
-  params.forEach(function(val, key){
-    if(key==="m"){ mode = (val==="let") ? "let" : "live"; return; }
-    if(key==="c"){ applyCurrency(val); return; }
-    var k = paramKey(key);
-    if(k){ var num = parseFloat(val); if(isFinite(num)) V[k] = clampToField(k, num); }
-  });
-}
-
-/* ===================== field definitions ===================== */
-function money(k,label,note){ return {k:k,label:label,note:note,type:"money"}; }
-function pct(k,label,min,max,step,note){ return {k:k,label:label,min:min,max:max,step:step,note:note,type:"pct"}; }
-
-var FIELDS = {
-  fPurchase:[
-    money("price","Property price"),
-    pct("downPct","Deposit",0,100,1,null),
-    pct("rate","Mortgage rate",0,30,0.1,"Annual, on the balance."),
-    pct("term","Loan term (years)",1,35,1,null),
-    pct("closingPct","Purchase costs",0,15,0.25,"Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered.")
-  ],
-  fOwn:[
-    pct("taxPct","Land rates / property tax",0,4,0.05,"Per year, as a share of the property's value."),
-    money("insurance","Insurance","Per year."),
-    pct("maintPct","Repairs & upkeep",0,5,0.1,"Per year, as a share of value. 1% is the usual rule of thumb."),
-    money("hoa","Service charge","Per month.")
-  ],
-  fRent:[
-    money("rent","Rent you'd pay","Per month, for a comparable home.")
-  ],
-  fLet:[
-    money("income","Rent you'd collect","Per month, when occupied."),
-    pct("vacancy","Empty months",0,40,1,"Share of the year with no tenant."),
-    pct("mgmt","Agent's cut",0,25,0.5,"Letting and management fees on rent collected.")
-  ],
-  fMarket:[
-    pct("appr","Property appreciation",-5,20,0.25,"Per year."),
-    pct("rentGrowth","Rent growth",-5,20,0.25,"Per year."),
-    pct("invest","Return if invested instead",0,25,0.25,"What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
-    pct("inflation","Inflation",0,20,0.25,"Pushes up insurance and service charge."),
-    pct("horizon","Years before you sell",1,40,1,"Short stays punish buyers — the purchase costs haven't been earned back yet."),
-    pct("sellPct","Selling costs",0,15,0.25,"Agent and legal fees when you sell.")
-  ],
-  fTax:[
-    pct("marginal","Your income tax rate",0,60,1,"Applied to net rental profit."),
-    money("reliefCap","Interest you can deduct","Per year, cap. Owner-occupier relief — set to 0 if you don't get it."),
-    pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt.")
-  ]
-};
-var FIELD_BY_KEY = {};
-Object.keys(FIELDS).forEach(function(id){
-  FIELDS[id].forEach(function(f){ FIELD_BY_KEY[f.k] = f; });
-});
-
-/* ===================== formatting ===================== */
-function fmt(n){
-  var x = n * cur.rate;
-  return cur.sym + Math.round(x).toLocaleString("en-US");
-}
-function fmtC(n){ // compact, for axes
-  var x = n * cur.rate, s = x<0?"-":"", a = Math.abs(x);
-  if(a>=1e9) return s+cur.sym+(a/1e9).toFixed(1).replace(/\.0$/,"")+"B";
-  if(a>=1e6) return s+cur.sym+(a/1e6).toFixed(1).replace(/\.0$/,"")+"M";
-  if(a>=1e3) return s+cur.sym+Math.round(a/1e3)+"k";
-  return s+cur.sym+Math.round(a);
-}
-function pctS(x){ return (Math.round(x*10)/10) + "%"; }
-
-/* ===================== the model ===================== */
-function mrate(annualPct){ return Math.pow(1+annualPct/100, 1/12) - 1; }
-
-function simulate(o){
-  o = o || {};
-  var appr    = o.appr    !== undefined ? o.appr    : V.appr;
-  var invest  = o.invest  !== undefined ? o.invest  : V.invest;
-  var horizon = o.horizon !== undefined ? o.horizon : V.horizon;
-
-  var price   = V.price;
-  var down    = price * V.downPct/100;
-  var closing = price * V.closingPct/100;
-  var loan    = price - down;
-  var r       = V.rate/100/12;
-  var n       = Math.round(V.term*12);
-
-  var pay = r > 0 ? loan * r / (1 - Math.pow(1+r, -n)) : (n>0 ? loan/n : 0);
-  var loanInterest = r > 0 ? pay*n - loan : 0;
-
-  var gAppr = mrate(appr), gInv = mrate(invest), gRent = mrate(V.rentGrowth), gInf = mrate(V.inflation);
-
-  var home = price, bal = loan;
-  var buyPot = 0, rentPot = down + closing;
-  var months = Math.round(horizon*12);
-
-  var series = [], yr1 = null;
-  var accInterest = 0, accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
-
-  function snapshot(y){
-    var sale  = home * (1 - V.sellPct/100);
-    var basis = price + closing;
-    var gain  = Math.max(0, sale - basis);
-    var net   = sale - bal - gain * V.cgt/100 + buyPot;
-    series.push({ y:y, buy:net, rent:rentPot, equity:sale - bal, pot:buyPot });
-  }
-  snapshot(0);
-
-  for(var m=1; m<=months; m++){
-    var interest = bal * r;
-    var principal = 0, payment = 0;
-    if(bal > 0.5 && m <= n){
-      payment = Math.min(pay, bal + interest);
-      principal = payment - interest;
-      bal = Math.max(0, bal - principal);
-    } else { interest = 0; }
-
-    var tax = home * V.taxPct/100/12;
-    var ins = V.insurance/12 * Math.pow(1+gInf, m);
-    var mnt = home * V.maintPct/100/12;
-    var hoa = V.hoa * Math.pow(1+gInf, m);
-
-    var grossIncome = 0, netIncome = 0, incomeTax = 0, relief = 0;
-    if(mode === "let"){
-      grossIncome = V.income * Math.pow(1+gRent, m);
-      netIncome = grossIncome * (1 - V.vacancy/100) * (1 - V.mgmt/100);
-      var profit = netIncome - interest - tax - ins - mnt - hoa;
-      if(profit > 0) incomeTax = profit * V.marginal/100;
-    } else {
-      var cap = V.reliefCap/12;
-      relief = Math.min(interest, cap) * V.marginal/100;
-    }
-
-    var buyOut  = payment + tax + ins + mnt + hoa + incomeTax - netIncome - relief;
-    var rentNow = mode === "live" ? V.rent * Math.pow(1+gRent, m) : 0;
-    var rentOut = rentNow;
-
-    var diff = buyOut - rentOut;
-    if(diff > 0) rentPot += diff; else buyPot += -diff;
-
-    buyPot  *= (1+gInv);
-    rentPot *= (1+gInv);
-    home    *= (1+gAppr);
-
-    if(m <= 12){
-      accCosts.int += interest; accCosts.pri += principal; accCosts.tax += tax;
-      accCosts.ins += ins; accCosts.mnt += mnt; accCosts.hoa += hoa;
-      accCosts.inc += netIncome; accCosts.itax += incomeTax; accCosts.relief += relief;
-      accRent += rentNow;
-    }
-    if(m % 12 === 0) snapshot(m/12);
-  }
-  if(months % 12 !== 0) snapshot(horizon);
-
-  var d = Math.min(12, months||1);
-  yr1 = {
-    interest:accCosts.int/d, principal:accCosts.pri/d, tax:accCosts.tax/d,
-    ins:accCosts.ins/d, mnt:accCosts.mnt/d, hoa:accCosts.hoa/d,
-    income:accCosts.inc/d, itax:accCosts.itax/d, relief:accCosts.relief/d,
-    rent:accRent/d
-  };
-
-  var be = null;
-  for(var i=1;i<series.length;i++){
-    if(series[i].buy >= series[i].rent){ be = series[i].y; break; }
-  }
-  var last = series[series.length-1];
-  return { series:series, payment:pay, loanInterest:loanInterest, yr1:yr1,
-           breakEven:be, finalBuy:last.buy, finalRent:last.rent,
-           equity:last.equity, loan:loan, upfront:down+closing };
-}
-
-/* find the value of one knob at which buy == rent */
-function solve(key, lo, hi){
-  function f(x){ var o={}; o[key]=x; var s=simulate(o); return s.finalBuy - s.finalRent; }
-  var a=f(lo), b=f(hi);
-  if(isNaN(a)||isNaN(b)) return null;
-  if((a>0&&b>0)||(a<0&&b<0)) return null;
-  for(var i=0;i<60;i++){
-    var mid=(lo+hi)/2, v=f(mid);
-    if((v>0)===(a>0)){ lo=mid; a=v; } else { hi=mid; }
-  }
-  return (lo+hi)/2;
-}
-
 /* ===================== rendering ===================== */
 function buildFields(){
-  Object.keys(FIELDS).forEach(function(id){
+  Object.keys(Calc.FIELDS).forEach(function(id){
     var host = document.getElementById(id);
     host.innerHTML = "";
-    FIELDS[id].forEach(function(f){
+    Calc.FIELDS[id].forEach(function(f){
       var w = document.createElement("div"); w.className="f";
       var lab = document.createElement("label");
       lab.setAttribute("for","i_"+f.k);
@@ -608,7 +338,7 @@ function buildFields(){
       inp.addEventListener("input", function(){
         var raw = parseFloat(inp.value);
         if(isNaN(raw)) return;
-        V[f.k] = f.type==="money" ? raw / cur.rate : raw;
+        Calc.V[f.k] = f.type==="money" ? raw / Calc.cur.rate : raw;
         render();
       });
       w.appendChild(inp);
@@ -619,17 +349,17 @@ function buildFields(){
 }
 
 function syncFields(){
-  Object.keys(FIELDS).forEach(function(id){
-    FIELDS[id].forEach(function(f){
+  Object.keys(Calc.FIELDS).forEach(function(id){
+    Calc.FIELDS[id].forEach(function(f){
       var inp = document.getElementById("i_"+f.k);
       if(!inp) return;
       if(f.type==="money"){
-        var shown = Math.round(V[f.k]*cur.rate);
+        var shown = Math.round(Calc.V[f.k]*Calc.cur.rate);
         if(document.activeElement !== inp) inp.value = shown;
       } else {
-        inp.value = V[f.k];
+        inp.value = Calc.V[f.k];
         var v = document.getElementById("v_"+f.k);
-        if(v) v.textContent = (f.k==="term"||f.k==="horizon") ? V[f.k] : pctS(V[f.k]);
+        if(v) v.textContent = (f.k==="term"||f.k==="horizon") ? Calc.V[f.k] : Calc.pctS(Calc.V[f.k]);
       }
     });
   });
@@ -652,7 +382,7 @@ function drawChart(s){
   for(var i=0;i<=ticks;i++){
     var v = minY + (maxY-minY)*i/ticks, y = Y(v);
     o.push('<line class="'+(Math.abs(v)<(maxY-minY)/200?"zeroline":"gridline")+'" x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'"/>');
-    o.push('<text class="axis" x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+fmtC(v)+'</text>');
+    o.push('<text class="axis" x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+Calc.fmtC(v)+'</text>');
   }
   // x labels
   var step = xmax<=10?1:(xmax<=20?2:5);
@@ -703,9 +433,9 @@ function drawCashflow(s){
     {n:"Upkeep",     v:y.mnt,      c:"#B3A98C"},
     {n:"Service charge", v:y.hoa,  c:"#6B7069"}
   ];
-  if(mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
+  if(Calc.mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
   var buyTotal = buyParts.reduce(function(a,b){return a+b.v;},0);
-  var credit = mode==="let" ? y.income : y.relief;
+  var credit = Calc.mode==="let" ? y.income : y.relief;
   var net = buyTotal - credit;
 
   var rentParts = [{n:"Rent", v:y.rent, c:"var(--rent)"}];
@@ -717,26 +447,26 @@ function drawCashflow(s){
       return '<div style="width:'+(p.v/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
     }).join("");
     var keys = parts.map(function(p){
-      return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+fmt(p.v)+'</span>';
+      return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+Calc.fmt(p.v)+'</span>';
     }).join("");
     var extra = creditAmt>0
-      ? '<div class="credit">Less '+creditLabel+' '+fmt(creditAmt)+' → <b class="num">'+fmt(netAmt)+' out of pocket</b></div>'
+      ? '<div class="credit">Less '+creditLabel+' '+Calc.fmt(creditAmt)+' → <b class="num">'+Calc.fmt(netAmt)+' out of pocket</b></div>'
       : '';
     return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
-           '<span class="amt num">'+fmt(total)+'</span></div>'+
+           '<span class="amt num">'+Calc.fmt(total)+'</span></div>'+
            '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+extra+'</div>';
   }
 
-  var html = block(mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
-                   mode==="let" ? "rent collected, after voids, agent and tax" : "tax relief on interest", credit);
-  if(mode==="live"){
+  var html = block(Calc.mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
+                   Calc.mode==="let" ? "rent collected, after voids, agent and tax" : "tax relief on interest", credit);
+  if(Calc.mode==="live"){
     html += block("Renting", rentParts, rentTotal, rentTotal, "", 0);
   } else {
     html += '<div class="cfrow"><div class="cfhead"><span class="who">Not buying</span>'+
-            '<span class="amt num">'+fmt(0)+'</span></div>'+
+            '<span class="amt num">'+Calc.fmt(0)+'</span></div>'+
             '<div class="bar"></div>'+
             '<div class="credit">Your own rent is identical either way, so it drops out. What you\'re comparing is '+
-            fmt(s.upfront)+' plus '+fmt(Math.max(0,net))+' a month going into a mortgage, or into the market.</div></div>';
+            Calc.fmt(s.upfront)+' plus '+Calc.fmt(Math.max(0,net))+' a month going into a mortgage, or into the market.</div></div>';
   }
   document.getElementById("cf").innerHTML = html;
   return {buyNet:net, rentTotal:rentTotal};
@@ -745,10 +475,10 @@ function drawCashflow(s){
 function drawTiles(s, cash){
   var gap = s.finalBuy - s.finalRent;
   var t = [
-    {k:"Monthly repayment", v:fmt(s.payment), s:"On "+fmt(s.loan)+" over "+V.term+" years"},
-    {k:"Cash needed on day one", v:fmt(s.upfront), s:"Deposit plus purchase costs"},
-    {k:"Interest over the loan", v:fmt(s.loanInterest), s:pctS(s.loanInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
-    {k:"Gap at year "+V.horizon, v:(gap>=0?"+":"−")+fmt(Math.abs(gap)).replace(cur.sym,cur.sym), s:(gap>=0?"in favour of buying":"in favour of renting")}
+    {k:"Monthly repayment", v:Calc.fmt(s.payment), s:"On "+Calc.fmt(s.loan)+" over "+Calc.V.term+" years"},
+    {k:"Cash needed on day one", v:Calc.fmt(s.upfront), s:"Deposit plus purchase costs"},
+    {k:"Interest over the loan", v:Calc.fmt(s.loanInterest), s:Calc.pctS(s.loanInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
+    {k:"Gap at year "+Calc.V.horizon, v:(gap>=0?"+":"−")+Calc.fmt(Math.abs(gap)), s:(gap>=0?"in favour of buying":"in favour of renting")}
   ];
   document.getElementById("tiles").innerHTML = t.map(function(x){
     return '<div class="tile"><div class="k">'+x.k+'</div><div class="v">'+x.v+'</div><div class="s">'+x.s+'</div></div>';
@@ -759,27 +489,27 @@ function drawFlip(s){
   var buying = s.finalBuy >= s.finalRent;
   var items = [];
 
-  var a = solve("appr", -8, 30);
+  var a = Calc.solve("appr", -8, 30);
   items.push({
     lever: buying ? "Buying stops winning if the property appreciates slower than"
                   : "Buying starts winning if the property appreciates faster than",
-    target: a===null ? null : pctS(a)+" a year",
-    now: "now "+pctS(V.appr)
+    target: a===null ? null : Calc.pctS(a)+" a year",
+    now: "now "+Calc.pctS(Calc.V.appr)
   });
 
-  var iv = solve("invest", 0, 30);
+  var iv = Calc.solve("invest", 0, 30);
   items.push({
     lever: buying ? "Buying stops winning if your investments return more than"
                   : "Buying starts winning if your investments return less than",
-    target: iv===null ? null : pctS(iv)+" a year",
-    now: "now "+pctS(V.invest)
+    target: iv===null ? null : Calc.pctS(iv)+" a year",
+    now: "now "+Calc.pctS(Calc.V.invest)
   });
 
-  var be40 = simulate({horizon:40}).breakEven;
+  var be40 = Calc.simulate({horizon:40}).breakEven;
   items.push({
     lever: be40 ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
     target: be40 ? be40 + (be40===1?" year":" years") : null,
-    now: be40 ? "you plan on "+V.horizon : "at these assumptions"
+    now: be40 ? "you plan on "+Calc.V.horizon : "at these assumptions"
   });
 
   document.getElementById("flip").innerHTML = items.map(function(i){
@@ -796,18 +526,18 @@ function drawVerdict(s){
   var h = document.getElementById("headline");
   var p = document.getElementById("subline");
   var word = buying ? '<span class="b">Buy</span>' : '<span class="r">Rent</span>';
-  var amt = fmt(Math.abs(gap));
+  var amt = Calc.fmt(Math.abs(gap));
 
-  if(mode==="live"){
-    h.innerHTML = word + ", by " + amt + " over " + V.horizon + (V.horizon===1?" year":" years") + ".";
+  if(Calc.mode==="live"){
+    h.innerHTML = word + ", by " + amt + " over " + Calc.V.horizon + (Calc.V.horizon===1?" year":" years") + ".";
     p.innerHTML = buying
-      ? "Owning leaves you <b>"+amt+"</b> better off by year "+V.horizon+", after selling costs and tax. "+
+      ? "Owning leaves you <b>"+amt+"</b> better off by year "+Calc.V.horizon+", after selling costs and tax. "+
         (s.breakEven ? "You cross over in <b>year "+s.breakEven+"</b> — leave earlier and buying loses." : "")
-      : "Renting and investing the difference leaves you <b>"+amt+"</b> ahead by year "+V.horizon+". "+
+      : "Renting and investing the difference leaves you <b>"+amt+"</b> ahead by year "+Calc.V.horizon+". "+
         (s.breakEven ? "" : "At these assumptions the two lines don't cross within your horizon.");
   } else {
     h.innerHTML = (buying ? '<span class="b">Buy the let</span>' : '<span class="r">Skip it</span>') +
-                  ", by " + amt + " over " + V.horizon + (V.horizon===1?" year":" years") + ".";
+                  ", by " + amt + " over " + Calc.V.horizon + (Calc.V.horizon===1?" year":" years") + ".";
     p.innerHTML = buying
       ? "The rental property beats putting the same money in the market by <b>"+amt+"</b>. "+
         (s.breakEven ? "It turns positive in <b>year "+s.breakEven+"</b>." : "")
@@ -819,18 +549,18 @@ function buildPrintSummary(){
   var groups = [
     { name:"The purchase", id:"fPurchase" },
     { name:"Cost of owning it", id:"fOwn" },
-    { name: mode==="live" ? "Renting instead" : "Letting it out", id: mode==="live" ? "fRent" : "fLet" },
+    { name: Calc.mode==="live" ? "Renting instead" : "Letting it out", id: Calc.mode==="live" ? "fRent" : "fLet" },
     { name:"What the future does", id:"fMarket" },
     { name:"Tax", id:"fTax" }
   ];
   var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
   var html = '<div class="ps-head"><h2>Rent vs buy report</h2><span>'+
-    (mode==="live"?"Living in it":"Letting it out")+" &middot; "+cur.code+" &middot; generated "+today+'</span></div>';
+    (Calc.mode==="live"?"Living in it":"Letting it out")+" &middot; "+Calc.cur.code+" &middot; generated "+today+'</span></div>';
   html += '<div class="ps-grid">';
   groups.forEach(function(g){
     html += '<div class="ps-col"><h3>'+g.name+'</h3>';
-    FIELDS[g.id].forEach(function(f){
-      var shown = f.type==="money" ? fmt(V[f.k]) : ((f.k==="term"||f.k==="horizon") ? V[f.k] : pctS(V[f.k]));
+    Calc.FIELDS[g.id].forEach(function(f){
+      var shown = f.type==="money" ? Calc.fmt(Calc.V[f.k]) : ((f.k==="term"||f.k==="horizon") ? Calc.V[f.k] : Calc.pctS(Calc.V[f.k]));
       html += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+shown+'</span></div>';
     });
     html += '</div>';
@@ -841,37 +571,42 @@ function buildPrintSummary(){
 
 function render(){
   syncFields();
-  var s = simulate();
+  var s = Calc.simulate();
   drawVerdict(s);
   drawChart(s);
   var cash = drawCashflow(s);
   drawTiles(s, cash);
   drawFlip(s);
   buildPrintSummary();
-  document.getElementById("chartHint").textContent = "Years 0–"+V.horizon;
-  document.getElementById("horizonHint").textContent = V.horizon+"-year horizon";
-  document.getElementById("fnH").textContent = V.horizon;
-  document.getElementById("curhint").textContent = cur.code;
-  updateURL();
+  document.getElementById("chartHint").textContent = "Years 0–"+Calc.V.horizon;
+  document.getElementById("horizonHint").textContent = Calc.V.horizon+"-year horizon";
+  document.getElementById("fnH").textContent = Calc.V.horizon;
+  document.getElementById("curhint").textContent = Calc.cur.code;
+  Calc.updateURL();
 }
 
 /* ===================== wiring ===================== */
 document.getElementById("mLive").addEventListener("click", function(){ setMode("live"); });
 document.getElementById("mLet").addEventListener("click", function(){ setMode("let"); });
 function applyModeUI(){
-  document.getElementById("mLive").setAttribute("aria-pressed", mode==="live");
-  document.getElementById("mLet").setAttribute("aria-pressed", mode==="let");
-  document.getElementById("secRent").classList.toggle("hidden", mode!=="live");
-  document.getElementById("secLet").classList.toggle("hidden", mode!=="let");
+  document.getElementById("mLive").setAttribute("aria-pressed", Calc.mode==="live");
+  document.getElementById("mLet").setAttribute("aria-pressed", Calc.mode==="let");
+  document.getElementById("secRent").classList.toggle("hidden", Calc.mode!=="live");
+  document.getElementById("secLet").classList.toggle("hidden", Calc.mode!=="let");
 }
 function setMode(m){
-  mode = m;
+  Calc.mode = m;
   applyModeUI();
   render();
 }
+function syncCurrencySelect(){
+  var sel = document.getElementById("cur");
+  for(var i=0;i<sel.options.length;i++){
+    if(sel.options[i].value.split("|")[0] === Calc.cur.code){ sel.value = sel.options[i].value; return; }
+  }
+}
 document.getElementById("cur").addEventListener("change", function(e){
-  var p = e.target.value.split("|");
-  cur = { code:p[0], sym:p[1], rate:parseFloat(p[2]) };
+  Calc.applyCurrency(e.target.value.split("|")[0]);
   render();
 });
 
@@ -900,18 +635,17 @@ document.getElementById("copyLink").addEventListener("click", function(){
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 
 buildFields();
-if(hasScenarioParams()){
-  Object.keys(DEFAULTS).forEach(function(k){ V[k] = DEFAULTS[k]; });
-  mode = DEFAULT_MODE;
-  applyCurrency(DEFAULT_CUR_CODE);
-  loadFromURL();
-  suppressPersist = true;
+if(Calc.hasScenarioParams()){
+  Calc.resetToDefaults();
+  Calc.loadFromURL();
+  Calc.suppressPersist = true;
 } else {
-  loadFromStorage();
+  Calc.loadFromStorage();
 }
+syncCurrencySelect();
 applyModeUI();
 render();
-suppressPersist = false;
+Calc.suppressPersist = false;
 </script>
 </body>
 </html>
