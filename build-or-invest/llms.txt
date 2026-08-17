@@ -1,0 +1,161 @@
+# Build or invest — the development crossover calculator
+
+> A browser calculator at https://vibes.obel.dev/build-or-invest/ that models what a lump sum becomes if it builds a rental block versus if it compounds in the market, and reports the year one overtakes the other. Every input is encoded in the URL query string, so a link opens with the whole scenario already filled in.
+
+This file is the complete parameter reference for building a link to this
+calculator. The tables are generated from the calculator's own field
+definitions — if this file and the app disagree, the app is right and this is a
+bug.
+
+## How to build a link
+
+1. Start from `https://vibes.obel.dev/build-or-invest/`.
+2. Append `?` then `&`-joined `name=value` pairs from the tables below.
+3. **Only include parameters you are changing.** Anything omitted uses its
+   default, so a bare `https://vibes.obel.dev/build-or-invest/` is the default scenario.
+4. A link is self-contained. Opening one resets every parameter you left out
+   back to its default, ignores whatever scenario the visitor had saved, and
+   does not overwrite it.
+5. Values are plain decimal numbers — no thousands separators, no currency
+   symbol, no `%`. Negatives are fine where the range allows.
+6. **All money is Kenyan shillings (KES), always.** The `c` parameter changes
+   the display currency only. It does not convert the numbers you pass and it
+   does not change the model, so convert to KES yourself before building the
+   link.
+7. Out-of-range values are never rejected, only clamped — a link stays valid
+   while quietly meaning something else. Money is clamped to 0 to 1000000000000;
+   everything else to the range in its table.
+8. The on-screen sliders move in fixed steps, but **URL values do not have to
+   be multiples of those steps.** Pass the real figure.
+9. Percentages are whole-number percents: `50` means 50%, not 0.5.
+10. Output the finished URL as raw text on its own line. Do not wrap it in a
+    markdown link, do not percent-encode it, and do not write `&` as `&amp;`.
+11. These parameter names are specific to this calculator. Do not reuse them on
+    another vibes calculator — several short names mean different things there.
+
+## Modes
+
+`m` chooses which rental tax regime applies. Default `gross`. Case-sensitive, and any value other than `net` is treated as `gross`.
+
+| value | shown as | means |
+| --- | --- | --- |
+| `gross` | Flat rate on rent | A flat percentage of rent collected, before any costs — Kenya's residential rental regime. Uses `flat`. |
+| `net` | Tax on profit | Your marginal income tax rate applied to net rental profit after operating costs. Uses `mtx`. |
+
+`flat` is ignored under `net`, and `mtx` is ignored under `gross`. Setting the wrong one for the mode does nothing.
+
+## Display currency
+
+`c` sets the currency results are *displayed* in. Default `KES`. Accepted values: `KES`, `UGX`, `USD`, `GBP`, `EUR`, `ZAR`, `NGN`, `INR`, `AED`. An unrecognised code is ignored entirely. Display only — see rule 6.
+
+## Parameters
+
+### What you're deploying
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `cap` | Money you have to deploy | 40000000 | KES | The same lump sum goes into the building or into the market. That's the whole comparison. |
+
+### The project
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `land` | Land cost | 8000000 | KES | Set to 0 if you already own the plot. |
+| `u` | Number of units | 12 | 1 to 200 |  |
+| `cpu` | Build cost per unit | 2200000 | KES | Shell, finishes and services, per unit. |
+| `fee` | Design, approvals & supervision | 8 | 0 to 25 % | Architect, engineer, county approvals, NEMA. A share of build cost. |
+| `cont` | Contingency | 10 | 0 to 30 % | Overruns are the norm, not the exception. |
+| `bm` | Months to build | 18 | 1 to 60 months | No rent arrives during these. This is the drag spreadsheets forget. |
+| `lm` | Months to fill it | 6 | 0 to 36 months | Occupancy ramps from empty to your long-run vacancy over this stretch. |
+
+### What it earns
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `r` | Rent per unit | 35000 | KES | Per month, when occupied. |
+| `vac` | Long-run vacancy | 8 | 0 to 40 % | Share of the year a unit sits empty once the building has settled. |
+| `mgmt` | Agent's cut | 8 | 0 to 25 % | Letting and management fees on rent collected. |
+| `rg` | Rent growth | 5 | -5 to 20 % | Per year. This also drives your exit value, so it works twice. |
+
+### Cost of running it
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `rt` | Land rates | 0.2 | 0 to 4 % | Per year, as a share of the site value. |
+| `ins` | Insurance | 180000 | KES | Per year, for the whole building. |
+| `rep` | Repairs & upkeep | 1 | 0 to 5 % | Per year, as a share of build cost. 1% is the usual rule of thumb. |
+| `cc` | Common areas & security | 60000 | KES | Per month. Caretaker, water, lifts, grounds, lighting. |
+
+### Getting out
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `cr` | Exit yield | 8 | 1 to 20 % | What a buyer demands. The building is worth a year's net income divided by this — the single biggest lever on your exit. |
+| `sp` | Selling costs | 3 | 0 to 15 % | Agent and legal fees when you sell. |
+| `h` | Years before you sell | 10 | 1 to 40 years |  |
+
+### The alternative
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `inv` | Return if invested instead | 13 | 0 to 25 % | Annual, compounding. Whatever you'd actually earn leaving the money in the market. |
+| `itx` | Tax on those returns | 15 | 0 to 40 % | Withholding tax. 15% on most Kenyan unit trusts. |
+| `ife` | Annual management fee | 1 | 0 to 5 % | Charged on the balance, so it bites every year. |
+
+### Tax on rent — mode `gross` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `flat` | Flat rate on gross rent | 7.5 | 0 to 20 % | Kenya's residential rental regime — a share of what you collect, before any costs. |
+
+### Tax on profit — mode `net` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `mtx` | Your income tax rate | 30 | 0 to 60 % | Applied to net rental profit after operating costs. |
+
+### Tax & inflation
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `cgt` | Capital gains tax | 15 | 0 to 40 % | On the gain over total project cost when you sell. |
+| `infl` | Inflation | 6 | 0 to 20 % | Pushes up insurance, repairs and common-area costs. |
+
+## Worked examples
+
+An 8-unit block in Kikuyu: KES 30M to deploy, KES 6M for the plot, KES 1.9M a unit, renting at KES 28,000:
+https://vibes.obel.dev/build-or-invest/?cap=30000000&land=6000000&u=8&cpu=1900000&r=28000
+
+A 24-unit development taxed on profit, sold after 15 years at a 9% exit yield:
+https://vibes.obel.dev/build-or-invest/?u=24&cap=80000000&cpu=2600000&h=15&cr=9&m=net
+
+The same 8-unit block, but the market alternative returns 16% instead of 13%:
+https://vibes.obel.dev/build-or-invest/?cap=30000000&land=6000000&u=8&cpu=1900000&r=28000&inv=16
+
+## What the calculator does with these
+
+The same lump sum takes both paths. On the build path it buys land, pays for
+construction over `bm` months earning nothing, then ramps from empty to `vac`
+occupancy over `lm` months; whatever hasn't been drawn yet keeps compounding while
+it waits. The building's exit value is a stabilised year's net income divided by
+`cr`, less selling costs and capital gains tax. On the market path the same money
+compounds at `inv`, net of `itx` and `ife`.
+
+The page reports which path wins, the crossover year, the project's IRR and yield
+on cost, whether the lump sum actually covers the project, and which single input
+would flip the verdict.
+
+`cr` is the biggest lever on the build side and `inv` on the other — a point of
+exit yield moves the answer more than most of the construction budget.
+
+The defaults are Kenyan, but nothing is hardcoded to Kenya. Every tax and rate is
+a plain input.
+
+Not modelled: construction finance or any debt at all — this compares cash against
+cash. Also absent: phased sales of individual units, ground rent, and the risk that
+a project simply doesn't finish. It is a model, not advice.
+
+## Related
+
+- https://vibes.obel.dev/llms.txt — index of the other tools
+- https://vibes.obel.dev/rent-or-buy/llms.txt — the same comparison for a single home you'd live in

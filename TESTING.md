@@ -53,6 +53,37 @@ npm run test:all  # both
 `npx playwright install --with-deps chromium` is needed once before the first
 `test:e2e` run.
 
+## Generated documentation
+
+`llms.txt`, `rent-or-buy/llms.txt` and `build-or-invest/llms.txt` publish each
+calculator's URL parameters so an AI assistant can hand someone a prefilled
+link. They are **generated**, not hand-edited:
+
+```bash
+npm run docs
+```
+
+`tools/llms-txt.js` renders them from each calculator's own `PARAM_MAP`,
+`FIELDS`, `DEFAULTS` and `SECTION_META` via `shared/spec-text.js`, so the
+published spec can't drift from the code that parses the query string. Only the
+editorial prose — what a tool is for, what its model does — lives in the
+generator.
+
+The output is committed, and `tools/llms-txt.test.js` compares the committed
+files against a fresh render. **If that test fails, run `npm run docs` and
+commit the result** — it means someone changed a field, a default or a range
+without regenerating. The generator is deliberately *not* chained into `npm
+test`: regenerating before asserting would turn a loud failure into a silent
+auto-fix, and the whole point is to notice.
+
+Two consequences worth knowing:
+
+- Generated output must stay byte-identical between runs, so nothing may embed
+  a date, timestamp or commit sha.
+- `.gitattributes` pins these files to LF. Most contributors have
+  `core.autocrlf=true`, and without the pin the golden check would pass right
+  after `npm run docs` and fail on a fresh clone.
+
 ## Writing a regression test
 
 When a bug fix lands, the test that would have caught it belongs in the same

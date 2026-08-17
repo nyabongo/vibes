@@ -93,6 +93,24 @@ select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--acc
 .results{min-width:0;}
 @media(max-width:900px){.results{order:1;}}
 
+/* ---------- "ask an AI" helper ---------- */
+.aihelp{
+  border:1px solid var(--line-soft);background:var(--surface);
+  margin-bottom:12px;font-size:12.5px;
+}
+.aihelp summary{
+  cursor:pointer;padding:10px 14px;font-weight:600;
+  list-style:none;display:flex;align-items:center;gap:7px;
+}
+.aihelp summary::-webkit-details-marker{display:none;}
+.aihelp summary::before{content:"+";color:var(--muted);font-weight:400;}
+.aihelp[open] summary::before{content:"–";}
+.aihelp summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.aihelp .body{padding:0 14px 13px;}
+.aihelp p{margin:0 0 10px;color:var(--muted);line-height:1.45;}
+.aihelp p:last-child{margin-bottom:0;}
+.aihelp .fineprint{font-size:11px;margin-top:9px;}
+
 .mode{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);}
 .mode button{
   font:500 12px/1.3 "IBM Plex Sans",sans-serif;

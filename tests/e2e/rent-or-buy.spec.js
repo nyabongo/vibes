@@ -103,6 +103,51 @@ test.describe("rent-or-buy", () => {
     await expect(page.locator("#printSummary")).toContainText("KSh18,500,000");
   });
 
+  test("the AI prompt carries the whole spec plus the visitor's current scenario", async ({ page, context, browserName }) => {
+    test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/rent-or-buy/?p=14500000&h=7");
+
+    await page.locator("details.aihelp > summary").click();
+    const btn = page.locator("#copyPrompt");
+    await btn.click();
+    await expect(btn).toHaveText("Copied");
+
+    const prompt = await page.evaluate(() => navigator.clipboard.readText());
+    // Without the current URL the chatbot would start from the defaults and
+    // silently discard whatever the visitor had already set up.
+    expect(prompt).toContain(page.url());
+
+    const shortNames = await page.evaluate(() => Object.values(Calc.PARAM_MAP));
+    for (const name of shortNames) expect(prompt).toContain("`" + name + "`");
+
+    await expect(btn).toHaveText("Copy prompt");
+  });
+
+  test("llms.txt is served as plain text and linked from the page body", async ({ page, request }) => {
+    const res = await request.get("/rent-or-buy/llms.txt");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("text/plain");
+
+    await page.goto("/rent-or-buy/");
+    // In the body, not just <head> — a fetch-only agent never runs the JS that
+    // would reveal anything else about this page.
+    await expect(page.locator('.aihelp a[href="llms.txt"]')).toHaveCount(1);
+  });
+
+  test("a worked example copied out of llms.txt opens the scenario it claims", async ({ page, request }) => {
+    const doc = await (await request.get("/rent-or-buy/llms.txt")).text();
+    const example = doc.match(/https:\/\/vibes\.obel\.dev\/rent-or-buy\/\?\S+/);
+    expect(example, "llms.txt should publish at least one worked example").not.toBeNull();
+
+    await page.goto("/rent-or-buy/" + new URL(example[0]).search);
+
+    await expect(page.locator("#i_price")).toHaveValue("14500000");
+    await expect(page.locator("#i_rent")).toHaveValue("75000");
+    await expect(page.locator("#i_horizon")).toHaveValue("7");
+    await expect(page.locator("#headline")).not.toHaveText("…");
+  });
+
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {
     await page.goto("/rent-or-buy/");
 
