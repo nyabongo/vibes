@@ -1,5 +1,14 @@
 import { test, expect } from "@playwright/test";
 
+// Input handlers coalesce into one render per animation frame, so a bare
+// getAttribute straight after dispatching "input" can read the previous frame.
+// Playwright's expect() auto-retries and doesn't need this; direct reads do.
+async function settle(page) {
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+  );
+}
+
 test.describe("build-or-invest", () => {
   test("loads with the default scenario and renders a verdict", async ({ page }) => {
     await page.goto("/build-or-invest/");
@@ -105,13 +114,38 @@ test.describe("build-or-invest", () => {
 
     await page.locator("#i_buildMonths").fill("12");
     await page.locator("#i_buildMonths").dispatchEvent("input");
+    await settle(page);
     const narrow = parseFloat(await band.getAttribute("width"));
 
     await page.locator("#i_buildMonths").fill("48");
     await page.locator("#i_buildMonths").dispatchEvent("input");
+    await settle(page);
     const wide = parseFloat(await band.getAttribute("width"));
 
     expect(wide).toBeGreaterThan(narrow);
+  });
+
+  test("a burst of input events coalesces into one render, without losing the last value", async ({ page }) => {
+    await page.goto("/build-or-invest/");
+
+    const result = await page.evaluate(async () => {
+      let count = 0;
+      const real = window.render;
+      window.render = function () { count++; return real.apply(this, arguments); };
+
+      const inp = document.getElementById("i_rentUnit");
+      for (let i = 0; i < 25; i++) {
+        inp.value = String(30000 + i * 500);
+        inp.dispatchEvent(new Event("input"));
+      }
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      window.render = real;
+      return { count, applied: Model.V.rentUnit };
+    });
+
+    expect(result.count).toBe(1);
+    expect(result.applied).toBe(42000); // 30000 + 24*500 — the last event still wins
   });
 
   test("the completion marker is drawn once the build fits inside the horizon", async ({ page }) => {

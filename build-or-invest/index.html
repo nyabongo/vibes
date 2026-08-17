@@ -348,6 +348,23 @@ footer b{color:var(--ink);font-weight:600;}
 "use strict";
 
 /* ===================== rendering ===================== */
+/* Dragging a slider fires `input` faster than the browser paints, and a render
+   costs a few milliseconds — almost all of it the four bisections behind the
+   "what would flip this" panel. Measured at ~3.6ms here, which fits in a frame
+   comfortably, but that's a desktop; the same work on a cheap phone is where it
+   would start dropping frames. Coalescing bursts into one render per frame makes
+   the handler frame-bound by construction, whatever it's running on.
+   Discrete events — the mode toggle, the currency select — still call render()
+   directly, since one click can't burst. */
+var renderQueued = false;
+function scheduleRender(){
+  if(renderQueued) return;
+  renderQueued = true;
+  function run(){ renderQueued = false; render(); }
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+  else setTimeout(run, 16);
+}
+
 function fieldDisplay(f){
   var v = Model.V[f.k];
   if(f.type==="money") return Model.fmt(v);
@@ -378,7 +395,7 @@ function buildFields(){
         var raw = parseFloat(inp.value);
         if(isNaN(raw)) return;
         Model.V[f.k] = f.type==="money" ? raw / Model.cur.rate : raw;
-        render();
+        scheduleRender();
       });
       w.appendChild(inp);
       if(f.note){ var nt=document.createElement("div"); nt.className="note"; nt.textContent=f.note; w.appendChild(nt); }
