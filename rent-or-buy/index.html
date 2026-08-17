@@ -8,6 +8,7 @@
 <link rel="canonical" href="https://vibes.obel.dev/rent-or-buy/">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="../shared/tool.css">
+<link rel="alternate" type="text/plain" href="llms.txt" title="Parameter spec for AI assistants">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://vibes.obel.dev/rent-or-buy/">
 <meta property="og:title" content="Rent or buy — the crossover calculator">
@@ -44,6 +45,22 @@
 
     <!-- ============ CONTROLS ============ -->
     <div class="controls">
+      <details class="aihelp">
+        <summary>Don't know your numbers? Ask an AI</summary>
+        <div class="body">
+          <p>Copy the prompt below into ChatGPT, Claude or any chatbot that can search
+             the web. It explains every input on this page and asks for a link back that
+             opens the calculator with your numbers already filled in.</p>
+          <button class="linkbtn" id="copyPrompt" type="button">Copy prompt</button>
+          <p class="fineprint">The same spec is published at <a href="llms.txt">llms.txt</a>,
+             if you'd rather point the chatbot straight at it.</p>
+        </div>
+      </details>
+      <noscript>
+        <p>This calculator needs JavaScript. The full parameter reference —
+           every input, its range and its default — is published as plain text at
+           <a href="llms.txt">llms.txt</a>.</p>
+      </noscript>
       <div class="panel">
         <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">KES</span></div>
 
@@ -125,6 +142,8 @@
 <script src="../shared/components/field-group.js"></script>
 <script src="../shared/components/crossover-chart.js"></script>
 <script src="../shared/components/key-tiles.js"></script>
+<script src="../shared/clipboard.js"></script>
+<script src="../shared/spec-text.js"></script>
 <script src="calc.js"></script>
 <script>
 "use strict";
@@ -342,27 +361,38 @@ document.getElementById("cur").addEventListener("currencychange", function(e){
   render();
 });
 
-function fallbackCopy(text, cb){
-  try{
-    var ta = document.createElement("textarea");
-    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-    document.body.appendChild(ta); ta.focus(); ta.select();
-    var ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    cb(ok);
-  }catch(e){ cb(false); }
-}
 document.getElementById("copyLink").addEventListener("click", function(){
-  var btn = this;
-  function done(ok){
-    btn.textContent = ok ? "Copied" : "Copy failed";
-    setTimeout(function(){ btn.textContent = "Copy link"; }, 1500);
+  copyWithFeedback(this, location.href, "Copy link");
+});
+
+/* The chatbot gets the spec plus wherever the visitor has already got to, so
+   it refines their scenario instead of starting from the defaults. */
+function aiPrompt(){
+  var base = location.origin + location.pathname;
+  var lines = [
+    "I'm deciding whether to buy a home or keep renting. Help me fill in this calculator:",
+    base,
+    ""
+  ];
+  /* Only worth carrying the scenario across if there is one — at the defaults
+     location.href is bare, and calling that "my assumptions" would be a lie. */
+  if(location.search){
+    lines.push("I've already set some of it up: " + location.href);
+    lines.push("Treat those as a starting point and correct any you can research.");
+    lines.push("");
   }
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(location.href).then(function(){ done(true); }, function(){ fallbackCopy(location.href, done); });
-  } else {
-    fallbackCopy(location.href, done);
-  }
+  return lines.concat([
+    "Ask me what you need to know about my situation, then look up current figures for",
+    "my city and market — asking prices, rents, mortgage rates, transaction costs and",
+    "the relevant taxes. Tell me where each number came from and how confident you are.",
+    "",
+    "Then give me one link, built to the rules below.",
+    "",
+    specText(Calc, base)
+  ]).join("\n");
+}
+document.getElementById("copyPrompt").addEventListener("click", function(){
+  copyWithFeedback(this, aiPrompt(), "Copy prompt");
 });
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 

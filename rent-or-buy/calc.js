@@ -78,6 +78,44 @@ Object.keys(FIELDS).forEach(function(id){
   FIELDS[id].forEach(function(f){ FIELD_BY_KEY[f.k] = f; });
 });
 
+/* ===================== spec metadata =====================
+   Read by shared/spec-text.js to generate llms.txt and the "ask an AI"
+   prompt. Everything here describes the URL API, not the maths — the
+   numbers themselves come from FIELDS and DEFAULTS. Keep `legend` matching
+   the <legend> text in index.html; `mode` gates a section to one mode. */
+var SECTION_META = {
+  fPurchase:{ legend:"The purchase" },
+  fOwn:     { legend:"Cost of owning it" },
+  fRent:    { legend:"Renting instead", mode:"live" },
+  fLet:     { legend:"Letting it out",  mode:"let" },
+  fMarket:  { legend:"What the future does" },
+  fTax:     { legend:"Tax" }
+};
+
+var MODE_META = {
+  param:"m",
+  label:"what the property is for",
+  values:[
+    { value:"live", label:"I'd live in it",
+      note:"You would live in the home. Compared against paying `rent` for something similar." },
+    { value:"let", label:"I'd rent it out",
+      note:"You would rent it out. Compared against the same money in the market — your own housing cost is identical on both paths, so it drops out entirely." }
+  ],
+  note:"`tax` applies in both modes: under `let` it taxes net rental profit, under `live` it sets the value of owner-occupier interest relief, capped by `rc`."
+};
+
+/* Worked examples for the docs. Kept as data so the tests can round-trip them
+   through loadFromURL/buildQueryString — that catches an out-of-range value
+   that got clamped, a param set to its own default, or a typo'd short name. */
+var EXAMPLES = [
+  { label:"A 2-bed in Kilimani at KES 14.5M with a 25% deposit, against KES 75,000 rent, over a 7-year stay",
+    params:{ p:14500000, dp:25, rent:75000, h:7 } },
+  { label:"A studio in Ruaka bought to let: KES 5.2M, 40% deposit, KES 28,000 a month collected, held 15 years",
+    params:{ p:5200000, dp:40, inc:28000, h:15, m:"let" } },
+  { label:"The first scenario shown in US dollars — the money in the URL is still KES",
+    params:{ p:14500000, dp:25, rent:75000, h:7, c:"USD" } }
+];
+
 function mrate(annualPct){ return Math.pow(1+annualPct/100, 1/12) - 1; }
 
 class RentOrBuyCalculator {
@@ -103,6 +141,11 @@ class RentOrBuyCalculator {
     this.STORAGE_KEY = STORAGE_KEY;
     this.FIELDS = FIELDS;
     this.FIELD_BY_KEY = FIELD_BY_KEY;
+    this.SECTION_META = SECTION_META;
+    this.MODE_META = MODE_META;
+    this.EXAMPLES = EXAMPLES;
+    this.DEFAULT_MODE = DEFAULT_MODE;
+    this.DEFAULT_CUR_CODE = DEFAULT_CUR_CODE;
     this.mrate = mrate;
   }
 

@@ -3,6 +3,7 @@
   "private": true,
   "description": "Dev-only test tooling for nyabongo/vibes. The shipped site stays a static file tree with zero build step.",
   "scripts": {
+    "docs": "node tools/llms-txt.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

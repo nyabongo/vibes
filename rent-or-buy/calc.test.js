@@ -247,6 +247,34 @@ describe("buildQueryString / loadFromURL round-trip", () => {
   });
 });
 
+describe("the worked examples published in llms.txt", () => {
+  /* Re-emitting a link must reproduce it exactly. One assertion catches all
+     four ways a documented example can quietly lie: a value outside the
+     field's range (silently clamped), a short name that isn't a real param
+     (silently ignored), a param set to its own default (dropped from the
+     re-emitted query), and a mode or currency value that didn't take. */
+  it("each round-trips through loadFromURL/buildQueryString unchanged", () => {
+    Calc.EXAMPLES.forEach((ex) => {
+      const qs = new URLSearchParams(ex.params).toString();
+      Calc.resetToDefaults();
+      expect(Calc.hasScenarioParams("?" + qs), ex.label).toBe(true);
+      Calc.loadFromURL("?" + qs);
+
+      const sort = (p) => [...p].sort((a, b) => a[0].localeCompare(b[0]));
+      expect(sort(new URLSearchParams(Calc.buildQueryString())), ex.label)
+        .toEqual(sort(new URLSearchParams(qs)));
+    });
+  });
+
+  it("every example carries a label, so the docs never print a bare URL", () => {
+    expect(Calc.EXAMPLES.length).toBeGreaterThan(0);
+    Calc.EXAMPLES.forEach((ex) => {
+      expect(typeof ex.label).toBe("string");
+      expect(ex.label.length).toBeGreaterThan(0);
+    });
+  });
+});
+
 describe("mode branching in simulate()", () => {
   it("live mode compares against the renter's own rent and applies the interest-relief cap", () => {
     Calc.mode = "live";

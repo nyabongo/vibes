@@ -93,6 +93,47 @@ Object.keys(FIELDS).forEach(function(id){
   FIELDS[id].forEach(function(f){ FIELD_BY_KEY[f.k] = f; });
 });
 
+/* ===================== spec metadata =====================
+   Read by shared/spec-text.js to generate llms.txt and the "ask an AI"
+   prompt. Everything here describes the URL API, not the maths — the
+   numbers themselves come from FIELDS and DEFAULTS. Keep `legend` matching
+   the <legend> text in index.html; `mode` gates a section to one mode. */
+var SECTION_META = {
+  fCapital:  { legend:"What you're deploying" },
+  fProject:  { legend:"The project" },
+  fIncome:   { legend:"What it earns" },
+  fOperating:{ legend:"Cost of running it" },
+  fExit:     { legend:"Getting out" },
+  fInvest:   { legend:"The alternative" },
+  fGross:    { legend:"Tax on rent",   mode:"gross" },
+  fNet:      { legend:"Tax on profit", mode:"net" },
+  fTax:      { legend:"Tax & inflation" }
+};
+
+var MODE_META = {
+  param:"m",
+  label:"which rental tax regime applies",
+  values:[
+    { value:"gross", label:"Flat rate on rent",
+      note:"A flat percentage of rent collected, before any costs — Kenya's residential rental regime. Uses `flat`." },
+    { value:"net", label:"Tax on profit",
+      note:"Your marginal income tax rate applied to net rental profit after operating costs. Uses `mtx`." }
+  ],
+  note:"`flat` is ignored under `net`, and `mtx` is ignored under `gross`. Setting the wrong one for the mode does nothing."
+};
+
+/* Worked examples for the docs. Kept as data so the tests can round-trip them
+   through loadFromURL/buildQueryString — that catches an out-of-range value
+   that got clamped, a param set to its own default, or a typo'd short name. */
+var EXAMPLES = [
+  { label:"An 8-unit block in Kikuyu: KES 30M to deploy, KES 6M for the plot, KES 1.9M a unit, renting at KES 28,000",
+    params:{ cap:30000000, land:6000000, u:8, cpu:1900000, r:28000 } },
+  { label:"A 24-unit development taxed on profit, sold after 15 years at a 9% exit yield",
+    params:{ u:24, cap:80000000, cpu:2600000, h:15, cr:9, m:"net" } },
+  { label:"The same 8-unit block, but the market alternative returns 16% instead of 13%",
+    params:{ cap:30000000, land:6000000, u:8, cpu:1900000, r:28000, inv:16 } }
+];
+
 function mrate(annualPct){ return Math.pow(1+annualPct/100, 1/12) - 1; }
 
 class BuildOrInvestModel {
@@ -121,6 +162,11 @@ class BuildOrInvestModel {
     this.STORAGE_KEY = STORAGE_KEY;
     this.FIELDS = FIELDS;
     this.FIELD_BY_KEY = FIELD_BY_KEY;
+    this.SECTION_META = SECTION_META;
+    this.MODE_META = MODE_META;
+    this.EXAMPLES = EXAMPLES;
+    this.DEFAULT_MODE = DEFAULT_MODE;
+    this.DEFAULT_CUR_CODE = DEFAULT_CUR_CODE;
     this.mrate = mrate;
   }
 

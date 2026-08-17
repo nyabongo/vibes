@@ -175,6 +175,51 @@ test.describe("build-or-invest", () => {
     await expect(page.locator("#printSummary")).toContainText("KSh13,750,000");
   });
 
+  test("the AI prompt carries the whole spec plus the visitor's current scenario", async ({ page, context, browserName }) => {
+    test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/build-or-invest/?cap=30000000&u=8");
+
+    await page.locator("details.aihelp > summary").click();
+    const btn = page.locator("#copyPrompt");
+    await btn.click();
+    await expect(btn).toHaveText("Copied");
+
+    const prompt = await page.evaluate(() => navigator.clipboard.readText());
+    // Without the current URL the chatbot would start from the defaults and
+    // silently discard whatever the visitor had already set up.
+    expect(prompt).toContain(page.url());
+
+    const shortNames = await page.evaluate(() => Object.values(Model.PARAM_MAP));
+    for (const name of shortNames) expect(prompt).toContain("`" + name + "`");
+
+    await expect(btn).toHaveText("Copy prompt");
+  });
+
+  test("llms.txt is served as plain text and linked from the page body", async ({ page, request }) => {
+    const res = await request.get("/build-or-invest/llms.txt");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("text/plain");
+
+    await page.goto("/build-or-invest/");
+    // In the body, not just <head> — a fetch-only agent never runs the JS that
+    // would reveal anything else about this page.
+    await expect(page.locator('.aihelp a[href="llms.txt"]')).toHaveCount(1);
+  });
+
+  test("a worked example copied out of llms.txt opens the scenario it claims", async ({ page, request }) => {
+    const doc = await (await request.get("/build-or-invest/llms.txt")).text();
+    const example = doc.match(/https:\/\/vibes\.obel\.dev\/build-or-invest\/\?\S+/);
+    expect(example, "llms.txt should publish at least one worked example").not.toBeNull();
+
+    await page.goto("/build-or-invest/" + new URL(example[0]).search);
+
+    await expect(page.locator("#i_capital")).toHaveValue("30000000");
+    await expect(page.locator("#i_units")).toHaveValue("8");
+    await expect(page.locator("#i_rentUnit")).toHaveValue("28000");
+    await expect(page.locator("#headline")).not.toHaveText("…");
+  });
+
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {
     await page.goto("/build-or-invest/");
 

@@ -1,0 +1,181 @@
+/* Generates the published llms.txt files.
+ *
+ *   npm run docs
+ *
+ * The parameter tables come from shared/spec-text.js, which reads each
+ * calculator's own field definitions — so the spec can't drift from the code
+ * that parses the query string. What lives here is only the editorial half:
+ * what each tool is for, what its model actually does, and what it doesn't
+ * cover.
+ *
+ * Output is committed, and tools/llms-txt.test.js fails if it's stale. That
+ * keeps the deployed site a plain static file tree with no build step: this
+ * script runs at author time, never at deploy time.
+ *
+ * Prose lives inline as data rather than in template files because it has to
+ * interpolate real values (base URLs, the default mode, the money clamp) and
+ * because the examples are structured objects the tests round-trip. A markdown
+ * template would need a templating engine to do the same job.
+ *
+ * No timestamps, no git SHAs, nothing else that varies between runs — that is
+ * what makes the golden-file test possible.
+ */
+"use strict";
+
+var fs = require("fs");
+var path = require("path");
+var specText = require("../shared/spec-text.js");
+
+var ROOT = path.resolve(__dirname, "..");
+var SITE = "https://vibes.obel.dev";
+
+var SPECS = [
+  {
+    out: "llms.txt",
+    title: "vibes — small, single-purpose web tools",
+    summary:
+      "A handful of standalone browser tools at " + SITE + ". No accounts, no " +
+      "tracking, no server: every one is a static page that computes in the " +
+      "browser. Two of them are financial calculators whose entire input set is " +
+      "encoded in the URL query string, so you can hand someone a link that " +
+      "opens with their scenario already filled in.",
+    body: [
+      "## Calculators with a URL API",
+      "",
+      "Each of these has its own complete parameter reference. Read the one for the",
+      "tool you're using — the short parameter names are not shared between them, and",
+      "several mean different things in each.",
+      "",
+      "- [Rent or buy](" + SITE + "/rent-or-buy/): should you buy a home or rent and",
+      "  invest the difference? Spec: " + SITE + "/rent-or-buy/llms.txt",
+      "- [Build or invest](" + SITE + "/build-or-invest/): should a lump sum become an",
+      "  apartment block or compound in the market? Spec: " + SITE + "/build-or-invest/llms.txt",
+      "",
+      "## Other tools",
+      "",
+      "- [Passport photo printer](" + SITE + "/passport-photo-printer/): crops a photo to",
+      "  passport dimensions and lays it out for printing. No URL parameters — it works",
+      "  on an uploaded image.",
+      "",
+      "## Notes",
+      "",
+      "- Both calculators default to Kenyan figures, but nothing is hardcoded to Kenya.",
+      "  Every tax, rate and transaction cost is an input, so set them for whatever",
+      "  market your reader is actually in.",
+      "- They are models, not advice. Growth rates are steady averages; real ones arrive",
+      "  in lumps.",
+      "- Source: https://github.com/nyabongo/vibes"
+    ].join("\n")
+  },
+
+  {
+    out: "rent-or-buy/llms.txt",
+    mod: require("../rent-or-buy/calc.js"),
+    base: SITE + "/rent-or-buy/",
+    title: "Rent or buy — the crossover calculator",
+    summary:
+      "A browser calculator at " + SITE + "/rent-or-buy/ that models net worth over " +
+      "time for buying a home versus renting and investing the difference, and reports " +
+      "the year one path overtakes the other. Every input is encoded in the URL query " +
+      "string, so a link opens with the whole scenario already filled in.",
+    model: [
+      "## What the calculator does with these",
+      "",
+      "Both paths start with the same cash. The renter invests the deposit and purchase",
+      "costs on day one, and whichever path has the cheaper month invests the difference.",
+      "Net worth in year `h` is the sale price less selling costs, the outstanding loan",
+      "and capital gains tax, plus whatever has accumulated in the investment pot.",
+      "",
+      "The page reports which path wins and by how much, the crossover year if there is",
+      "one, and which single input would flip the verdict.",
+      "",
+      "The defaults are Kenyan, but nothing is hardcoded to Kenya. The tax knobs (`tax`,",
+      "`rc`, `cgt`), the mortgage rate and the transaction costs are all plain inputs —",
+      "set them for whatever market your reader is in.",
+      "",
+      "Not modelled: mortgage insurance, service charge arrears, ground rent, moving",
+      "costs. Appreciation and investment returns are steady averages; real ones arrive",
+      "in lumps. It is a model, not advice."
+    ].join("\n"),
+    related: [
+      [SITE + "/llms.txt", "index of the other tools"],
+      [SITE + "/build-or-invest/llms.txt", "should a lump sum become a building instead?"]
+    ]
+  },
+
+  {
+    out: "build-or-invest/llms.txt",
+    mod: require("../build-or-invest/model.js"),
+    base: SITE + "/build-or-invest/",
+    title: "Build or invest — the development crossover calculator",
+    summary:
+      "A browser calculator at " + SITE + "/build-or-invest/ that models what a lump sum " +
+      "becomes if it builds a rental block versus if it compounds in the market, and " +
+      "reports the year one overtakes the other. Every input is encoded in the URL query " +
+      "string, so a link opens with the whole scenario already filled in.",
+    model: [
+      "## What the calculator does with these",
+      "",
+      "The same lump sum takes both paths. On the build path it buys land, pays for",
+      "construction over `bm` months earning nothing, then ramps from empty to `vac`",
+      "occupancy over `lm` months; whatever hasn't been drawn yet keeps compounding while",
+      "it waits. The building's exit value is a stabilised year's net income divided by",
+      "`cr`, less selling costs and capital gains tax. On the market path the same money",
+      "compounds at `inv`, net of `itx` and `ife`.",
+      "",
+      "The page reports which path wins, the crossover year, the project's IRR and yield",
+      "on cost, whether the lump sum actually covers the project, and which single input",
+      "would flip the verdict.",
+      "",
+      "`cr` is the biggest lever on the build side and `inv` on the other — a point of",
+      "exit yield moves the answer more than most of the construction budget.",
+      "",
+      "The defaults are Kenyan, but nothing is hardcoded to Kenya. Every tax and rate is",
+      "a plain input.",
+      "",
+      "Not modelled: construction finance or any debt at all — this compares cash against",
+      "cash. Also absent: phased sales of individual units, ground rent, and the risk that",
+      "a project simply doesn't finish. It is a model, not advice."
+    ].join("\n"),
+    related: [
+      [SITE + "/llms.txt", "index of the other tools"],
+      [SITE + "/rent-or-buy/llms.txt", "the same comparison for a single home you'd live in"]
+    ]
+  }
+];
+
+function render(spec){
+  var L = ["# " + spec.title, "", "> " + spec.summary, ""];
+
+  if(spec.body){
+    L.push(spec.body);
+    L.push("");
+    return L.join("\n").replace(/\n+$/, "\n");
+  }
+
+  L.push("This file is the complete parameter reference for building a link to this");
+  L.push("calculator. The tables are generated from the calculator's own field");
+  L.push("definitions — if this file and the app disagree, the app is right and this is a");
+  L.push("bug.");
+  L.push("");
+  L.push(specText(spec.mod, spec.base));
+  L.push(spec.model);
+  L.push("");
+  L.push("## Related");
+  L.push("");
+  spec.related.forEach(function(r){ L.push("- " + r[0] + " — " + r[1]); });
+  L.push("");
+
+  return L.join("\n").replace(/\n+$/, "\n");
+}
+
+function main(){
+  SPECS.forEach(function(spec){
+    fs.writeFileSync(path.join(ROOT, spec.out), render(spec), "utf8");
+    process.stdout.write("wrote " + spec.out + "\n");
+  });
+}
+
+module.exports = { SPECS: SPECS, render: render, ROOT: ROOT, SITE: SITE };
+
+if(require.main === module) main();

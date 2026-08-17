@@ -1,0 +1,8 @@
+# The generated llms.txt files are compared byte-for-byte against the generator
+# output by tools/llms-txt.test.js. core.autocrlf is on for most contributors, so
+# without this they'd check out as CRLF and the golden-file test would fail on a
+# fresh clone while passing right after `npm run docs`.
+#
+# Deliberately scoped to these files: `* text=auto` would renormalise the whole
+# repo in one commit.
+llms.txt text eol=lf

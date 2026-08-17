@@ -12,4 +12,13 @@
   <url>
     <loc>https://vibes.obel.dev/passport-photo-printer/</loc>
   </url>
+  <url>
+    <loc>https://vibes.obel.dev/llms.txt</loc>
+  </url>
+  <url>
+    <loc>https://vibes.obel.dev/rent-or-buy/llms.txt</loc>
+  </url>
+  <url>
+    <loc>https://vibes.obel.dev/build-or-invest/llms.txt</loc>
+  </url>
 </urlset>

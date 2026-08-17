@@ -352,6 +352,34 @@ describe("a shared link is a full scenario, not a patch (regression: 51811df)", 
   });
 });
 
+describe("the worked examples published in llms.txt", () => {
+  /* Re-emitting a link must reproduce it exactly. One assertion catches all
+     four ways a documented example can quietly lie: a value outside the
+     field's range (silently clamped), a short name that isn't a real param
+     (silently ignored), a param set to its own default (dropped from the
+     re-emitted query), and a mode or currency value that didn't take. */
+  it("each round-trips through loadFromURL/buildQueryString unchanged", () => {
+    Model.EXAMPLES.forEach((ex) => {
+      const qs = new URLSearchParams(ex.params).toString();
+      Model.resetToDefaults();
+      expect(Model.hasScenarioParams("?" + qs), ex.label).toBe(true);
+      Model.loadFromURL("?" + qs);
+
+      const sort = (p) => [...p].sort((a, b) => a[0].localeCompare(b[0]));
+      expect(sort(new URLSearchParams(Model.buildQueryString())), ex.label)
+        .toEqual(sort(new URLSearchParams(qs)));
+    });
+  });
+
+  it("every example carries a label, so the docs never print a bare URL", () => {
+    expect(Model.EXAMPLES.length).toBeGreaterThan(0);
+    Model.EXAMPLES.forEach((ex) => {
+      expect(typeof ex.label).toBe("string");
+      expect(ex.label.length).toBeGreaterThan(0);
+    });
+  });
+});
+
 describe("the default scenario", () => {
   // Locked in so a change to the engine has to be a deliberate one. If these move,
   // check the model before changing the numbers.
