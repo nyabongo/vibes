@@ -28,17 +28,7 @@
     <div class="mast-actions">
       <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
       <button class="linkbtn" id="copyLink" type="button">Copy link</button>
-      <select class="currency" id="cur" aria-label="Currency">
-        <option value="KES|KSh|1">KES — Kenyan shilling</option>
-        <option value="UGX|USh|28.7">UGX — Ugandan shilling</option>
-        <option value="USD|$|0.0077">USD — US dollar</option>
-        <option value="GBP|£|0.0061">GBP — pound</option>
-        <option value="EUR|€|0.0071">EUR — euro</option>
-        <option value="ZAR|R|0.14">ZAR — rand</option>
-        <option value="NGN|₦|11.6">NGN — naira</option>
-        <option value="INR|₹|0.65">INR — rupee</option>
-        <option value="AED|AED |0.028">AED — dirham</option>
-      </select>
+      <currency-select id="cur"></currency-select>
     </div>
   </div>
   <div class="rule"></div>
@@ -66,47 +56,47 @@
 
         <fieldset>
           <legend>What you're deploying</legend>
-          <div id="fCapital"></div>
+          <field-group id="fCapital"></field-group>
         </fieldset>
 
         <fieldset>
           <legend>The project</legend>
-          <div id="fProject"></div>
+          <field-group id="fProject"></field-group>
         </fieldset>
 
         <fieldset>
           <legend>What it earns</legend>
-          <div id="fIncome"></div>
+          <field-group id="fIncome"></field-group>
         </fieldset>
 
         <fieldset>
           <legend>Cost of running it</legend>
-          <div id="fOperating"></div>
+          <field-group id="fOperating"></field-group>
         </fieldset>
 
         <fieldset>
           <legend>Getting out</legend>
-          <div id="fExit"></div>
+          <field-group id="fExit"></field-group>
         </fieldset>
 
         <fieldset>
           <legend>The alternative</legend>
-          <div id="fInvest"></div>
+          <field-group id="fInvest"></field-group>
         </fieldset>
 
         <fieldset id="secGross">
           <legend>Tax on rent</legend>
-          <div id="fGross"></div>
+          <field-group id="fGross"></field-group>
         </fieldset>
 
         <fieldset id="secNet" class="hidden">
           <legend>Tax on profit</legend>
-          <div id="fNet"></div>
+          <field-group id="fNet"></field-group>
         </fieldset>
 
         <fieldset>
           <legend>Tax &amp; inflation</legend>
-          <div id="fTax"></div>
+          <field-group id="fTax"></field-group>
         </fieldset>
       </div>
     </div>
@@ -116,7 +106,7 @@
 
       <div class="panel">
         <div class="panel-hd"><h2>Net worth if you sell that year</h2><span class="hint" id="chartHint"></span></div>
-        <div class="chartbox"><svg id="chart" viewBox="0 0 760 340" role="img" aria-label="Net worth over time for building versus investing"></svg></div>
+        <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for building versus investing"></crossover-chart></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i> Build the block</span>
           <span><i style="background:var(--accent2)"></i> Leave it invested</span>
@@ -127,7 +117,7 @@
 
       <div class="panel" style="margin-top:22px;">
         <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
-        <div class="tiles" id="tiles"></div>
+        <key-tiles class="tiles" id="tiles"></key-tiles>
       </div>
 
       <div class="panel" style="margin-top:22px;">
@@ -153,6 +143,10 @@
   </div>
 </div>
 
+<script src="../shared/components/currency-select.js"></script>
+<script src="../shared/components/field-group.js"></script>
+<script src="../shared/components/crossover-chart.js"></script>
+<script src="../shared/components/key-tiles.js"></script>
 <script src="model.js"></script>
 <script>
 "use strict";
@@ -184,126 +178,32 @@ function fieldDisplay(f){
 
 function buildFields(){
   Object.keys(Model.FIELDS).forEach(function(id){
-    var host = document.getElementById(id);
-    host.innerHTML = "";
-    Model.FIELDS[id].forEach(function(f){
-      var w = document.createElement("div"); w.className="f";
-      var lab = document.createElement("label");
-      lab.setAttribute("for","i_"+f.k);
-      var name = document.createElement("span"); name.textContent = f.label;
-      lab.appendChild(name);
-      if(f.type!=="money"){
-        var val = document.createElement("span"); val.className="val"; val.id="v_"+f.k;
-        lab.appendChild(val);
-      }
-      w.appendChild(lab);
-      var inp = document.createElement("input");
-      inp.id = "i_"+f.k;
-      if(f.type==="money"){ inp.type="number"; inp.step="any"; inp.inputMode="decimal"; }
-      else { inp.type="range"; inp.min=f.min; inp.max=f.max; inp.step=f.step; }
-      inp.addEventListener("input", function(){
-        var raw = parseFloat(inp.value);
-        if(isNaN(raw)) return;
-        Model.V[f.k] = f.type==="money" ? raw / Model.cur.rate : raw;
-        scheduleRender();
-      });
-      w.appendChild(inp);
-      if(f.note){ var nt=document.createElement("div"); nt.className="note"; nt.textContent=f.note; w.appendChild(nt); }
-      host.appendChild(w);
+    document.getElementById(id).configure({
+      fields: Model.FIELDS[id],
+      get: function(k){ return Model.V[k]; },
+      set: function(k, v){ Model.V[k] = v; },
+      onInput: scheduleRender
     });
   });
 }
 
 function syncFields(){
   Object.keys(Model.FIELDS).forEach(function(id){
-    Model.FIELDS[id].forEach(function(f){
-      var inp = document.getElementById("i_"+f.k);
-      if(!inp) return;
-      if(f.type==="money"){
-        var shown = Math.round(Model.V[f.k]*Model.cur.rate);
-        if(document.activeElement !== inp) inp.value = shown;
-      } else {
-        inp.value = Model.V[f.k];
-        var v = document.getElementById("v_"+f.k);
-        if(v) v.textContent = fieldDisplay(f);
-      }
-    });
+    document.getElementById(id).refresh(Model.cur.rate);
   });
 }
 
 function drawChart(s){
-  var W=760,H=340,L=64,R=16,T=18,B=34;
-  var pts = s.series;
-  /* Scale to the data, not to zero. Both paths start at the same lump sum and diverge
-     slowly, so a forced zero floor would squash the whole comparison into a sliver. */
-  var maxY = pts[0].build, minY = pts[0].build;
-  pts.forEach(function(p){ maxY=Math.max(maxY,p.build,p.invest); minY=Math.min(minY,p.build,p.invest); });
-  if(maxY===minY) maxY = minY+1;
-  var pad=(maxY-minY)*0.08; maxY+=pad; minY-=pad;
-  var xmax = pts[pts.length-1].y || 1;
-  function X(y){ return L + (y/xmax)*(W-L-R); }
-  function Y(v){ return T + (1-(v-minY)/(maxY-minY))*(H-T-B); }
-
-  var o = [];
-  // shaded band over the months the site is a hole in the ground
-  if(s.completionYear > 0){
-    var bw = X(Math.min(s.completionYear, xmax)) - L;
-    if(bw > 0) o.push('<rect x="'+L+'" y="'+T+'" width="'+bw.toFixed(1)+'" height="'+(H-T-B)+'" fill="var(--muted)" opacity="0.08"/>');
-  }
-  // horizontal gridlines
-  var ticks=5;
-  for(var i=0;i<=ticks;i++){
-    var v = minY + (maxY-minY)*i/ticks, y = Y(v);
-    o.push('<line class="'+(Math.abs(v)<(maxY-minY)/200?"zeroline":"gridline")+'" x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'"/>');
-    o.push('<text class="axis" x="'+(L-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+Model.fmtC(v)+'</text>');
-  }
-  // x labels
-  var step = xmax<=10?1:(xmax<=20?2:5);
-  for(var yv=0; yv<=xmax; yv+=step){
-    o.push('<text class="axis" x="'+X(yv).toFixed(1)+'" y="'+(H-B+18)+'" text-anchor="middle">'+yv+'</text>');
-  }
-  o.push('<text class="axis" x="'+X(xmax/2).toFixed(1)+'" y="'+(H-2)+'" text-anchor="middle" style="letter-spacing:.12em">YEARS HELD</text>');
-
-  // shaded gap between the two paths
-  var top=[], bot=[];
-  pts.forEach(function(p){ top.push(X(p.y).toFixed(1)+","+Y(p.build).toFixed(1)); });
-  for(var j=pts.length-1;j>=0;j--){ bot.push(X(pts[j].y).toFixed(1)+","+Y(pts[j].invest).toFixed(1)); }
-  var ahead = pts[pts.length-1].build >= pts[pts.length-1].invest ? "var(--accent)" : "var(--accent2)";
-  o.push('<polygon points="'+top.concat(bot).join(" ")+'" fill="'+ahead+'" opacity="0.10"/>');
-
-  function line(key,color){
-    var d = pts.map(function(p,i){ return (i?"L":"M")+X(p.y).toFixed(1)+" "+Y(p[key]).toFixed(1); }).join(" ");
-    return '<path class="pathline" d="'+d+'" stroke="'+color+'"/>';
-  }
-  o.push(line("invest","var(--accent2)"));
-  o.push(line("build","var(--accent)"));
-
-  // completion marker — where the building stops being a hole in the ground
-  if(s.completionYear > 0 && s.completionYear < xmax){
-    var cx = X(s.completionYear);
-    o.push('<g class="marker">');
-    o.push('<line x1="'+cx.toFixed(1)+'" y1="'+T+'" x2="'+cx.toFixed(1)+'" y2="'+(H-B)+'" stroke="var(--line)" stroke-width="1.25" stroke-dasharray="2 4"/>');
-    var ca = cx > W*0.72 ? "end" : "start";
-    o.push('<text class="soft" x="'+(cx+(ca==="end"?-7:7)).toFixed(1)+'" y="'+(H-B-8)+'" text-anchor="'+ca+'">COMPLETE</text>');
-    o.push('</g>');
-  }
-
-  // crossover marker
-  if(s.breakEven){
-    var bx = X(s.breakEven);
-    o.push('<g class="marker">');
-    o.push('<line x1="'+bx.toFixed(1)+'" y1="'+T+'" x2="'+bx.toFixed(1)+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.25" stroke-dasharray="4 4"/>');
-    var anchor = bx > W*0.72 ? "end" : "start";
-    var dx = anchor==="end" ? -7 : 7;
-    o.push('<text x="'+(bx+dx).toFixed(1)+'" y="'+(T+12)+'" text-anchor="'+anchor+'">CROSSOVER · YEAR '+s.breakEven+'</text>');
-    o.push('</g>');
-  }
-  // end dots
-  var lastP = pts[pts.length-1];
-  o.push('<circle cx="'+X(lastP.y).toFixed(1)+'" cy="'+Y(lastP.build).toFixed(1)+'" r="4" fill="var(--accent)"/>');
-  o.push('<circle cx="'+X(lastP.y).toFixed(1)+'" cy="'+Y(lastP.invest).toFixed(1)+'" r="4" fill="var(--accent2)"/>');
-
-  document.getElementById("chart").innerHTML = o.join("");
+  document.getElementById("chart").draw({
+    series: s.series.map(function(p){ return {y:p.y, a:p.build, b:p.invest}; }),
+    colorA: "var(--accent)",
+    colorB: "var(--accent2)",
+    formatY: Model.fmtC,
+    zeroFloor: false, // both paths start at the same lump sum, far from zero
+    breakEven: s.breakEven,
+    band: {to: s.completionYear},
+    bandMarker: s.completionYear > 0 ? {at: s.completionYear, label: "COMPLETE"} : null
+  });
 }
 
 function block(title, parts, total, extraHTML){
@@ -379,9 +279,7 @@ function drawTiles(s){
     {k:"Gap at year "+Model.V.horizon, v:(gap>=0?"+":"−")+Model.fmt(Math.abs(gap)),
      s:(gap>=0?"in favour of building":"in favour of investing")}
   ];
-  document.getElementById("tiles").innerHTML = t.map(function(x){
-    return '<div class="tile"><div class="k">'+x.k+'</div><div class="v">'+x.v+'</div><div class="s">'+x.s+'</div></div>';
-  }).join("");
+  document.getElementById("tiles").render(t);
 }
 
 function drawFlip(s){
@@ -529,13 +427,10 @@ function setMode(m){
   render();
 }
 function syncCurrencySelect(){
-  var sel = document.getElementById("cur");
-  for(var i=0;i<sel.options.length;i++){
-    if(sel.options[i].value.split("|")[0] === Model.cur.code){ sel.value = sel.options[i].value; return; }
-  }
+  document.getElementById("cur").setCode(Model.cur.code);
 }
-document.getElementById("cur").addEventListener("change", function(e){
-  Model.applyCurrency(e.target.value.split("|")[0]);
+document.getElementById("cur").addEventListener("currencychange", function(e){
+  Model.applyCurrency(e.detail.code);
   render();
 });
 
