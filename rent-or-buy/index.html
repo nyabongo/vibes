@@ -152,7 +152,7 @@ function drawChart(s){
     series: s.series.map(function(p){ return {y:p.y, a:p.buy, b:p.rent}; }),
     colorA: "var(--accent)",
     colorB: "var(--accent2)",
-    formatY: Calc.fmtC,
+    formatY: function(v){ return Calc.fmtC(v); },
     zeroFloor: true,
     breakEven: s.breakEven
   });

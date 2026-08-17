@@ -198,7 +198,7 @@ function drawChart(s){
     series: s.series.map(function(p){ return {y:p.y, a:p.build, b:p.invest}; }),
     colorA: "var(--accent)",
     colorB: "var(--accent2)",
-    formatY: Model.fmtC,
+    formatY: function(v){ return Model.fmtC(v); },
     zeroFloor: false, // both paths start at the same lump sum, far from zero
     breakEven: s.breakEven,
     band: {to: s.completionYear},
