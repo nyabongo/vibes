@@ -28,7 +28,13 @@ function send(res, status, body, contentType){
 }
 
 var server = http.createServer(function(req, res){
-  var urlPath = decodeURIComponent(req.url.split("?")[0]);
+  var urlPath;
+  try {
+    urlPath = decodeURIComponent(req.url.split("?")[0]);
+  } catch (e) {
+    send(res, 400, "Bad request");
+    return;
+  }
   var filePath = path.join(ROOT, urlPath);
 
   if (!filePath.startsWith(ROOT)) { send(res, 403, "Forbidden"); return; }

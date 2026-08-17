@@ -478,7 +478,7 @@ function drawTiles(s, cash){
     {k:"Monthly repayment", v:Calc.fmt(s.payment), s:"On "+Calc.fmt(s.loan)+" over "+Calc.V.term+" years"},
     {k:"Cash needed on day one", v:Calc.fmt(s.upfront), s:"Deposit plus purchase costs"},
     {k:"Interest over the loan", v:Calc.fmt(s.loanInterest), s:Calc.pctS(s.loanInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
-    {k:"Gap at year "+Calc.V.horizon, v:(gap>=0?"+":"−")+Calc.fmt(Math.abs(gap)).replace(Calc.cur.sym,Calc.cur.sym), s:(gap>=0?"in favour of buying":"in favour of renting")}
+    {k:"Gap at year "+Calc.V.horizon, v:(gap>=0?"+":"−")+Calc.fmt(Math.abs(gap)), s:(gap>=0?"in favour of buying":"in favour of renting")}
   ];
   document.getElementById("tiles").innerHTML = t.map(function(x){
     return '<div class="tile"><div class="k">'+x.k+'</div><div class="v">'+x.v+'</div><div class="s">'+x.s+'</div></div>';

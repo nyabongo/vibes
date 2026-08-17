@@ -155,6 +155,14 @@ describe("loadFromStorage rejects bad input and can't pollute the prototype (reg
     expect(({}).polluted).toBeUndefined();
   });
 
+  it("only accepts keys that are V's own fields, not ones merely inherited via the prototype chain", () => {
+    const raw = '{"V":{"price":123456,"constructor":777,"toString":42}}';
+    Calc.loadFromStorage(raw);
+    expect(Calc.V.price).toBe(123456);
+    expect(Object.prototype.hasOwnProperty.call(Calc.V, "constructor")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(Calc.V, "toString")).toBe(false);
+  });
+
   it("does not throw on malformed JSON, and leaves state untouched", () => {
     expect(() => Calc.loadFromStorage("{not valid json")).not.toThrow();
     expect(Calc.V.price).toBe(Calc.DEFAULTS.price);

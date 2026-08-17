@@ -97,7 +97,7 @@ Calc.loadFromStorage = function(raw){
     if(!raw) return;
     var data = JSON.parse(raw);
     if(data.V) Object.keys(data.V).forEach(function(k){
-      if(k in Calc.V && typeof data.V[k]==="number" && isFinite(data.V[k])) Calc.V[k] = Calc.clampToField(k, data.V[k]);
+      if(Object.prototype.hasOwnProperty.call(Calc.V, k) && typeof data.V[k]==="number" && isFinite(data.V[k])) Calc.V[k] = Calc.clampToField(k, data.V[k]);
     });
     if(data.mode==="live"||data.mode==="let") Calc.mode = data.mode;
     if(data.cur) Calc.applyCurrency(data.cur);
