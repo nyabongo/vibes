@@ -38,9 +38,11 @@ class CurrencySelect extends HTMLElement {
   }
 
   /* Reflects an externally-applied currency (e.g. loaded from a shared link
-     or localStorage) back into the visible selection. */
+     or localStorage) back into the visible selection. A no-op if called
+     before connectedCallback has run (or after disconnection). */
   setCode(code) {
     const select = this._select;
+    if (!select) return;
     for (const opt of select.options) {
       if (opt.value.split("|")[0] === code) { select.value = opt.value; return; }
     }
