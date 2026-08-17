@@ -55,7 +55,7 @@ test.describe("rent-or-buy", () => {
     await page.goto("/rent-or-buy/");
     await expect(page.locator("#tiles .tile").first()).toContainText("KSh");
 
-    await page.locator("#cur").selectOption({ label: "USD — US dollar" });
+    await page.locator("#cur select").selectOption({ label: "USD — US dollar" });
 
     await expect(page.locator("#tiles .tile").first()).toContainText("$");
     await expect(page.locator("#tiles .tile").first()).not.toContainText("KSh");
