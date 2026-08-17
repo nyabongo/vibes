@@ -107,7 +107,7 @@ Calc.loadFromStorage = function(raw){
 Calc.clampToField = function(k, num){
   var f = Calc.FIELD_BY_KEY[k];
   if(!f) return num;
-  if(f.type==="pct"){
+  if(f.type==="pct" || f.type==="num"){
     if(typeof f.min==="number") num = Math.max(f.min, num);
     if(typeof f.max==="number") num = Math.min(f.max, num);
   } else if(f.type==="money"){
@@ -143,13 +143,14 @@ Calc.loadFromURL = function(search){
 /* ===================== field definitions ===================== */
 function money(k,label,note){ return {k:k,label:label,note:note,type:"money"}; }
 function pct(k,label,min,max,step,note){ return {k:k,label:label,min:min,max:max,step:step,note:note,type:"pct"}; }
+function num(k,label,min,max,step,note,unit){ return {k:k,label:label,min:min,max:max,step:step,note:note,unit:unit,type:"num"}; }
 
 Calc.FIELDS = {
   fPurchase:[
     money("price","Property price"),
     pct("downPct","Deposit",0,100,1,null),
     pct("rate","Mortgage rate",0,30,0.1,"Annual, on the balance."),
-    pct("term","Loan term (years)",1,35,1,null),
+    num("term","Loan term",1,35,1,null," years"),
     pct("closingPct","Purchase costs",0,15,0.25,"Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered.")
   ],
   fOwn:[
@@ -171,7 +172,7 @@ Calc.FIELDS = {
     pct("rentGrowth","Rent growth",-5,20,0.25,"Per year."),
     pct("invest","Return if invested instead",0,25,0.25,"What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
     pct("inflation","Inflation",0,20,0.25,"Pushes up insurance and service charge."),
-    pct("horizon","Years before you sell",1,40,1,"Short stays punish buyers — the purchase costs haven't been earned back yet."),
+    num("horizon","Years before you sell",1,40,1,"Short stays punish buyers — the purchase costs haven't been earned back yet."," years"),
     pct("sellPct","Selling costs",0,15,0.25,"Agent and legal fees when you sell.")
   ],
   fTax:[
