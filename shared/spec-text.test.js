@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import specText from "./spec-text.js";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import Calc from "../rent-or-buy/calc.js";
 import Model from "../build-or-invest/model.js";
 
 const BASE = "https://vibes.obel.dev/x/";
+const specTextSource = readFileSync(fileURLToPath(new URL("./spec-text.js", import.meta.url)), "utf8");
 
 /* Pulls the parameter tables back out of the rendered markdown, so the
    assertions below check what a reader actually sees rather than the data
@@ -125,6 +128,63 @@ describe.each(TOOLS)("specText for %s", (_name, calc) => {
     // reach the page as the string "undefined".
     expect(text).not.toContain("undefined");
     expect(text).not.toContain("null");
+  });
+});
+
+describe("a cached engine older than this script fails by name, not by TypeError (regression: 69f09b1)", () => {
+  // Reported from a live browser after the merge: spec-text.js was brand new so
+  // it loaded fresh, while calc.js came from a 10-minute cache without
+  // MODE_META. The crash was "Cannot read properties of undefined (reading
+  // 'values')" four frames deep, and the button did nothing at all.
+  const stale = (drop) => {
+    const clone = Object.create(Object.getPrototypeOf(Calc));
+    Object.assign(clone, Calc);
+    delete clone[drop];
+    return clone;
+  };
+
+  it("names the missing metadata and tells the reader to reload", () => {
+    expect(() => specText(stale("MODE_META"), BASE)).toThrow(/MODE_META/);
+    expect(() => specText(stale("MODE_META"), BASE)).toThrow(/reload the page/i);
+  });
+
+  it("guards every engine field it reads, including the two defaults", () => {
+    // DEFAULT_MODE and DEFAULT_CUR_CODE shipped in the same commit as
+    // MODE_META, so a stale engine loses all three together — but the guard
+    // shouldn't depend on that coincidence.
+    const read = [...specTextSource.matchAll(/calc\.([A-Z][A-Z_]+)/g)].map((m) => m[1]);
+    expect([...new Set(read)].sort()).toEqual([
+      "CURRENCIES", "DEFAULTS", "DEFAULT_CUR_CODE", "DEFAULT_MODE",
+      "EXAMPLES", "FIELDS", "MODE_META", "PARAM_MAP", "SECTION_META"
+    ]);
+    [...new Set(read)].forEach((k) => {
+      expect(() => specText(stale(k), BASE), k).toThrow(new RegExp(k));
+    });
+  });
+
+  it("reports every missing piece at once, not just the first", () => {
+    const gutted = stale("MODE_META");
+    delete gutted.EXAMPLES;
+    delete gutted.CURRENCIES;
+    expect(() => specText(gutted, BASE)).toThrow(/MODE_META, EXAMPLES, CURRENCIES/);
+  });
+
+  it("treats a present-but-empty value as present, not missing", () => {
+    // == null, not falsy: an engine with no worked examples yet is current,
+    // just sparse, and telling that reader to reload would be wrong.
+    const empty = stale("EXAMPLES");
+    empty.EXAMPLES = [];
+    expect(() => specText(empty, BASE)).not.toThrow();
+  });
+
+  it("throws a named error so a caller can tell it from a real bug", () => {
+    expect(() => specText(stale("EXAMPLES"), BASE)).toThrow(
+      expect.objectContaining({ name: "StaleEngineError" })
+    );
+  });
+
+  it("still renders normally when the engine is complete", () => {
+    expect(() => specText(Calc, BASE)).not.toThrow();
   });
 });
 

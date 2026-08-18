@@ -392,7 +392,20 @@ function aiPrompt(){
   ]).join("\n");
 }
 document.getElementById("copyPrompt").addEventListener("click", function(){
-  copyWithFeedback(this, aiPrompt(), "Copy prompt");
+  var prompt;
+  try{
+    prompt = aiPrompt();
+  }catch(e){
+    /* A stale cached calc.js has a fix the reader can act on; anything else is a
+       real bug and pointing them at reload would just misdirect. Either way the
+       button has to say something — going silent is what made the original
+       report read as a broken site. */
+    var btn = this;
+    btn.textContent = e.name === "StaleEngineError" ? "Reload the page" : "Copy failed";
+    setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
+    throw e;
+  }
+  copyWithFeedback(this, prompt, "Copy prompt");
 });
 document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
 

@@ -37,7 +37,31 @@ function table(header, rows){
   return out.join("\n");
 }
 
+/* This file and the engine it reads are separate <script src> tags with their
+   own cache lifetimes, so a returning visitor can hold a stale engine while
+   fetching a fresh copy of this one. Say so plainly instead of dying on an
+   undefined property four frames deep.
+
+   Every engine field specText reads belongs here — keep this in step with the
+   `calc.` references below, or a missing field fails deep in the render
+   instead of at the door. */
+var REQUIRED = ["PARAM_MAP", "FIELDS", "DEFAULTS", "SECTION_META", "MODE_META",
+  "EXAMPLES", "CURRENCIES", "DEFAULT_MODE", "DEFAULT_CUR_CODE"];
+
+function assertUsable(calc){
+  /* == null rather than falsy: a legitimately empty or zero value is still
+     present, and only absence means the engine predates this script. */
+  var missing = REQUIRED.filter(function(k){ return !calc || calc[k] == null; });
+  if(missing.length){
+    var err = new Error("specText: the calculator is missing " + missing.join(", ") +
+      ". This usually means a cached copy of the engine is older than this script — reload the page.");
+    err.name = "StaleEngineError";
+    throw err;
+  }
+}
+
 return function specText(calc, base){
+  assertUsable(calc);
   var L = [];
   var altModes = calc.MODE_META.values.filter(function(v){ return v.value !== calc.DEFAULT_MODE; });
 
