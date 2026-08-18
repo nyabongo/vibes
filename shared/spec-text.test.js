@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import specText from "./spec-text.js";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import Calc from "../rent-or-buy/calc.js";
 import Model from "../build-or-invest/model.js";
 
 const BASE = "https://vibes.obel.dev/x/";
+const specTextSource = readFileSync(fileURLToPath(new URL("./spec-text.js", import.meta.url)), "utf8");
 
 /* Pulls the parameter tables back out of the rendered markdown, so the
    assertions below check what a reader actually sees rather than the data
@@ -145,10 +148,33 @@ describe("a cached engine older than this script fails by name, not by TypeError
     expect(() => specText(stale("MODE_META"), BASE)).toThrow(/reload the page/i);
   });
 
-  it("reports every piece it needs, not just the first one missing", () => {
-    ["PARAM_MAP", "FIELDS", "DEFAULTS", "SECTION_META", "EXAMPLES", "CURRENCIES"].forEach((k) => {
+  it("guards every engine field it reads, including the two defaults", () => {
+    // DEFAULT_MODE and DEFAULT_CUR_CODE shipped in the same commit as
+    // MODE_META, so a stale engine loses all three together — but the guard
+    // shouldn't depend on that coincidence.
+    const read = [...specTextSource.matchAll(/calc\.([A-Z][A-Z_]+)/g)].map((m) => m[1]);
+    expect([...new Set(read)].sort()).toEqual([
+      "CURRENCIES", "DEFAULTS", "DEFAULT_CUR_CODE", "DEFAULT_MODE",
+      "EXAMPLES", "FIELDS", "MODE_META", "PARAM_MAP", "SECTION_META"
+    ]);
+    [...new Set(read)].forEach((k) => {
       expect(() => specText(stale(k), BASE), k).toThrow(new RegExp(k));
     });
+  });
+
+  it("reports every missing piece at once, not just the first", () => {
+    const gutted = stale("MODE_META");
+    delete gutted.EXAMPLES;
+    delete gutted.CURRENCIES;
+    expect(() => specText(gutted, BASE)).toThrow(/MODE_META, EXAMPLES, CURRENCIES/);
+  });
+
+  it("treats a present-but-empty value as present, not missing", () => {
+    // == null, not falsy: an engine with no worked examples yet is current,
+    // just sparse, and telling that reader to reload would be wrong.
+    const empty = stale("EXAMPLES");
+    empty.EXAMPLES = [];
+    expect(() => specText(empty, BASE)).not.toThrow();
   });
 
   it("throws a named error so a caller can tell it from a real bug", () => {

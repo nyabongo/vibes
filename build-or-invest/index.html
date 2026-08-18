@@ -490,10 +490,12 @@ document.getElementById("copyPrompt").addEventListener("click", function(){
   try{
     prompt = aiPrompt();
   }catch(e){
-    /* Almost always a cached model.js older than spec-text.js. Leaving the
-       button silent would just look broken, so name the fix. */
+    /* A stale cached model.js has a fix the reader can act on; anything else is a
+       real bug and pointing them at reload would just misdirect. Either way the
+       button has to say something — going silent is what made the original
+       report read as a broken site. */
     var btn = this;
-    btn.textContent = "Reload the page";
+    btn.textContent = e.name === "StaleEngineError" ? "Reload the page" : "Copy failed";
     setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
     throw e;
   }
