@@ -11,11 +11,18 @@ bug.
 
 1. Start from `https://vibes.obel.dev/build-or-invest/`.
 2. Append `?` then `&`-joined `name=value` pairs from the tables below.
-3. **Only include parameters you are changing.** Anything omitted uses its
-   default, so a bare `https://vibes.obel.dev/build-or-invest/` is the default scenario.
-4. A link is self-contained. Opening one resets every parameter you left out
-   back to its default, ignores whatever scenario the visitor had saved, and
-   does not overwrite it.
+3. **Only include parameters you are changing.** Anything you leave out falls
+   back to its default — provided the link carries at least one parameter this
+   file documents. A link carrying none is not a defaults link; see rule 4.
+4. A link carrying at least one parameter the calculator recognises — `m`, `c`,
+   or any name from the tables below — is self-contained. Opening it resets
+   every parameter you left out back to its default, ignores whatever scenario
+   the visitor had saved, and does not overwrite it. A URL with nothing
+   recognisable in it does the opposite. A bare `https://vibes.obel.dev/build-or-invest/`,
+   or one carrying only unrecognised parameters such as `utm_source=x`,
+   restores whatever scenario that visitor last had — so a bare link is not a
+   link to the defaults. To send the default scenario, pass one parameter
+   explicitly, such as the mode at its own default, `m=gross`.
 5. Values are plain decimal numbers — no thousands separators, no currency
    symbol, no `%`. Negatives are fine where the range allows.
 6. **All money is Kenyan shillings (KES), always.** The `c` parameter changes
