@@ -46,6 +46,7 @@ cloning.
 
 ```
 index.html                 landing page — the list of tools
+llms.txt                   generated index of the tools, for AI assistants
 rent-or-buy/
   index.html               page markup + view layer
   calc.js                  the engine (a UMD module — see below)
@@ -61,7 +62,7 @@ shared/
 tools/llms-txt.js          generates the committed llms.txt files
 tests/
   serve.js                 zero-dependency static server, for Playwright only
-  e2e/                     Playwright specs, one per tool
+  e2e/                     Playwright specs — the two calculators so far
 CNAME  .nojekyll           GitHub Pages configuration
 robots.txt  sitemap.xml    crawler-facing files; both list the llms.txt specs
 TESTING.md                 the testing convention
@@ -130,7 +131,7 @@ browser. One file, loaded as a plain `<script src>` with no build step, and
 still importable by Vitest. The simulation, state, persistence and formatting
 all live there; `index.html` holds only the view layer.
 
-**The spec is generated, never written.**
+**The spec is generated, never hand-written.**
 [`shared/spec-text.js`](shared/spec-text.js) reads an engine's own field
 definitions and renders the markdown parameter tables. Two things consume it:
 [`tools/llms-txt.js`](tools/llms-txt.js) writes them to disk at author time, and
@@ -153,9 +154,11 @@ cover — is hand-written, and it lives in the generator.
    copy the block at the top of
    [rent-or-buy/index.html](rent-or-buy/index.html#L7) and edit it.
 5. Register the tool in three places: the list in [index.html](index.html), a
-   `<url>` entry in [sitemap.xml](sitemap.xml), and the `## Other tools` block in
-   `SPECS[0].body` of [tools/llms-txt.js](tools/llms-txt.js). Then run
-   `npm run docs` and commit the regenerated `llms.txt`.
+   `<url>` entry in [sitemap.xml](sitemap.xml), and `SPECS[0].body` in
+   [tools/llms-txt.js](tools/llms-txt.js) — under `## Other tools` if it has no
+   URL API, or under `## Calculators with a URL API` if it does, with a link to
+   its own spec. Then run `npm run docs` and commit the regenerated root
+   `llms.txt`.
 6. Add tests, choosing unit or E2E by the rule in [TESTING.md](TESTING.md).
 
 ### A calculator with a URL API
@@ -179,8 +182,9 @@ copying.
 3. **Build `FIELDS` with the helpers.** `money(k, label, note)`,
    `pct(k, label, min, max, step, note)` and
    `num(k, label, min, max, step, note, unit)`
-   ([rent-or-buy/calc.js:36](rent-or-buy/calc.js#L36)) — the min/max/step feed
-   both the on-screen sliders and the published range. Keep each
+   ([rent-or-buy/calc.js:36](rent-or-buy/calc.js#L36)) — min and max set both
+   the slider bounds and the range published in the spec, while `step` only
+   moves the on-screen slider. URL values are never held to it. Keep each
    `SECTION_META[id].legend` matching the `<legend>` text in the HTML, and set
    `mode:` on a section to gate it to one mode.
 
@@ -198,9 +202,11 @@ copying.
 
 6. **Add a `SPECS` entry** in [tools/llms-txt.js](tools/llms-txt.js) with the
    editorial half: `summary`, `model` (what the calculator does with the inputs,
-   and what it does not model) and `related`. Run `npm run docs`, commit the
-   generated `llms.txt`, and add its URL to [robots.txt](robots.txt) and
-   [sitemap.xml](sitemap.xml).
+   and what it does not model) and `related`. That generates the tool's own
+   `llms.txt`; list it in the root index too, under
+   `## Calculators with a URL API` in `SPECS[0].body`, not `## Other tools`.
+   Run `npm run docs`, commit both generated files, and add the new spec URL to
+   [robots.txt](robots.txt) and [sitemap.xml](sitemap.xml).
 
 7. **Two constraints on generated output.** Nothing may embed a date, timestamp
    or commit SHA — the golden test compares byte-for-byte between runs. And
