@@ -15,8 +15,39 @@ test.describe("brick-by-brick", () => {
     await page.goto("/brick-by-brick/");
     await expect(page.locator("#curhint")).toHaveText("UGX");
     await expect(page.locator("#tiles .tile").last()).toContainText("USh");
-    // ...and a default scenario is still a bare URL, since UGX is the default.
+    // ...and picking a different default currency costs nothing at the URL:
+    // buildQueryString omits `c` while it still matches DEFAULT_CUR_CODE, so
+    // links from this tool are no noisier than the other two.
     expect(new URL(page.url()).search).toBe("");
+  });
+
+  /* llms.txt rules 3 and 4 turn on this branch, and it lives in the page's init
+     block rather than the engine — so it is pinned here, the same way it is for
+     the other two calculators. */
+  test("only a link with a recognised parameter shows the defaults, as llms.txt claims", async ({ page }) => {
+    await page.goto("/brick-by-brick/");
+    const defaultSqm = await page.locator("#i_sqm").inputValue();
+
+    await page.locator("#i_sqm").fill("310");
+    await page.locator("#i_sqm").dispatchEvent("input");
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(Brick.STORAGE_KEY) || "{}").V?.sqm))
+      .toBe(310);
+
+    // A bare URL, and one carrying only parameters the calculator doesn't know,
+    // both restore what this visitor last had.
+    for (const url of ["/brick-by-brick/", "/brick-by-brick/?utm_source=x"]) {
+      await page.goto(url);
+      await expect(page.locator("#i_sqm"), url).toHaveValue("310");
+    }
+
+    // The defaults link llms.txt recommends: one recognised parameter, set to
+    // its own default, so it changes nothing but still trips the branch.
+    await page.goto("/brick-by-brick/?m=asyougo");
+    await expect(page.locator("#i_sqm")).toHaveValue(defaultSqm);
+
+    // ...and opening it left the saved scenario alone.
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem(Brick.STORAGE_KEY)).V.sqm)).toBe(310);
   });
 
   test("changing an input updates the headline and tiles live, without a reload", async ({ page }) => {
