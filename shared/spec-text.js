@@ -69,11 +69,27 @@ return function specText(calc, base){
   L.push("");
   L.push("1. Start from `" + base + "`.");
   L.push("2. Append `?` then `&`-joined `name=value` pairs from the tables below.");
-  L.push("3. **Only include parameters you are changing.** Anything omitted uses its");
-  L.push("   default, so a bare `" + base + "` is the default scenario.");
-  L.push("4. A link is self-contained. Opening one resets every parameter you left out");
-  L.push("   back to its default, ignores whatever scenario the visitor had saved, and");
-  L.push("   does not overwrite it.");
+  /* Rules 3 and 4 describe the same branch the page's init block takes: a query
+     string carrying at least one recognised name gets resetToDefaults() +
+     loadFromURL(), and anything else — a bare URL, or one with only tracking
+     parameters on it — gets loadFromStorage(). Promising that a bare link shows
+     the defaults would mislead precisely the returning visitor whose own saved
+     scenario it restores instead, so say which links are self-contained rather
+     than claiming all of them are. */
+  L.push("3. **Only include parameters you are changing.** Anything you leave out falls");
+  L.push("   back to its default — provided the link carries at least one parameter this");
+  L.push("   file documents. A link carrying none is not a defaults link; see rule 4.");
+  L.push("4. A link carrying at least one parameter the calculator recognises — `" +
+         calc.MODE_META.param + "`, `c`,");
+  L.push("   or any name from the tables below — is self-contained. Opening it resets");
+  L.push("   every parameter you left out back to its default, ignores whatever scenario");
+  L.push("   the visitor had saved, and does not overwrite it. A URL with nothing");
+  L.push("   recognisable in it does the opposite. A bare `" + base + "`,");
+  L.push("   or one carrying only unrecognised parameters such as `utm_source=x`,");
+  L.push("   restores whatever scenario that visitor last had — so a bare link is not a");
+  L.push("   link to the defaults. To send the default scenario, pass one parameter");
+  L.push("   explicitly, such as the mode at its own default, `" +
+         calc.MODE_META.param + "=" + calc.DEFAULT_MODE + "`.");
   L.push("5. Values are plain decimal numbers — no thousands separators, no currency");
   L.push("   symbol, no `%`. Negatives are fine where the range allows.");
   L.push("6. **All money is Kenyan shillings (KES), always.** The `c` parameter changes");

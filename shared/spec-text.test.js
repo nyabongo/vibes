@@ -26,6 +26,11 @@ function paramRows(text) {
     }));
 }
 
+/* The rules are hand-wrapped for reading, so a single claim can straddle a line
+   break. Assertions about what the prose says run against the collapsed text,
+   which survives a future re-wrap; assertions about layout do not. */
+const flat = (s) => s.replace(/\s+/g, " ");
+
 const TOOLS = [
   ["rent-or-buy", Calc],
   ["build-or-invest", Model]
@@ -100,6 +105,51 @@ describe.each(TOOLS)("specText for %s", (_name, calc) => {
 
   it("warns that out-of-range values are clamped rather than rejected", () => {
     expect(text).toContain("never rejected, only clamped");
+  });
+
+  /* The page's init block branches on hasScenarioParams(): a recognised name
+     means resetToDefaults() + loadFromURL(), anything else means
+     loadFromStorage(). The spec used to describe only the first branch, and
+     called a bare URL "the default scenario" — which is the second branch, and
+     the one that hands a returning visitor their own saved scenario back. */
+  describe("the link rules match the branch the page actually takes", () => {
+    it("does not call a bare URL the default scenario", () => {
+      expect(calc.hasScenarioParams("")).toBe(false);
+      expect(calc.hasScenarioParams("?utm_source=x")).toBe(false);
+      expect(flat(text)).not.toContain("is the default scenario");
+      expect(flat(text)).toContain("a bare link is not a link to the defaults");
+      expect(flat(text)).toContain("restores whatever scenario that visitor last had");
+    });
+
+    it("makes self-containment conditional on a recognised parameter", () => {
+      expect(flat(text)).toContain("at least one parameter the calculator recognises");
+      // The promise itself has to survive the qualification, or a link-builder
+      // loses the reason it can omit everything it isn't changing.
+      expect(flat(text)).toContain("resets every parameter you left out back to its default");
+      expect(flat(text)).toContain("ignores whatever scenario the visitor had saved");
+    });
+
+    it("recommends a defaults link that really does open the defaults", () => {
+      const recipe = calc.MODE_META.param + "=" + calc.DEFAULT_MODE;
+      expect(text).toContain("`" + recipe + "`");
+
+      // Recognised, so the page takes the reset + loadFromURL branch...
+      expect(calc.hasScenarioParams("?" + recipe)).toBe(true);
+
+      // ...and what that branch produces is the documented defaults, untouched.
+      calc.resetToDefaults();
+      calc.loadFromURL("?" + recipe);
+      Object.keys(calc.DEFAULTS).forEach((k) => expect(calc.V[k], k).toBe(calc.DEFAULTS[k]));
+      expect(calc.mode).toBe(calc.DEFAULT_MODE);
+      expect(calc.cur.code).toBe(calc.DEFAULT_CUR_CODE);
+    });
+
+    it("names only parameters hasScenarioParams would actually recognise", () => {
+      // `m`, `c` and the table names are the exact set that trips the branch.
+      expect(calc.hasScenarioParams("?" + calc.MODE_META.param + "=x")).toBe(true);
+      expect(calc.hasScenarioParams("?c=x")).toBe(true);
+      rows.forEach((r) => expect(calc.hasScenarioParams("?" + r.param + "=1"), r.param).toBe(true));
+    });
   });
 
   it("renders each worked example under its label, as a bare URL", () => {

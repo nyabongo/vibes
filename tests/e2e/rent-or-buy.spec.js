@@ -51,6 +51,37 @@ test.describe("rent-or-buy", () => {
     await fresh.close();
   });
 
+  /* llms.txt rules 3 and 4 turn on this branch, and used to describe only half
+     of it — they called a bare URL "the default scenario" when it is the one
+     shape of URL that hands a returning visitor their own saved scenario back.
+     Pinned here rather than only against the engine, because the branch itself
+     lives in the page's init block. */
+  test("only a link with a recognised parameter shows the defaults, as llms.txt claims", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+    const defaultPrice = await page.locator("#i_price").inputValue();
+
+    await page.locator("#i_price").fill("18500000");
+    await page.locator("#i_price").dispatchEvent("input");
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(Calc.STORAGE_KEY) || "{}").V?.price))
+      .toBe(18500000);
+
+    // A bare URL, and one carrying only parameters the calculator doesn't know,
+    // both restore what this visitor last had.
+    for (const url of ["/rent-or-buy/", "/rent-or-buy/?utm_source=x"]) {
+      await page.goto(url);
+      await expect(page.locator("#i_price"), url).toHaveValue("18500000");
+    }
+
+    // The defaults link llms.txt recommends: one recognised parameter, set to
+    // its own default, so it changes nothing but still trips the branch.
+    await page.goto("/rent-or-buy/?m=live");
+    await expect(page.locator("#i_price")).toHaveValue(defaultPrice);
+
+    // ...and opening it left the saved scenario alone.
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem(Calc.STORAGE_KEY)).V.price)).toBe(18500000);
+  });
+
   test("currency switcher changes the displayed symbol and scale", async ({ page }) => {
     await page.goto("/rent-or-buy/");
     await expect(page.locator("#tiles .tile").first()).toContainText("KSh");

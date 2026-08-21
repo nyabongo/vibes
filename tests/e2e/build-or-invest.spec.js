@@ -68,6 +68,29 @@ test.describe("build-or-invest", () => {
     await fresh.close();
   });
 
+  /* See the matching test in rent-or-buy.spec.js — llms.txt makes the same
+     claim for both calculators, and both pages branch the same way. */
+  test("only a link with a recognised parameter shows the defaults, as llms.txt claims", async ({ page }) => {
+    await page.goto("/build-or-invest/");
+    const defaultCapital = await page.locator("#i_capital").inputValue();
+
+    await page.locator("#i_capital").fill("75000000");
+    await page.locator("#i_capital").dispatchEvent("input");
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(Model.STORAGE_KEY) || "{}").V?.capital))
+      .toBe(75000000);
+
+    for (const url of ["/build-or-invest/", "/build-or-invest/?utm_source=x"]) {
+      await page.goto(url);
+      await expect(page.locator("#i_capital"), url).toHaveValue("75000000");
+    }
+
+    await page.goto("/build-or-invest/?m=gross");
+    await expect(page.locator("#i_capital")).toHaveValue(defaultCapital);
+
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem(Model.STORAGE_KEY)).V.capital)).toBe(75000000);
+  });
+
   test("currency switcher changes the displayed symbol and scale", async ({ page }) => {
     await page.goto("/build-or-invest/");
     await expect(page.locator("#tiles .tile").first()).toContainText("KSh");
