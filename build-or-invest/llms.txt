@@ -166,3 +166,4 @@ a project simply doesn't finish. It is a model, not advice.
 
 - https://vibes.obel.dev/llms.txt — index of the other tools
 - https://vibes.obel.dev/rent-or-buy/llms.txt — the same comparison for a single home you'd live in
+- https://vibes.obel.dev/brick-by-brick/llms.txt — a home built out of salary rather than a lump sum

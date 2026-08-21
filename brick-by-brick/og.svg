@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+<rect width="1200" height="630" fill="#E7E9E3"/>
+
+<text x="80" y="112" font-family="'IBM Plex Mono', ui-monospace, monospace" font-size="20" letter-spacing="3" fill="#6B7069">BUILD SLOWLY VS RENT AND INVEST &#183; CROSSOVER MODEL</text>
+<rect x="80" y="132" width="1040" height="1" fill="#15181C"/>
+
+<text x="78" y="232" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#15181C">A course at a time,</text>
+<text x="78" y="304" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="600" fill="#15181C">or <tspan fill="#C0611A">rent and invest</tspan>.</text>
+<text x="80" y="360" font-family="'IBM Plex Sans', system-ui, sans-serif" font-size="24" fill="#6B7069">Works out when you move in, whether you ever finish, and what it costs to wait.</text>
+
+<g transform="translate(880,440)">
+  <rect width="240" height="140" fill="#FBFBF9" stroke="#CBCEC5"/>
+  <rect x="14" y="14" width="86" height="112" fill="#6B7069" opacity="0.12"/>
+  <path d="M18 116 L 60 108 L 100 96 L 104 40 L 222 24" fill="none" stroke="#1B4F8A" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M18 110 C 90 100, 150 72, 222 38" fill="none" stroke="#C0611A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="100" y1="14" x2="100" y2="126" stroke="#CBCEC5" stroke-width="1.5" stroke-dasharray="3 5"/>
+</g>
+
+<text x="80" y="580" font-family="'IBM Plex Mono', ui-monospace, monospace" font-size="20" fill="#6B7069">vibes.obel.dev/brick-by-brick</text>
+</svg>

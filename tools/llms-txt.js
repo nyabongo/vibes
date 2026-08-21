@@ -36,7 +36,7 @@ var SPECS = [
     summary:
       "A handful of standalone browser tools at " + SITE + ". No accounts, no " +
       "tracking, no server: every one is a static page that computes in the " +
-      "browser. Two of them are financial calculators whose entire input set is " +
+      "browser. Three of them are financial calculators whose entire input set is " +
       "encoded in the URL query string, so you can hand someone a link that " +
       "opens with their scenario already filled in.",
     body: [
@@ -50,6 +50,8 @@ var SPECS = [
       "  invest the difference? Spec: " + SITE + "/rent-or-buy/llms.txt",
       "- [Build or invest](" + SITE + "/build-or-invest/): should a lump sum become an",
       "  apartment block or compound in the market? Spec: " + SITE + "/build-or-invest/llms.txt",
+      "- [Brick by brick](" + SITE + "/brick-by-brick/): should you build a home for yourself a",
+      "  bit at a time while you rent, or rent and invest instead? Spec: " + SITE + "/brick-by-brick/llms.txt",
       "",
       "## Other tools",
       "",
@@ -59,9 +61,11 @@ var SPECS = [
       "",
       "## Notes",
       "",
-      "- Both calculators default to Kenyan figures, but nothing is hardcoded to Kenya.",
-      "  Every tax, rate and transaction cost is an input, so set them for whatever",
-      "  market your reader is actually in.",
+      "- Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens",
+      "  on Ugandan ones. Nothing is hardcoded to either. Every tax, rate and transaction",
+      "  cost is an input, so set them for whatever market your reader is actually in.",
+      "- Money in every URL is Kenyan shillings regardless of which calculator it is, and",
+      "  regardless of the currency the page displays. Convert before building a link.",
       "- They are models, not advice. Growth rates are steady averages; real ones arrive",
       "  in lumps.",
       "- Source: https://github.com/nyabongo/vibes"
@@ -99,7 +103,8 @@ var SPECS = [
     ].join("\n"),
     related: [
       [SITE + "/llms.txt", "index of the other tools"],
-      [SITE + "/build-or-invest/llms.txt", "should a lump sum become a building instead?"]
+      [SITE + "/build-or-invest/llms.txt", "should a lump sum become a building instead?"],
+      [SITE + "/brick-by-brick/llms.txt", "no mortgage on offer? the same question paid for out of salary"]
     ]
   },
 
@@ -139,7 +144,65 @@ var SPECS = [
     ].join("\n"),
     related: [
       [SITE + "/llms.txt", "index of the other tools"],
-      [SITE + "/rent-or-buy/llms.txt", "the same comparison for a single home you'd live in"]
+      [SITE + "/rent-or-buy/llms.txt", "the same comparison for a single home you'd live in"],
+      [SITE + "/brick-by-brick/llms.txt", "a home built out of salary rather than a lump sum"]
+    ]
+  },
+
+  {
+    out: "brick-by-brick/llms.txt",
+    mod: require("../brick-by-brick/model.js"),
+    base: SITE + "/brick-by-brick/",
+    title: "Brick by brick — build slowly, or rent and invest",
+    summary:
+      "A browser calculator at " + SITE + "/brick-by-brick/ that models building a home for " +
+      "yourself a stage at a time out of salary, while renting, against renting for good and " +
+      "investing the same money. It reports when you move in, whether the house is ever " +
+      "finished, and the year one path overtakes the other. Every input is encoded in the URL " +
+      "query string, so a link opens with the whole scenario already filled in.",
+    model: [
+      "## What the calculator does with these",
+      "",
+      "Both paths are handed the same wallet every month: the rent (`r`, growing at `rg`)",
+      "plus what you can set aside (`sm`, growing at `ig`). The renter pays rent and",
+      "invests the rest at `inv`, net of `itx` and `ife`. The builder pays that same rent",
+      "until they move in, buys the plot as soon as the pot covers `land` plus `lfee` — a",
+      "target that is itself rising at `app`, so a slow saver can watch it recede — and",
+      "puts what is left into the house. Once they move in the rent stops and `oc`, `mnt`",
+      "and inflation `infl` take its place, so the freed rent finishes the house and then",
+      "goes into the same investment as the renter's money.",
+      "",
+      "The build is not given a duration. Progress is tracked as a share of the house:",
+      "each month's spend divided by what the whole house costs that month, which is",
+      "`sqm` times `cps`, plus `perm` and `wst`, inflated at `bi`. So a build cost rising",
+      "faster than the budget grows means progress converges short of 100% and the house",
+      "is never finished — the calculator says so rather than extrapolating a finish date.",
+      "You move in at `mi` complete, not at 100%, which is when the rent stops.",
+      "",
+      "An unfinished house is valued at `pb` of the work standing in it, priced at what",
+      "that work would cost to put up today rather than at the nominal money spent, and",
+      "that fraction decays at `dec` for every year it stands unfinished. At completion it",
+      "becomes `fv` of what it cost, and appreciates at `app` from there. Net worth is the",
+      "plot and the house less `sp` and `cgt`, plus the pot.",
+      "",
+      "A crossover here means overtaking, not merely being level: before the plot is paid",
+      "for the two paths run identical arithmetic, so being tied in year one is not a",
+      "crossing.",
+      "",
+      "The defaults are Ugandan, but nothing is hardcoded to Uganda. Every tax, rate and",
+      "cost is a plain input. Note that `cgt` starts at zero because Uganda exempts a home",
+      "you have lived in for at least two years.",
+      "",
+      "Not modelled: a construction loan or mortgage part-way through, land disputes and",
+      "title problems, buying materials in bulk ahead of a price rise, family labour, or",
+      "renting out part of the plot while you build. Nor does the money capture the part",
+      "that decides it for most people — that a landlord can raise the rent or ask you to",
+      "leave, and a finished house cannot. It is a model, not advice."
+    ].join("\n"),
+    related: [
+      [SITE + "/llms.txt", "index of the other tools"],
+      [SITE + "/rent-or-buy/llms.txt", "the same question where a mortgage is on the table"],
+      [SITE + "/build-or-invest/llms.txt", "building to let rather than to live in"]
     ]
   }
 ];

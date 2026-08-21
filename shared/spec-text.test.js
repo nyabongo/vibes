@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import Calc from "../rent-or-buy/calc.js";
 import Model from "../build-or-invest/model.js";
+import Brick from "../brick-by-brick/model.js";
 
 const BASE = "https://vibes.obel.dev/x/";
 const specTextSource = readFileSync(fileURLToPath(new URL("./spec-text.js", import.meta.url)), "utf8");
@@ -33,7 +34,8 @@ const flat = (s) => s.replace(/\s+/g, " ");
 
 const TOOLS = [
   ["rent-or-buy", Calc],
-  ["build-or-invest", Model]
+  ["build-or-invest", Model],
+  ["brick-by-brick", Brick]
 ];
 
 describe.each(TOOLS)("specText for %s", (_name, calc) => {
