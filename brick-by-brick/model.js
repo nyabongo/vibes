@@ -400,7 +400,12 @@ class BrickByBrickModel {
         /* the plot comes first, and affording it can take a while */
         var landNow = landValueAt(m) * (1 + V.landFeesPct/100);
         if(pot >= landNow){
-          pot -= landNow; landPaid = landValueAt(m); owned = true; landM = m;
+          /* The whole outlay is the basis, fees included — the same convention
+             as rent-or-buy taxing the gain over price plus closing costs, and
+             build-or-invest over a projectCost carrying its soft costs. Stamp
+             duty and the lawyer are part of what the plot cost you; crediting
+             only the headline price taxes a gain that was never made. */
+          pot -= landNow; landPaid = landNow; owned = true; landM = m;
         }
       } else if(baseCost > 0 && progress < 1){
         var costNow = baseCost * Math.pow(1+gBuild, m);

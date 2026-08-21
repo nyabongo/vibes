@@ -94,6 +94,37 @@ describe("the plot comes first", () => {
     expect(fast).toBeLessThan(slow);
   });
 
+  it("credits the transfer and legal fees to what the plot cost", () => {
+    // The pot is debited for price plus fees, so the basis has to carry both.
+    // rent-or-buy taxes the gain over price + closing and build-or-invest over
+    // a projectCost holding its soft costs; this is the same convention.
+    const s = Brick.simulate();
+    const atPurchase = V().landCost * Math.pow(1 + Brick.mrate(V().apprec), s.landYear * 12);
+    near(s.landPaid, atPurchase * (1 + V().landFeesPct / 100), 1e-6);
+    expect(s.landPaid).toBeGreaterThan(atPurchase);
+  });
+
+  it("charges capital gains over that basis, not over the bare plot price", () => {
+    // cgt defaults to zero, so an error here is invisible until someone who
+    // doesn't qualify for the principal-residence exemption sets it.
+    V().cgt = 40;
+    const taxed = Brick.simulate();
+    V().cgt = 0;
+    const free = Brick.simulate();
+
+    const last = free.series[free.series.length - 1];
+    const sale = (last.land + last.house) * (1 - V().sellPct / 100);
+    const gain = Math.max(0, sale - (free.landPaid + free.sunk));
+
+    // cgt touches only the snapshot, so both runs share one set of dynamics.
+    near(free.finalBuild - taxed.finalBuild, gain * 0.4, 1e-6);
+
+    // ...and dropping the fees from the basis would have taxed more than that.
+    const feesOnly = free.landPaid * V().landFeesPct / (100 + V().landFeesPct);
+    expect(feesOnly).toBeGreaterThan(0);
+    expect(Math.max(0, sale - (free.landPaid - feesOnly + free.sunk))).toBeGreaterThan(gain);
+  });
+
   it("never breaks ground on a plot it cannot afford", () => {
     V().landCost = 1e11;
     const s = Brick.simulate();
