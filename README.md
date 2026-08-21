@@ -27,9 +27,10 @@ transaction cost is an input.
 What deploys is the repo, as-is. No bundler, no transpiler, no generated
 `dist/` — GitHub Pages serves these files directly, and opening
 `rent-or-buy/index.html` from disk renders the same page with nothing built
-first. Serve it over HTTP if you are exercising the link and prompt buttons,
-though: both build their URL from `location.origin`, which a `file://` page
-does not have.
+first. Serve it over HTTP if you are exercising the two copy buttons, though.
+Copy link hands back `location.href`, which off disk is a `file:///…` path
+nobody else can open, and Copy prompt builds its base from `location.origin`,
+which a `file://` page reports as the string `"null"`.
 
 npm is here for dev tooling only. `vitest` and `@playwright/test` are the only
 dependencies [package.json](package.json) has, both of them dev-only, and
@@ -107,8 +108,9 @@ npx playwright install --with-deps chromium
 E2E spec, and where each lives. One rule from it is worth repeating here,
 because it is the failure you are most likely to hit first — **if
 `tools/llms-txt.test.js` fails, run `npm run docs` and commit the result.** It
-means a field, default or range changed without the spec being regenerated. The
-generator is deliberately not chained into `npm test`: regenerating before
+means the committed output is stale — a field, default or range moved, or the
+editorial prose in the generator changed, and the specs were not regenerated
+after. The generator is deliberately not chained into `npm test`: regenerating before
 asserting would turn a loud failure into a silent auto-fix, and the whole point
 is to notice.
 
@@ -120,14 +122,15 @@ and then the E2E suite on Node 22, for every push to `main` and every PR.
 Three ideas hold the two calculators together, and they explain most of the
 shape of the code.
 
-**The URL is the API.** Every input is a query-string parameter, mapped from a
+**The URL is the API.** Every field is a query-string parameter, mapped from a
 readable internal name to a short public one in `PARAM_MAP`
-([rent-or-buy/calc.js:27](rent-or-buy/calc.js#L27)). A link carrying any
-parameter is self-contained: the page resets to defaults, applies what the URL
-sets, and leaves the visitor's own saved scenario untouched. A URL with no
-parameters at all is the exception — that restores whatever they last had.
-Money in the URL is always KES; the `c` parameter changes the display currency
-only.
+([rent-or-buy/calc.js:27](rent-or-buy/calc.js#L27)). Two more sit outside that
+map: `m` for the mode, named by `MODE_META.param`, and `c` for the display
+currency. A link carrying at least one parameter the calculator recognises is
+self-contained — the page resets to defaults, applies what the URL sets, and
+leaves the visitor's saved scenario untouched. A URL with nothing recognisable
+in it, `?utm_source=…` included, restores whatever they last had instead. Money
+in the URL is always KES; `c` changes the display currency only.
 
 **The engine is a UMD module.** [`rent-or-buy/calc.js`](rent-or-buy/calc.js) and
 [`build-or-invest/model.js`](build-or-invest/model.js) assign to
