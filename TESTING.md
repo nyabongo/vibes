@@ -80,9 +80,10 @@ Two consequences worth knowing:
 
 - Generated output must stay byte-identical between runs, so nothing may embed
   a date, timestamp or commit sha.
-- `.gitattributes` pins these files to LF. Most contributors have
-  `core.autocrlf=true`, and without the pin the golden check would pass right
-  after `npm run docs` and fail on a fresh clone.
+- `.gitattributes` pins these files to LF so they check out the same for
+  everyone, most of whom have `core.autocrlf=true`. The golden check normalises
+  CRLF before comparing as well, so a misconfigured checkout reports the real
+  problem instead of a phantom staleness failure.
 
 ## Writing a regression test
 
