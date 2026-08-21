@@ -94,6 +94,18 @@ describe("the plot comes first", () => {
     expect(fast).toBeLessThan(slow);
   });
 
+  it("lets the plot get dearer while you are still saving for it", () => {
+    // apprec is a headwind before it is a tailwind, and the field note has to
+    // say so — it is published in llms.txt for chatbots to read.
+    V().savings = 0;
+    V().apprec = 0;
+    const still = Brick.simulate();
+    V().apprec = 18;
+    const rising = Brick.simulate();
+    expect(rising.landYear).toBeGreaterThan(still.landYear);
+    expect(rising.landPaid).toBeGreaterThan(still.landPaid);
+  });
+
   it("credits the transfer and legal fees to what the plot cost", () => {
     // The pot is debited for price plus fees, so the basis has to carry both.
     // rent-or-buy taxes the gain over price + closing and build-or-invest over

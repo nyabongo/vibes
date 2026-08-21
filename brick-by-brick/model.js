@@ -80,7 +80,7 @@ var FIELDS = {
     pct("inflation","Inflation",0,20,0.25,"Pushes up the running costs above.")
   ],
   fWorth:[
-    pct("apprec","Land & house appreciation",-5,20,0.25,"Per year, once the house is standing."),
+    pct("apprec","Land & house appreciation",-5,20,0.25,"Per year, on the plot from day one — including while you are still saving to buy it, which is what can put it out of reach — and on the house once it is finished."),
     pct("finishedValuePct","Finished house is worth",50,200,5,"A share of what it cost to build. Above 100 means you captured the margin a developer would have taken."),
     pct("partBuiltPct","An unfinished house fetches",0,100,5,"A share of the work standing in it, priced at what that work would cost today. Walls without a roof are not an asset at cost.")
   ],
