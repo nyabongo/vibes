@@ -1,7 +1,8 @@
 # The generated llms.txt files are compared byte-for-byte against the generator
 # output by tools/llms-txt.test.js. core.autocrlf is on for most contributors, so
-# without this they'd check out as CRLF and the golden-file test would fail on a
-# fresh clone while passing right after `npm run docs`.
+# this pin is what makes the files check out the same for everyone. The golden
+# test normalises CRLF before comparing as well, so a misconfigured checkout
+# reports the real problem instead of a phantom staleness failure.
 #
 # A pattern with no slash matches at every directory level, the same rule
 # .gitignore uses — so this one line covers rent-or-buy/llms.txt and
