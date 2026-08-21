@@ -231,6 +231,42 @@ test.describe("brick-by-brick", () => {
     await expect(btn).toHaveText("Copy prompt");
   });
 
+  test("the AI prompt never passes off tracking junk as the visitor's assumptions", async ({ page, context, browserName }) => {
+    test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
+    const read = () => page.evaluate(() => navigator.clipboard.readText());
+    const copy = async () => {
+      await page.locator("details.aihelp > summary").click();
+      await page.locator("#copyPrompt").click();
+      await expect(page.locator("#copyPrompt")).toHaveText("Copied");
+      return read();
+    };
+
+    // Arriving on tracking junk with nothing saved is not a scenario, and the
+    // prompt must not tell a chatbot it is.
+    await page.goto("/brick-by-brick/?utm_source=twitter&fbclid=abc123");
+    let prompt = await copy();
+    expect(prompt).not.toContain("I've already set some of it up");
+
+    // Assert on the *values*, not the key: the generated spec quotes
+    // `utm_source=x` in its own prose as the example of a parameter the
+    // calculator ignores, so searching for "utm_source" always matches.
+    expect(prompt).not.toMatch(/twitter|fbclid|abc123/);
+
+    // With something saved, the same arrival restores it — and the prompt may
+    // now claim a scenario, but only the normalised one, still carrying no junk.
+    await page.locator("#i_sqm").fill("310");
+    await page.locator("#i_sqm").dispatchEvent("input");
+    await page.goto("/brick-by-brick/?utm_source=twitter&fbclid=abc123");
+    await expect(page.locator("#i_sqm")).toHaveValue("310");
+
+    prompt = await copy();
+    expect(prompt).toContain("I've already set some of it up");
+    expect(prompt).toContain("sqm=310");
+    expect(prompt).not.toMatch(/twitter|fbclid|abc123/);
+  });
+
   test("llms.txt is served as plain text and linked from the page body", async ({ page, request }) => {
     const res = await request.get("/brick-by-brick/llms.txt");
     expect(res.status()).toBe(200);

@@ -506,8 +506,16 @@ function aiPrompt(){
     ""
   ];
   /* Only worth carrying the scenario across if there is one — at the defaults
-     location.href is bare, and calling that "my assumptions" would be a lie. */
-  if(location.search){
+     location.href is bare, and calling that "my assumptions" would be a lie.
+
+     Ask the engine what counts as a scenario rather than testing location.search
+     for emptiness. Both give the same answer today, because render() has already
+     called updateURL() and rewritten the query string from buildQueryString(),
+     which only ever emits parameters this calculator recognises — so a visitor
+     who arrived on ?utm_source=x is looking at a bare URL by the time they can
+     click. But that makes a truthful prompt depend on the bootstrap ordering
+     several screens away. This says what it means. */
+  if(Brick.hasScenarioParams()){
     lines.push("I've already set some of it up: " + location.href);
     lines.push("Treat those as a starting point and correct any you can research.");
     lines.push("");
