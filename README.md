@@ -26,11 +26,14 @@ transaction cost is an input.
 
 What deploys is the repo, as-is. No bundler, no transpiler, no generated
 `dist/` — GitHub Pages serves these files directly, and opening
-`rent-or-buy/index.html` from disk gets you the same page the site does.
+`rent-or-buy/index.html` from disk renders the same page with nothing built
+first. Serve it over HTTP if you are exercising the link and prompt buttons,
+though: both build their URL from `location.origin`, which a `file://` page
+does not have.
 
-npm is here for dev tooling only. `vitest` and `@playwright/test` are the
-entirety of [package.json](package.json), both devDependencies, and neither
-reaches what ships.
+npm is here for dev tooling only. `vitest` and `@playwright/test` are the only
+dependencies [package.json](package.json) has, both of them dev-only, and
+neither reaches what ships.
 
 That is not the same as zero dependencies. Three things load from a CDN at
 runtime, and they are the only ones:
@@ -119,10 +122,12 @@ shape of the code.
 
 **The URL is the API.** Every input is a query-string parameter, mapped from a
 readable internal name to a short public one in `PARAM_MAP`
-([rent-or-buy/calc.js:27](rent-or-buy/calc.js#L27)). Anything you leave out
-falls back to its default, so a bare URL is the default scenario and any link is
-self-contained. Money in the URL is always KES; the `c` parameter changes the
-display currency only.
+([rent-or-buy/calc.js:27](rent-or-buy/calc.js#L27)). A link carrying any
+parameter is self-contained: the page resets to defaults, applies what the URL
+sets, and leaves the visitor's own saved scenario untouched. A URL with no
+parameters at all is the exception — that restores whatever they last had.
+Money in the URL is always KES; the `c` parameter changes the display currency
+only.
 
 **The engine is a UMD module.** [`rent-or-buy/calc.js`](rent-or-buy/calc.js) and
 [`build-or-invest/model.js`](build-or-invest/model.js) assign to
@@ -169,8 +174,9 @@ copying.
 
 1. **Write the engine.** Wrap it in the UMD prelude from
    [build-or-invest/model.js:1](build-or-invest/model.js#L1) and put the state,
-   simulation, persistence and formatting inside it. The page should end up
-   holding nothing but wiring.
+   simulation, persistence and formatting inside it. What stays in the page is
+   the view layer — building the fields, drawing the chart and the tiles, and
+   the event wiring.
 
 2. **Implement what `spec-text.js` needs.** Nine members, listed in its
    `REQUIRED` array ([shared/spec-text.js:48](shared/spec-text.js#L48)):
@@ -185,8 +191,9 @@ copying.
    ([rent-or-buy/calc.js:36](rent-or-buy/calc.js#L36)) — min and max set both
    the slider bounds and the range published in the spec, while `step` only
    moves the on-screen slider. URL values are never held to it. Keep each
-   `SECTION_META[id].legend` matching the `<legend>` text in the HTML, and set
-   `mode:` on a section to gate it to one mode.
+   `SECTION_META[id].legend` matching the `<legend>` text in the HTML. Setting
+   `mode:` on a section marks it mode-only in the generated spec; hiding the
+   fieldset on screen is a separate job, done by the page's `applyModeUI()`.
 
 4. **Keep `EXAMPLES` as data.** The unit tests round-trip it through
    `loadFromURL` / `buildQueryString`, which catches an example that silently got
@@ -210,9 +217,10 @@ copying.
 
 7. **Two constraints on generated output.** Nothing may embed a date, timestamp
    or commit SHA — the golden test compares byte-for-byte between runs. And
-   [.gitattributes](.gitattributes) pins `llms.txt` to LF, because most
-   contributors have `core.autocrlf=true` and without the pin the check would
-   pass right after `npm run docs` and fail on a fresh clone.
+   [.gitattributes](.gitattributes) pins `llms.txt` to LF so the files check out
+   the same for everyone, most of whom have `core.autocrlf=true`. The golden
+   test normalises CRLF before comparing as well, so a misconfigured checkout
+   reports the real problem instead of a phantom staleness failure.
 
 8. **Add tests**: `<tool>/<name>.test.js` for the engine, and
    `tests/e2e/<tool>.spec.js` for the page.
