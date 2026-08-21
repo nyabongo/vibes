@@ -4,6 +4,7 @@ import { join } from "node:path";
 import docs from "./llms-txt.js";
 import Calc from "../rent-or-buy/calc.js";
 import Model from "../build-or-invest/model.js";
+import Brick from "../brick-by-brick/model.js";
 
 const { SPECS, render, ROOT, SITE } = docs;
 
@@ -16,7 +17,8 @@ const read = (p) => norm(readFileSync(join(ROOT, p), "utf8"));
 
 const TOOL_BY_PATH = {
   "rent-or-buy": Calc,
-  "build-or-invest": Model
+  "build-or-invest": Model,
+  "brick-by-brick": Brick
 };
 
 describe("the committed llms.txt files are current", () => {
@@ -34,20 +36,22 @@ describe("every calculator link published anywhere actually works", () => {
     "llms.txt",
     "rent-or-buy/llms.txt",
     "build-or-invest/llms.txt",
+    "brick-by-brick/llms.txt",
     "index.html",
     "rent-or-buy/index.html",
-    "build-or-invest/index.html"
+    "build-or-invest/index.html",
+    "brick-by-brick/index.html"
   ];
 
   const links = [];
   SOURCES.forEach((src) => {
     const text = read(src);
-    const re = /https:\/\/vibes\.obel\.dev\/(rent-or-buy|build-or-invest)\/\?[^\s"'<>)]+/g;
+    const re = /https:\/\/vibes\.obel\.dev\/(rent-or-buy|build-or-invest|brick-by-brick)\/\?[^\s"'<>)]+/g;
     [...text.matchAll(re)].forEach((m) => links.push({ src, url: m[0], tool: m[1] }));
   });
 
   it("finds the worked examples, so the assertions below aren't vacuous", () => {
-    const expected = Calc.EXAMPLES.length + Model.EXAMPLES.length;
+    const expected = Calc.EXAMPLES.length + Model.EXAMPLES.length + Brick.EXAMPLES.length;
     expect(links.length).toBeGreaterThanOrEqual(expected);
   });
 
@@ -110,7 +114,7 @@ describe("the docs are discoverable", () => {
   });
 
   it("links llms.txt visibly from each calculator, not just from <head>", () => {
-    ["rent-or-buy/index.html", "build-or-invest/index.html"].forEach((page) => {
+    ["rent-or-buy/index.html", "build-or-invest/index.html", "brick-by-brick/index.html"].forEach((page) => {
       const html = read(page);
       expect(html, page).toContain('<a href="llms.txt"');
       expect(html, page).toContain('rel="alternate"');

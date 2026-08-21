@@ -135,3 +135,4 @@ in lumps. It is a model, not advice.
 
 - https://vibes.obel.dev/llms.txt — index of the other tools
 - https://vibes.obel.dev/build-or-invest/llms.txt — should a lump sum become a building instead?
+- https://vibes.obel.dev/brick-by-brick/llms.txt — no mortgage on offer? the same question paid for out of salary

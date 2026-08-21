@@ -11,16 +11,20 @@ Small tools, vibe-coded. A monorepo of standalone browser tools, live at
 | --- | --- | --- | --- |
 | [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Models net worth over time for buying and for renting, and shows the exact year buying overtakes renting — or doesn't. | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
 | [Build or invest](https://vibes.obel.dev/build-or-invest/) | Compares building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth. | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
+| [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Compares building a home for yourself a stage at a time out of salary, while renting, against renting for good and investing the same money. Works out when you move in and whether construction costs outrun you before the house is finished. | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
 | [Passport photo printer](https://vibes.obel.dev/passport-photo-printer/) | Crops a photo to passport dimensions and lays it out on an A4 sheet for printing. | [`passport-photo-printer/`](passport-photo-printer/) | — |
 
-Both calculators take their whole input set from the URL query string, so a link
-opens with the scenario already filled in. The specs above document that URL
+All three calculators take their whole input set from the URL query string, so a
+link opens with the scenario already filled in. The specs above document that URL
 API — they are generated from the code, and
 [how that works](#how-a-calculator-is-put-together) is worth reading before you
 change one.
 
-The defaults are Kenyan. Nothing is hardcoded to Kenya: every tax, rate and
-transaction cost is an input.
+Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens
+on Ugandan ones. Nothing is hardcoded to either: every tax, rate and transaction
+cost is an input. Money in the URL is always KES whichever calculator it is —
+only the display currency changes, and each engine picks its own default for
+that through `DEFAULT_CUR_CODE`.
 
 ## No build step
 
@@ -57,16 +61,17 @@ rent-or-buy/
   calc.test.js             unit tests, co-located with what they test
   llms.txt                 generated parameter spec
 build-or-invest/           same shape: index.html, model.js, model.test.js, llms.txt
+brick-by-brick/            same shape again; opens in UGX rather than KES
 passport-photo-printer/    crop and print-layout tool; no URL API, no engine
 shared/
   tool.css                 house style for the calculators (design tokens at the top)
   spec-text.js             renders a calculator's URL API as markdown (UMD)
   clipboard.js             copyWithFeedback() — copy, then report on the button itself
-  components/              the four custom elements both calculators use
+  components/              the four custom elements every calculator uses
 tools/llms-txt.js          generates the committed llms.txt files
 tests/
   serve.js                 zero-dependency static server, for Playwright only
-  e2e/                     Playwright specs — the two calculators so far
+  e2e/                     Playwright specs — one per calculator
 CNAME  .nojekyll           GitHub Pages configuration
 robots.txt  sitemap.xml    crawler-facing files; both list the llms.txt specs
 TESTING.md                 the testing convention
@@ -132,10 +137,11 @@ leaves the visitor's saved scenario untouched. A URL with nothing recognisable
 in it, `?utm_source=…` included, restores whatever they last had instead. Money
 in the URL is always KES; `c` changes the display currency only.
 
-**The engine is a UMD module.** [`rent-or-buy/calc.js`](rent-or-buy/calc.js) and
-[`build-or-invest/model.js`](build-or-invest/model.js) assign to
-`module.exports` under Node and attach `Calc` / `Model` to `window` in the
-browser. One file, loaded as a plain `<script src>` with no build step, and
+**The engine is a UMD module.** [`rent-or-buy/calc.js`](rent-or-buy/calc.js),
+[`build-or-invest/model.js`](build-or-invest/model.js) and
+[`brick-by-brick/model.js`](brick-by-brick/model.js) assign to
+`module.exports` under Node and attach `Calc` / `Model` / `Brick` to `window` in
+the browser. One file, loaded as a plain `<script src>` with no build step, and
 still importable by Vitest. The simulation, state, persistence and formatting
 all live there; `index.html` holds only the view layer.
 

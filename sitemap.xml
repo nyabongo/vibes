@@ -7,6 +7,9 @@
     <loc>https://vibes.obel.dev/build-or-invest/</loc>
   </url>
   <url>
+    <loc>https://vibes.obel.dev/brick-by-brick/</loc>
+  </url>
+  <url>
     <loc>https://vibes.obel.dev/rent-or-buy/</loc>
   </url>
   <url>
@@ -20,5 +23,8 @@
   </url>
   <url>
     <loc>https://vibes.obel.dev/build-or-invest/llms.txt</loc>
+  </url>
+  <url>
+    <loc>https://vibes.obel.dev/brick-by-brick/llms.txt</loc>
   </url>
 </urlset>

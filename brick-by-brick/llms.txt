@@ -1,0 +1,183 @@
+# Brick by brick — build slowly, or rent and invest
+
+> A browser calculator at https://vibes.obel.dev/brick-by-brick/ that models building a home for yourself a stage at a time out of salary, while renting, against renting for good and investing the same money. It reports when you move in, whether the house is ever finished, and the year one path overtakes the other. Every input is encoded in the URL query string, so a link opens with the whole scenario already filled in.
+
+This file is the complete parameter reference for building a link to this
+calculator. The tables are generated from the calculator's own field
+definitions — if this file and the app disagree, the app is right and this is a
+bug.
+
+## How to build a link
+
+1. Start from `https://vibes.obel.dev/brick-by-brick/`.
+2. Append `?` then `&`-joined `name=value` pairs from the tables below.
+3. **Only include parameters you are changing.** Anything omitted uses its
+   default, so a bare `https://vibes.obel.dev/brick-by-brick/` is the default scenario.
+4. A link is self-contained. Opening one resets every parameter you left out
+   back to its default, ignores whatever scenario the visitor had saved, and
+   does not overwrite it.
+5. Values are plain decimal numbers — no thousands separators, no currency
+   symbol, no `%`. Negatives are fine where the range allows.
+6. **All money is Kenyan shillings (KES), always.** The `c` parameter changes
+   the display currency only. It does not convert the numbers you pass and it
+   does not change the model, so convert to KES yourself before building the
+   link.
+7. Out-of-range values are never rejected, only clamped — a link stays valid
+   while quietly meaning something else. Money is clamped to 0 to 1000000000000;
+   everything else to the range in its table.
+8. The on-screen sliders move in fixed steps, but **URL values do not have to
+   be multiples of those steps.** Pass the real figure.
+9. Percentages are whole-number percents: `50` means 50%, not 0.5.
+10. Output the finished URL as raw text on its own line. Do not wrap it in a
+    markdown link, do not percent-encode it, and do not write `&` as `&amp;`.
+11. These parameter names are specific to this calculator. Do not reuse them on
+    another vibes calculator — several short names mean different things there.
+
+## Modes
+
+`m` chooses how the build is paid for. Default `asyougo`. Case-sensitive, and any value other than `savefirst` is treated as `asyougo`.
+
+| value | shown as | means |
+| --- | --- | --- |
+| `asyougo` | Build as you go | Buy the plot, break ground, and put in whatever you have each month for as long as it takes. Uses `mi` and `dec`. |
+| `savefirst` | Save first, then build | Leave the money compounding until a set share of the cost is in hand, then build in one short push. Uses `sa` and `pm`, and you move in only once the house is finished. |
+
+`mi` and `dec` are ignored under `savefirst`, and `sa` and `pm` are ignored under `asyougo`. Setting the wrong one for the mode does nothing.
+
+## Display currency
+
+`c` sets the currency results are *displayed* in. Default `UGX`. Accepted values: `KES`, `UGX`, `USD`, `GBP`, `EUR`, `ZAR`, `NGN`, `INR`, `AED`. An unrecognised code is ignored entirely. Display only — see rule 6.
+
+## Parameters
+
+### What you're working with
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `sav` | What you have saved now | 1045296.1672 | KES | Both paths start from this same figure. One buys a plot with it, the other invests it. |
+| `sm` | What you can put aside each month | 87108.0139 | KES | On top of the rent you already pay. This is the money that either becomes bricks or becomes a portfolio. |
+| `ig` | Salary growth | 7 | 0 to 25 % | Per year. Set it against construction inflation below — if it loses that race, the house is never finished. |
+
+### The plot
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `land` | Plot price | 1393728.223 | KES | Bought as soon as you can afford it, which is not necessarily in month one. |
+| `lfee` | Survey, transfer & legal | 8 | 0 to 20 % | Stamp duty, surveyor, transfer, lawyer. A share of the plot price, and none of it comes back. |
+
+### The house
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `sqm` | House size | 120 | 30 to 600 m² | A modest three-bedroom bungalow is around 120. |
+| `cps` | Build cost per square metre | 52264.8084 | KES | Shell, roof, finishes and services, at today's prices. |
+| `perm` | Plans, approvals & supervision | 6 | 0 to 25 % | Architect, engineer, local authority approvals. A share of build cost. |
+| `wst` | Wastage, theft & rework | 10 | 0 to 35 % | Materials that walk off site, spoilage, and redoing work done wrong. The tax on managing your own build. |
+| `bi` | Construction cost inflation | 8 | 0 to 30 % | Per year, on cement, steel and iron sheets. This is what you are racing. |
+
+### Building as you go — mode `asyougo` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `mi` | Move in once this much is done | 70 | 30 to 100 % | Most people move in before the house is finished. Rent stops here, and finishing carries on around you. |
+| `dec` | Deterioration while unfinished | 3 | 0 to 20 % | Per year. A shell standing out in the rain is worth less every season it waits for a roof. |
+
+### Saving first — mode `savefirst` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `sa` | Break ground once you have saved | 70 | 10 to 150 % | A share of the build cost. Waiting longer means a shorter build, but more months of rent. |
+| `pm` | Months to build once you start | 12 | 3 to 60 months | The short push. Running out of money mid-push simply slows it down. |
+
+### Renting now
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `r` | Rent you pay now | 31358.885 | KES | Per month. It stops the month you move in, and that is the single biggest swing in the model. |
+| `rg` | Rent growth | 6 | 0 to 25 % | Per year. Every year the build runs long costs more than the year before it. |
+
+### Once you move in
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `oc` | Running the place once you own it | 5226.4808 | KES | Per month. Ground rent, security, water, garbage — the things a rental quietly included. |
+| `mnt` | Repairs & upkeep | 1 | 0 to 5 % | Per year, as a share of what the house is worth. 1% is the usual rule of thumb. |
+| `infl` | Inflation | 6 | 0 to 20 % | Pushes up the running costs above. |
+
+### What it's worth
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `app` | Land & house appreciation | 8 | -5 to 20 % | Per year, once the house is standing. |
+| `fv` | Finished house is worth | 110 | 50 to 200 % | A share of what it cost to build. Above 100 means you captured the margin a developer would have taken. |
+| `pb` | An unfinished house fetches | 65 | 0 to 100 % | A share of the work standing in it, priced at what that work would cost today. Walls without a roof are not an asset at cost. |
+
+### The alternative
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `inv` | Return if invested instead | 14 | 0 to 30 % | Annual, compounding. Ugandan treasury bonds have run in the low-to-mid teens. |
+| `itx` | Tax on those returns | 15 | 0 to 40 % | Withholding tax. 15% on interest in Uganda. |
+| `ife` | Annual management fee | 1 | 0 to 5 % | Charged on the balance, so it bites every year. |
+
+### Getting out
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `sp` | Selling costs | 5 | 0 to 15 % | Agent and legal fees, if you ever sell. |
+| `cgt` | Capital gains tax | 0 | 0 to 40 % | Uganda exempts a home you have lived in for at least two years, which is why this starts at zero. |
+| `h` | Years to compare over | 25 | 1 to 40 years | How far out to run both paths. |
+
+## Worked examples
+
+A smaller 90 m² house at a cheaper rate per square metre, with a bigger monthly push:
+https://vibes.obel.dev/brick-by-brick/?sqm=90&sm=70000&cps=45000
+
+Saving first: leave it compounding at 16% until 85% of the cost is in hand, then build:
+https://vibes.obel.dev/brick-by-brick/?m=savefirst&sa=85&inv=16
+
+Construction inflation at 14% against a thin monthly budget — the house that never gets finished:
+https://vibes.obel.dev/brick-by-brick/?bi=14&sm=25000&h=30
+
+## What the calculator does with these
+
+Both paths are handed the same wallet every month: the rent (`r`, growing at `rg`)
+plus what you can set aside (`sm`, growing at `ig`). The renter pays rent and
+invests the rest at `inv`, net of `itx` and `ife`. The builder pays that same rent
+until they move in, buys the plot as soon as the pot covers `land` plus `lfee`, and
+puts what is left into the house. Once they move in the rent stops and `oc`, `mnt`
+and inflation `infl` take its place, so the freed rent finishes the house and then
+goes into the same investment as the renter's money.
+
+The build is not given a duration. Progress is tracked as a share of the house:
+each month's spend divided by what the whole house costs that month, which is
+`sqm` times `cps`, plus `perm` and `wst`, inflated at `bi`. So a build cost rising
+faster than the budget grows means progress converges short of 100% and the house
+is never finished — the calculator says so rather than extrapolating a finish date.
+You move in at `mi` complete, not at 100%, which is when the rent stops.
+
+An unfinished house is valued at `pb` of the work standing in it, priced at what
+that work would cost to put up today rather than at the nominal money spent, and
+that fraction decays at `dec` for every year it stands unfinished. At completion it
+becomes `fv` of what it cost, and appreciates at `app` from there. Net worth is the
+plot and the house less `sp` and `cgt`, plus the pot.
+
+A crossover here means overtaking, not merely being level: before the plot is paid
+for the two paths run identical arithmetic, so being tied in year one is not a
+crossing.
+
+The defaults are Ugandan, but nothing is hardcoded to Uganda. Every tax, rate and
+cost is a plain input. Note that `cgt` starts at zero because Uganda exempts a home
+you have lived in for at least two years.
+
+Not modelled: a construction loan or mortgage part-way through, land disputes and
+title problems, buying materials in bulk ahead of a price rise, family labour, or
+renting out part of the plot while you build. Nor does the money capture the part
+that decides it for most people — that a landlord can raise the rent or ask you to
+leave, and a finished house cannot. It is a model, not advice.
+
+## Related
+
+- https://vibes.obel.dev/llms.txt — index of the other tools
+- https://vibes.obel.dev/rent-or-buy/llms.txt — the same question where a mortgage is on the table
+- https://vibes.obel.dev/build-or-invest/llms.txt — building to let rather than to live in

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brick by brick — build slowly, or rent and invest</title>
+<meta name="description" content="A calculator for building a home a course at a time while you rent. Works out when you move in, whether you ever finish, and how that compares to renting and investing the same money.">
+<link rel="canonical" href="https://vibes.obel.dev/brick-by-brick/">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="../shared/tool.css">
+<link rel="alternate" type="text/plain" href="llms.txt" title="Parameter spec for AI assistants">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibes.obel.dev/brick-by-brick/">
+<meta property="og:title" content="Brick by brick — build slowly, or rent and invest">
+<meta property="og:description" content="A calculator for building a home a course at a time while you rent. Works out when you move in, whether you ever finish, and how that compares to renting and investing the same money.">
+<meta property="og:image" content="https://vibes.obel.dev/brick-by-brick/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Brick by brick — build slowly, or rent and invest">
+<meta name="twitter:description" content="A calculator for building a home a course at a time while you rent. Works out when you move in, whether you ever finish, and how that compares to renting and investing the same money.">
+<meta name="twitter:image" content="https://vibes.obel.dev/brick-by-brick/og.svg">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <div class="eyebrow">Build slowly vs rent and invest · crossover model</div>
+    </div>
+    <div class="mast-actions">
+      <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
+      <button class="linkbtn" id="copyLink" type="button">Copy link</button>
+      <currency-select id="cur"></currency-select>
+    </div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="verdict">
+    <h1 id="headline">…</h1>
+    <p id="subline"></p>
+  </div>
+
+  <div class="warn hidden" id="stallWarn"></div>
+
+  <div class="print-summary" id="printSummary"></div>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="controls">
+      <details class="aihelp">
+        <summary>Don't know your numbers? Ask an AI</summary>
+        <div class="body">
+          <p>Copy the prompt below into ChatGPT, Claude or any chatbot that can search
+             the web. It explains every input on this page and asks for a link back that
+             opens the calculator with your numbers already filled in.</p>
+          <button class="linkbtn" id="copyPrompt" type="button">Copy prompt</button>
+          <p class="fineprint">The same spec is published at <a href="llms.txt">llms.txt</a>,
+             if you'd rather point the chatbot straight at it.</p>
+        </div>
+      </details>
+      <noscript>
+        <p>This calculator needs JavaScript. The full parameter reference —
+           every input, its range and its default — is published as plain text at
+           <a href="llms.txt">llms.txt</a>.</p>
+      </noscript>
+      <div class="panel">
+        <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">UGX</span></div>
+
+        <div class="mode" role="group" aria-label="How the build is paid for">
+          <button id="mAsYouGo" aria-pressed="true">Build as you go</button>
+          <button id="mSaveFirst" aria-pressed="false">Save first, then build</button>
+        </div>
+
+        <fieldset>
+          <legend>What you're working with</legend>
+          <field-group id="fStart"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>The plot</legend>
+          <field-group id="fLand"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>The house</legend>
+          <field-group id="fHouse"></field-group>
+        </fieldset>
+
+        <fieldset id="secAsYouGo">
+          <legend>Building as you go</legend>
+          <field-group id="fAsYouGo"></field-group>
+        </fieldset>
+
+        <fieldset id="secSaveFirst" class="hidden">
+          <legend>Saving first</legend>
+          <field-group id="fSaveFirst"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>Renting now</legend>
+          <field-group id="fRent"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>Once you move in</legend>
+          <field-group id="fOwning"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>What it's worth</legend>
+          <field-group id="fWorth"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>The alternative</legend>
+          <field-group id="fInvest"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>Getting out</legend>
+          <field-group id="fExit"></field-group>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="panel">
+        <div class="panel-hd"><h2>What you'd be worth each year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for building a home slowly versus renting and investing"></crossover-chart></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i> Build</span>
+          <span><i style="background:var(--accent2)"></i> Rent &amp; invest</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
+        <key-tiles class="tiles" id="tiles"></key-tiles>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Where the money goes each month</h2><span class="hint">Before and after you move in</span></div>
+        <div class="cf" id="cf"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>What would flip this</h2><span class="hint">Everything else held still</span></div>
+        <div class="flip" id="flip"></div>
+      </div>
+
+      <footer>
+        <b>How this works.</b> Both paths are handed the same money every month — your rent plus whatever you can put aside. The renter pays rent and invests the rest. The builder pays that same rent until they move in, buys the plot as soon as they can afford it, and puts everything left into the house; once they move in the rent stops, the running costs of owning start, and what is freed up finishes the house and then goes into the same investment. Progress is tracked as a share of the house rather than a running total of shillings, so a build cost rising faster than your budget shows up as a house that never gets finished — not as a finish date quietly extrapolated past the horizon. Net worth at year <span id="fnH">25</span> is the plot and the house at what they would fetch, less selling costs and any tax, plus whatever is in the pot.
+        <br><br>
+        <b>What the money doesn't capture.</b> A landlord can raise your rent or ask you to leave; a finished house cannot do either. For most families this is also the only asset they will ever hold that a bank will lend against, and the discipline of building is savings that cannot be spent on something else. If the two lines come out close, those are the things that decide it.
+        <br><br>
+        <b>Not modelled:</b> a construction loan or mortgage part-way through, land disputes and title problems, materials bought in bulk ahead of a price rise, family labour, or renting out part of the plot while you build. Growth rates here are steady averages; real ones arrive in lumps, and so does the money to build with.
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/components/currency-select.js"></script>
+<script src="../shared/components/field-group.js"></script>
+<script src="../shared/components/crossover-chart.js"></script>
+<script src="../shared/components/key-tiles.js"></script>
+<script src="../shared/clipboard.js"></script>
+<script src="../shared/spec-text.js"></script>
+<script src="model.js"></script>
+<script>
+"use strict";
+
+/* Dragging a slider fires input on every pixel, and one render costs a few
+   milliseconds — most of it the four bisections behind the "what would flip
+   this" panel. Coalescing a burst into one render per frame keeps the handler
+   frame-bound whatever it is running on. Discrete events — the mode toggle,
+   the currency select — call render() directly, since one click can't burst. */
+var renderQueued = false;
+function scheduleRender(){
+  if(renderQueued) return;
+  renderQueued = true;
+  function run(){ renderQueued = false; render(); }
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+  else setTimeout(run, 16);
+}
+
+/* ===================== rendering ===================== */
+function buildFields(){
+  Object.keys(Brick.FIELDS).forEach(function(id){
+    document.getElementById(id).configure({
+      fields: Brick.FIELDS[id],
+      get: function(k){ return Brick.V[k]; },
+      set: function(k, v){ Brick.V[k] = v; },
+      onInput: scheduleRender
+    });
+  });
+}
+
+function syncFields(){
+  Object.keys(Brick.FIELDS).forEach(function(id){
+    document.getElementById(id).refresh(Brick.cur.rate);
+  });
+}
+
+function yrS(y){ return (Math.round(y*10)/10) + (y===1 ? " year" : " years"); }
+
+function drawChart(s){
+  /* The band is everything before the house is habitable; the marker is the
+     month the rent stops, which is the single biggest event on the chart. */
+  var bandTo = s.moveInYear === null ? Brick.V.horizon : s.moveInYear;
+  document.getElementById("chart").draw({
+    series: s.series.map(function(p){ return {y:p.y, a:p.build, b:p.invest}; }),
+    colorA: "var(--accent)",
+    colorB: "var(--accent2)",
+    formatY: function(v){ return Brick.fmtC(v); },
+    zeroFloor: false, // both paths start at the same savings, away from zero
+    breakEven: s.breakEven,
+    band: {to: bandTo},
+    bandMarker: s.moveInYear !== null && s.moveInYear > 0
+      ? {at: s.moveInYear, label: "MOVE IN"} : null
+  });
+}
+
+function block(title, parts, total, extraHTML){
+  var scale = Math.max(total, 1);
+  var bar = parts.map(function(p){
+    return '<div style="width:'+(Math.max(0,p.v)/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
+  }).join("");
+  var keys = parts.map(function(p){
+    return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+Brick.fmt(p.v)+'</span>';
+  }).join("");
+  return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
+         '<span class="amt num">'+Brick.fmt(total)+'</span></div>'+
+         '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+
+         (extraHTML || '')+'</div>';
+}
+
+/* A month where more went into the house than came in that month is real —
+   it is the savings pile going into the ground — but the bar would read as a
+   monthly income if that went unsaid. */
+function drawnNote(p){
+  return p.drawn > 0
+    ? '<div class="credit">'+Brick.fmt(p.drawn)+' of that came out of what you had '+
+      'already put by, not out of that month’s income.</div>'
+    : '';
+}
+
+function drawCashflow(s){
+  var html = "";
+
+  if(s.monthlyBefore){
+    var b = s.monthlyBefore;
+    var bParts = [
+      {n:"Rent",           v:b.rent,  c:"var(--accent2)"},
+      {n:"Into the house", v:b.build, c:"var(--accent)"},
+      {n:"Invested",       v:b.saved, c:"#7EA3CC"}
+    ];
+    html += block("While you are building — year "+Math.ceil(b.m/12), bParts,
+      b.rent + b.build + b.saved, drawnNote(b));
+  } else {
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">While you are building</span>'+
+            '<span class="amt num">—</span></div>'+
+            '<div class="credit">Nothing goes into a house at these numbers — the plot '+
+            'alone is out of reach.</div></div>';
+  }
+
+  if(s.monthlyAfter){
+    var a = s.monthlyAfter;
+    var aParts = [
+      {n:"Running costs",   v:a.own,   c:"#6B7069"},
+      {n:"Still finishing", v:a.build, c:"var(--accent)"},
+      {n:"Invested",        v:a.saved, c:"#7EA3CC"}
+    ];
+    html += block("Once you have moved in — year "+Math.ceil(a.m/12), aParts,
+      a.own + a.build + a.saved,
+      '<div class="credit">The rent line is gone — that is the whole point of the move. '+
+      'The same wallet now buys '+Brick.fmt(a.own)+' of running costs instead of rent, '+
+      'and the rest is yours.</div>' + drawnNote(a));
+  } else {
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">Once you have moved in</span>'+
+            '<span class="amt num">—</span></div>'+
+            '<div class="credit">You never move in inside '+yrS(Brick.V.horizon)+
+            ', so the rent never stops.</div></div>';
+  }
+
+  document.getElementById("cf").innerHTML = html;
+}
+
+function drawTiles(s){
+  var gap = s.finalBuild - s.finalInvest;
+
+  var moveV = s.moveInYear === null ? "Never" : "Year "+(Math.round(s.moveInYear*10)/10);
+  var moveS = s.moveInYear === null
+    ? "Not within "+yrS(Brick.V.horizon)
+    : "After "+Brick.fmt(s.rentPaid)+" of rent";
+
+  var doneV, doneS;
+  if(s.neverBuysLand){
+    doneV = "No plot"; doneS = "The plot is never affordable";
+  } else if(s.neverFinishes){
+    doneV = "Never at this rate";
+    doneS = Brick.pctS(s.progressAtHorizon*100)+" done by year "+Brick.V.horizon;
+  } else {
+    doneV = "Year "+(Math.round(s.finishYear*10)/10);
+    doneS = "Plot bought in year "+(Math.round(s.landYear*10)/10);
+  }
+
+  var t = [
+    {k:"You move in", v:moveV, s:moveS},
+    {k:"House finished", v:doneV, s:doneS},
+    {k:"Crossover", v:s.breakEven ? "Year "+s.breakEven : "None",
+     s:s.breakEven ? "Building pulls ahead" : "No crossover in "+yrS(Brick.V.horizon)},
+    {k:"Gap at year "+Brick.V.horizon, v:(gap>=0?"+":"−")+Brick.fmt(Math.abs(gap)),
+     s:(gap>=0?"in favour of building":"in favour of renting")}
+  ];
+  document.getElementById("tiles").render(t);
+}
+
+function drawFlip(s){
+  var building = s.finalBuild >= s.finalInvest;
+  var items = [];
+
+  var a = Brick.solve("apprec", -5, 20);
+  items.push({
+    lever: building ? "Building stops winning if the plot and house appreciate slower than"
+                    : "Building starts winning if the plot and house appreciate faster than",
+    target: a===null ? null : Brick.pctS(a)+" a year",
+    now: "now "+Brick.pctS(Brick.V.apprec)
+  });
+
+  var iv = Brick.solve("invest", 0, 30);
+  items.push({
+    lever: building ? "Building stops winning if your investments return more than"
+                    : "Building starts winning if your investments return less than",
+    target: iv===null ? null : Brick.pctS(iv)+" a year",
+    now: "now "+Brick.pctS(Brick.V.invest)
+  });
+
+  /* Not down to zero: a house that costs nothing is a house that never gets
+     built, so the model has you renting for good — the wrong side of the sign
+     change, and the bisection would give up before it found the real one. */
+  var cps = Brick.solve("costPerSqm", 1, Math.max(2, Brick.V.costPerSqm*4));
+  items.push({
+    lever: building ? "Building stops winning if a square metre costs more than"
+                    : "Building starts winning if you can build for less than",
+    target: cps===null ? null : Brick.fmt(cps)+" a square metre",
+    now: "now "+Brick.fmt(Brick.V.costPerSqm)
+  });
+
+  var sm = Brick.solve("saveMonthly", 0, Math.max(1, Brick.V.saveMonthly*6));
+  items.push({
+    lever: building ? "Building stops winning if you can only put aside"
+                    : "Building starts winning if you can put aside more than",
+    target: sm===null ? null : Brick.fmt(sm)+" a month",
+    now: "now "+Brick.fmt(Brick.V.saveMonthly)
+  });
+
+  document.getElementById("flip").innerHTML = items.map(function(i){
+    var tg = i.target ? '<span class="target">'+i.target+'</span>'
+                      : '<span class="target na">no crossover in range</span>';
+    return '<div class="item"><span class="lever">'+i.lever+
+           ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
+  }).join("");
+}
+
+function drawWarning(s){
+  var el = document.getElementById("stallWarn");
+  var msg = null;
+
+  if(s.neverBuysLand){
+    msg = "<b>The plot never becomes affordable.</b> Land is appreciating at "+
+          Brick.pctS(Brick.V.apprec)+" a year and nothing you set aside catches it. "+
+          "Nothing is ever built, so the build path here is just renting with a worse portfolio.";
+  } else if(s.neverFinishes){
+    msg = "<b>At this rate the house is never finished.</b> It reaches "+
+          Brick.pctS(s.progressAtHorizon*100)+" done by year "+Brick.V.horizon+
+          ". Building costs are rising at "+Brick.pctS(Brick.V.buildInflation)+
+          " a year while your budget grows at "+Brick.pctS(Brick.V.incomeGrowth)+
+          " — the target is moving away from you faster than you are walking towards it.";
+  } else if(s.neverMovesIn){
+    msg = "<b>You never move in.</b> The house gets there, but not inside "+
+          yrS(Brick.V.horizon)+", so you pay rent the whole way and the money "+
+          "sunk into the site earns nothing while you do.";
+  }
+
+  el.innerHTML = msg || "";
+  el.classList.toggle("hidden", msg === null);
+}
+
+function drawVerdict(s){
+  var gap = s.finalBuild - s.finalInvest;
+  var building = gap >= 0;
+  var h = document.getElementById("headline");
+  var p = document.getElementById("subline");
+  var amt = Brick.fmt(Math.abs(gap));
+  var word = building ? '<span class="b">Build</span>' : '<span class="r">Rent and invest</span>';
+
+  h.innerHTML = word + ", by " + amt + " over " + yrS(Brick.V.horizon) + ".";
+
+  if(building){
+    p.innerHTML = "Building leaves you <b>"+amt+"</b> ahead by year "+Brick.V.horizon+
+      ", after selling costs and tax. "+
+      (s.moveInYear !== null
+        ? "You move in around year <b>"+(Math.round(s.moveInYear*10)/10)+"</b>, having paid "+
+          Brick.fmt(s.rentPaid)+" in rent to get there. " : "")+
+      (s.breakEven ? "The two lines cross in <b>year "+s.breakEven+"</b> — leave earlier and building loses."
+                   : "Building is ahead the whole way here.");
+  } else {
+    p.innerHTML = "Renting and investing the same money leaves you <b>"+amt+"</b> ahead by year "+
+      Brick.V.horizon+". "+
+      (s.moveInYear !== null
+        ? "The build ties up cash for years before it houses you — you move in around year <b>"+
+          (Math.round(s.moveInYear*10)/10)+"</b>, after "+Brick.fmt(s.rentPaid)+" of rent. "
+        : "")+
+      (s.breakEven ? "" : "At these assumptions the two lines never cross. ")+
+      "What that gap does not price is a rent nobody can raise.";
+  }
+}
+
+function buildPrintSummary(){
+  var groups = [
+    { name:"What you're working with", id:"fStart" },
+    { name:"The plot", id:"fLand" },
+    { name:"The house", id:"fHouse" },
+    Brick.mode==="asyougo"
+      ? { name:"Building as you go", id:"fAsYouGo" }
+      : { name:"Saving first", id:"fSaveFirst" },
+    { name:"Renting now", id:"fRent" },
+    { name:"Once you move in", id:"fOwning" },
+    { name:"What it's worth", id:"fWorth" },
+    { name:"The alternative", id:"fInvest" },
+    { name:"Getting out", id:"fExit" }
+  ];
+  var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  var html = '<div class="ps-head"><h2>Build or rent report</h2><span>'+
+    (Brick.mode==="asyougo"?"Building as you go":"Saving first, then building")+
+    " &middot; "+Brick.cur.code+" &middot; generated "+today+'</span></div>';
+  html += '<div class="ps-grid">';
+  groups.forEach(function(g){
+    html += '<div class="ps-col"><h3>'+g.name+'</h3>';
+    Brick.FIELDS[g.id].forEach(function(f){
+      var shown = f.type==="money" ? Brick.fmt(Brick.V[f.k])
+                : f.type==="num" ? FieldGroup.formatNum(Brick.V[f.k], f.unit)
+                : Brick.pctS(Brick.V[f.k]);
+      html += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+shown+'</span></div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById("printSummary").innerHTML = html;
+}
+
+function render(){
+  syncFields();
+  var s = Brick.simulate();
+  drawVerdict(s);
+  drawWarning(s);
+  drawChart(s);
+  drawCashflow(s);
+  drawTiles(s);
+  drawFlip(s);
+  buildPrintSummary();
+  document.getElementById("chartHint").textContent = "Years 0–"+Brick.V.horizon;
+  document.getElementById("horizonHint").textContent = Brick.V.horizon+"-year horizon";
+  document.getElementById("fnH").textContent = Brick.V.horizon;
+  document.getElementById("curhint").textContent = Brick.cur.code;
+  Brick.updateURL();
+}
+
+/* ===================== wiring ===================== */
+document.getElementById("mAsYouGo").addEventListener("click", function(){ setMode("asyougo"); });
+document.getElementById("mSaveFirst").addEventListener("click", function(){ setMode("savefirst"); });
+function applyModeUI(){
+  document.getElementById("mAsYouGo").setAttribute("aria-pressed", Brick.mode==="asyougo");
+  document.getElementById("mSaveFirst").setAttribute("aria-pressed", Brick.mode==="savefirst");
+  document.getElementById("secAsYouGo").classList.toggle("hidden", Brick.mode!=="asyougo");
+  document.getElementById("secSaveFirst").classList.toggle("hidden", Brick.mode!=="savefirst");
+}
+function setMode(m){
+  Brick.mode = m;
+  applyModeUI();
+  render();
+}
+function syncCurrencySelect(){
+  document.getElementById("cur").setCode(Brick.cur.code);
+}
+document.getElementById("cur").addEventListener("currencychange", function(e){
+  Brick.applyCurrency(e.detail.code);
+  render();
+});
+
+document.getElementById("copyLink").addEventListener("click", function(){
+  copyWithFeedback(this, location.href, "Copy link");
+});
+
+/* The chatbot gets the spec plus wherever the visitor has already got to, so
+   it refines their scenario instead of starting from the defaults. */
+function aiPrompt(){
+  var base = location.origin + location.pathname;
+  var lines = [
+    "I'm deciding whether to build a house for myself a bit at a time while I rent, or",
+    "to keep renting and invest the money instead. Help me fill in this calculator:",
+    base,
+    ""
+  ];
+  /* Only worth carrying the scenario across if there is one — at the defaults
+     location.href is bare, and calling that "my assumptions" would be a lie. */
+  if(location.search){
+    lines.push("I've already set some of it up: " + location.href);
+    lines.push("Treat those as a starting point and correct any you can research.");
+    lines.push("");
+  }
+  return lines.concat([
+    "Ask me what you need to know about my situation, then look up current figures for",
+    "my city and market — plot prices, what a square metre of construction costs, rents,",
+    "how fast building materials have been rising, and what I could earn on government",
+    "bonds or a unit trust. Tell me where each number came from and how confident you are.",
+    "",
+    "Then give me one link, built to the rules below.",
+    "",
+    specText(Brick, base)
+  ]).join("\n");
+}
+document.getElementById("copyPrompt").addEventListener("click", function(){
+  var prompt;
+  try{
+    prompt = aiPrompt();
+  }catch(e){
+    /* A stale cached model.js has a fix the reader can act on; anything else is
+       a real bug and pointing them at reload would just misdirect. Either way
+       the button has to say something — going silent reads as a broken site. */
+    var btn = this;
+    btn.textContent = e.name === "StaleEngineError" ? "Reload the page" : "Copy failed";
+    setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
+    throw e;
+  }
+  copyWithFeedback(this, prompt, "Copy prompt");
+});
+document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+
+buildFields();
+if(Brick.hasScenarioParams()){
+  Brick.resetToDefaults();
+  Brick.loadFromURL();
+  Brick.suppressPersist = true;
+} else {
+  Brick.loadFromStorage();
+}
+syncCurrencySelect();
+applyModeUI();
+render();
+Brick.suppressPersist = false;
+</script>
+</body>
+</html>

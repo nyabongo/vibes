@@ -1,6 +1,6 @@
 # vibes — small, single-purpose web tools
 
-> A handful of standalone browser tools at https://vibes.obel.dev. No accounts, no tracking, no server: every one is a static page that computes in the browser. Two of them are financial calculators whose entire input set is encoded in the URL query string, so you can hand someone a link that opens with their scenario already filled in.
+> A handful of standalone browser tools at https://vibes.obel.dev. No accounts, no tracking, no server: every one is a static page that computes in the browser. Three of them are financial calculators whose entire input set is encoded in the URL query string, so you can hand someone a link that opens with their scenario already filled in.
 
 ## Calculators with a URL API
 
@@ -12,6 +12,8 @@ several mean different things in each.
   invest the difference? Spec: https://vibes.obel.dev/rent-or-buy/llms.txt
 - [Build or invest](https://vibes.obel.dev/build-or-invest/): should a lump sum become an
   apartment block or compound in the market? Spec: https://vibes.obel.dev/build-or-invest/llms.txt
+- [Brick by brick](https://vibes.obel.dev/brick-by-brick/): should you build a home for yourself a
+  bit at a time while you rent, or rent and invest instead? Spec: https://vibes.obel.dev/brick-by-brick/llms.txt
 
 ## Other tools
 
@@ -21,9 +23,11 @@ several mean different things in each.
 
 ## Notes
 
-- Both calculators default to Kenyan figures, but nothing is hardcoded to Kenya.
-  Every tax, rate and transaction cost is an input, so set them for whatever
-  market your reader is actually in.
+- Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens
+  on Ugandan ones. Nothing is hardcoded to either. Every tax, rate and transaction
+  cost is an input, so set them for whatever market your reader is actually in.
+- Money in every URL is Kenyan shillings regardless of which calculator it is, and
+  regardless of the currency the page displays. Convert before building a link.
 - They are models, not advice. Growth rates are steady averages; real ones arrive
   in lumps.
 - Source: https://github.com/nyabongo/vibes
