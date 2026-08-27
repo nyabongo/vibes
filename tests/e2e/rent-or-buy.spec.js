@@ -126,6 +126,116 @@ test.describe("rent-or-buy", () => {
     await expect(thirdRow.locator(".target")).toHaveText("9 years");
   });
 
+  /* The flip panel used to solve appreciation over −8…30 and investment return
+     over 0…30, both wider than the sliders those levers are actually offered
+     on. Turning "Return if invested instead" up to its own maximum made it
+     name 22.3% appreciation, 2.3 points past the end of that slider — a target
+     the visitor is told about and then cannot set. (regression: #11) */
+  test("the flip panel never names a target its own slider cannot reach", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+
+    // Everything default except the one lever, pushed to its declared maximum.
+    await page.locator("#i_invest").fill("25");
+    await page.locator("#i_invest").dispatchEvent("input");
+
+    const flipRows = page.locator("#flip .item");
+    await expect(flipRows).toHaveCount(3);
+
+    // The appreciation root sits above the slider's 20% ceiling here, so the
+    // panel has to say so rather than quote a number nobody can dial in.
+    await expect(flipRows.nth(0).locator(".target")).toHaveText("no crossover in range");
+
+    // And whatever either percentage row does name has to be reachable. Bounds
+    // come from the same FIELDS the sliders are built from, so this keeps
+    // holding if a range is ever widened or narrowed.
+    const bounds = await page.evaluate(() => ({
+      appr: [Calc.FIELD_BY_KEY.appr.min, Calc.FIELD_BY_KEY.appr.max],
+      invest: [Calc.FIELD_BY_KEY.invest.min, Calc.FIELD_BY_KEY.invest.max]
+    }));
+    for (const [row, key] of [[0, "appr"], [1, "invest"]]) {
+      const target = await flipRows.nth(row).locator(".target").innerText();
+      if (target === "no crossover in range") continue;
+      const value = parseFloat(target);
+      expect(Number.isNaN(value), `${key} target "${target}" should be a percentage`).toBe(false);
+      expect(value, key).toBeGreaterThanOrEqual(bounds[key][0]);
+      expect(value, key).toBeLessThanOrEqual(bounds[key][1]);
+    }
+  });
+
+  /* The credit line quotes yr1.income — gross rent after voids and the agent,
+     with tax still in it. Income tax rides the other side of the same bar as
+     its own "Tax on rent" segment, so the arithmetic nets out; only the label
+     was wrong, and it claimed tax even in the common case where no tax segment
+     is drawn at all. (regression: #10) */
+  test("the let-mode credit line names only what was actually taken out of it", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+    await page.locator("#mLet").click();
+
+    const credit = page.locator("#cf .credit").first();
+    const keys = page.locator("#cf .keys").first();
+
+    // The defaults don't turn a rental profit, so nothing is taxed and no
+    // "Tax on rent" segment is drawn — the old wording promised one anyway.
+    await expect(keys).not.toContainText("Tax on rent");
+    await expect(credit).toContainText("rent collected, after voids and agent");
+    await expect(credit).not.toContainText("tax");
+
+    // Push the rent high enough to be taxed: the segment shows up, and the
+    // credit still quotes the pre-tax figure, so naming tax here would be
+    // charging the reader for it twice.
+    await page.locator("#i_income").fill("400000");
+    await page.locator("#i_income").dispatchEvent("input");
+
+    await expect(keys).toContainText("Tax on rent");
+    const preTax = await page.evaluate(() => Calc.fmt(Calc.simulate().yr1.income));
+    await expect(credit).toContainText(preTax);
+    await expect(credit).not.toContainText("tax");
+  });
+
+  /* The property paid capital gains tax on sale while both investment pots
+     compounded entirely tax-free, with no input to change it — and the page's
+     own help text calls the investment return "the single biggest lever". The
+     rate now has its own field beside `cgt` in the Tax fieldset, opening on the
+     same 15%. Separate knobs, not a mirror: exempting the home leaves the pot
+     taxed, which is the wrinkle a footnote would have hidden. (regression: #6) */
+  test("investment gains are taxed at their own rate, which survives a shared link", async ({ page, context }) => {
+    await page.goto("/rent-or-buy/?m=live");
+
+    const icgt = page.locator("#i_cgtInvest");
+    await expect(page.locator('label[for="i_cgtInvest"]')).toBeVisible();
+    await expect(icgt).toHaveValue("15");
+    await expect(page.locator("#v_cgtInvest")).toHaveText("15%");
+    await expect(page.locator("#printSummary")).toContainText("Tax on investment gains");
+
+    const taxed = await page.locator("#headline").innerText();
+
+    // A home that's exempt from CGT is not a sheltered investment account, so
+    // dropping `cgt` to 0 must leave the pot's rate exactly where it was.
+    await page.locator("#i_cgt").fill("0");
+    await page.locator("#i_cgt").dispatchEvent("input");
+    await expect(icgt).toHaveValue("15");
+
+    // Sheltering the pot is what turns the tax off, and it moves the verdict —
+    // the old tax-free model is now something you opt into.
+    await page.goto("/rent-or-buy/?m=live");
+    await icgt.fill("0");
+    await icgt.dispatchEvent("input");
+    await expect(page.locator("#headline")).not.toHaveText(taxed);
+
+    // ...and whatever rate you land on rides in the URL under its own name.
+    await icgt.fill("7.5");
+    await icgt.dispatchEvent("input");
+    await expect.poll(() => new URL(page.url()).searchParams.get("icgt")).toBe("7.5");
+
+    const sharedURL = page.url();
+    const sharedHeadline = await page.locator("#headline").innerText();
+    const fresh = await context.newPage();
+    await fresh.goto(sharedURL);
+    await expect(fresh.locator("#i_cgtInvest")).toHaveValue("7.5");
+    await expect(fresh.locator("#headline")).toHaveText(sharedHeadline);
+    await fresh.close();
+  });
+
   test("print summary stays populated with the current field values", async ({ page }) => {
     await page.goto("/rent-or-buy/");
     await page.locator("#i_price").fill("18500000");

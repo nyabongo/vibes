@@ -13,11 +13,11 @@
 <meta property="og:url" content="https://vibes.obel.dev/rent-or-buy/">
 <meta property="og:title" content="Rent or buy — the crossover calculator">
 <meta property="og:description" content="A rent-vs-buy calculator that models net worth over time for both paths and shows the exact year buying overtakes renting — or doesn't.">
-<meta property="og:image" content="https://vibes.obel.dev/rent-or-buy/og.svg">
+<meta property="og:image" content="https://vibes.obel.dev/rent-or-buy/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Rent or buy — the crossover calculator">
 <meta name="twitter:description" content="A rent-vs-buy calculator that models net worth over time for both paths and shows the exact year buying overtakes renting — or doesn't.">
-<meta name="twitter:image" content="https://vibes.obel.dev/rent-or-buy/og.svg">
+<meta name="twitter:image" content="https://vibes.obel.dev/rent-or-buy/og.png">
 </head>
 <body>
 <div class="wrap">
@@ -130,9 +130,9 @@
       </div>
 
       <footer>
-        <b>How this works.</b> Both paths start with the same cash. The renter invests the deposit and purchase costs on day one, and whichever path has the cheaper month invests the difference. Net worth at year <span id="fnH">10</span> is the sale price minus selling costs, remaining loan and capital gains tax, plus whatever's in the investment pot. When the property is a let, your own rent is the same either way, so it's left out entirely — the comparison is the rental property against the same money in the market.
+        <b>How this works.</b> Both paths start with the same cash. The renter invests the deposit and purchase costs on day one, and whichever path has the cheaper month invests the difference. Net worth at year <span id="fnH">10</span> is the sale price minus selling costs, remaining loan and capital gains tax, plus whatever's in the investment pot minus the tax on that pot's own gain. Both sides are cashed in on the same day and taxed on the same terms; what you contributed is never taxed, only the growth on top of it. When the property is a let, your own rent is the same either way, so it's left out entirely — the comparison is the rental property against the same money in the market.
         <br><br>
-        <b>Not modelled:</b> mortgage insurance, service charge arrears, ground rent, the cost of moving, or the fact that a landlord can raise your rent and a bank can't raise your fixed repayment. Appreciation and returns are steady averages here; real ones arrive in lumps.
+        <b>Not modelled:</b> mortgage insurance, service charge arrears, ground rent, the cost of moving, or the fact that a landlord can raise your rent and a bank can't raise your fixed repayment. On the tax side: fund fees, withholding on dividends and interest as they arrive, and any tax-free allowance on either gain — the pot is taxed once, on its gain, on the day you cash it in. Appreciation and returns are steady averages here; real ones arrive in lumps.
       </footer>
     </div>
   </div>
@@ -189,6 +189,8 @@ function drawCashflow(s){
   ];
   if(Calc.mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
   var buyTotal = buyParts.reduce(function(a,b){return a+b.v;},0);
+  /* y.income is netIncome — gross rent less voids and the agent, before tax.
+     Tax on it is its own bar segment above, so don't name it here too. */
   var credit = Calc.mode==="let" ? y.income : y.relief;
   var net = buyTotal - credit;
 
@@ -212,7 +214,7 @@ function drawCashflow(s){
   }
 
   var html = block(Calc.mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
-                   Calc.mode==="let" ? "rent collected, after voids, agent and tax" : "tax relief on interest", credit);
+                   Calc.mode==="let" ? "rent collected, after voids and agent" : "tax relief on interest", credit);
   if(Calc.mode==="live"){
     html += block("Renting", rentParts, rentTotal, rentTotal, "", 0);
   } else {
@@ -223,10 +225,9 @@ function drawCashflow(s){
             Calc.fmt(s.upfront)+' plus '+Calc.fmt(Math.max(0,net))+' a month going into a mortgage, or into the market.</div></div>';
   }
   document.getElementById("cf").innerHTML = html;
-  return {buyNet:net, rentTotal:rentTotal};
 }
 
-function drawTiles(s, cash){
+function drawTiles(s){
   var gap = s.finalBuy - s.finalRent;
   var t = [
     {k:"Monthly repayment", v:Calc.fmt(s.payment), s:"On "+Calc.fmt(s.loan)+" over "+Calc.V.term+" years"},
@@ -241,7 +242,16 @@ function drawFlip(s){
   var buying = s.finalBuy >= s.finalRent;
   var items = [];
 
-  var a = Calc.solve("appr", -8, 30);
+  /* Solve across the slider's own range, not a wider one: naming a target the
+     visitor cannot dial in is worse than naming none. Out-of-range roots come
+     back null from solve() and fall through to "no crossover in range" below.
+     Reading the bounds off FIELDS keeps the two from drifting apart. */
+  function solveInRange(key){
+    var f = Calc.FIELD_BY_KEY[key];
+    return Calc.solve(key, f.min, f.max);
+  }
+
+  var a = solveInRange("appr");
   items.push({
     lever: buying ? "Buying stops winning if the property appreciates slower than"
                   : "Buying starts winning if the property appreciates faster than",
@@ -249,7 +259,7 @@ function drawFlip(s){
     now: "now "+Calc.pctS(Calc.V.appr)
   });
 
-  var iv = Calc.solve("invest", 0, 30);
+  var iv = solveInRange("invest");
   items.push({
     lever: buying ? "Buying stops winning if your investments return more than"
                   : "Buying starts winning if your investments return less than",
@@ -328,8 +338,8 @@ function render(){
   var s = Calc.simulate();
   drawVerdict(s);
   drawChart(s);
-  var cash = drawCashflow(s);
-  drawTiles(s, cash);
+  drawCashflow(s);
+  drawTiles(s);
   drawFlip(s);
   buildPrintSummary();
   document.getElementById("chartHint").textContent = "Years 0–"+Calc.V.horizon;

@@ -63,7 +63,7 @@ bug.
 | --- | --- | --- | --- | --- |
 | `p` | Property price | 12000000 | KES |  |
 | `dp` | Deposit | 20 | 0 to 100 % |  |
-| `mr` | Mortgage rate | 14.5 | 0 to 30 % | Annual, on the balance. |
+| `mr` | Mortgage rate | 14.5 | 0 to 30 % | Annual, on the balance. Nominal, as banks quote it — monthly compounding makes the effective rate higher. |
 | `term` | Loan term | 20 | 1 to 35 years |  |
 | `cc` | Purchase costs | 5 | 0 to 15 % | Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered. |
 
@@ -94,10 +94,10 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `appr` | Property appreciation | 8 | -5 to 20 % | Per year. |
-| `rg` | Rent growth | 5 | -5 to 20 % | Per year. |
-| `inv` | Return if invested instead | 10 | 0 to 25 % | What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever. |
-| `infl` | Inflation | 6 | 0 to 20 % | Pushes up insurance and service charge. |
+| `appr` | Property appreciation | 8 | -5 to 20 % | Effective annual. |
+| `rg` | Rent growth | 5 | -5 to 20 % | Effective annual. |
+| `inv` | Return if invested instead | 10 | 0 to 25 % | Effective annual. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever. |
+| `infl` | Inflation | 6 | 0 to 20 % | Effective annual. Pushes up insurance and service charge. |
 | `h` | Years before you sell | 10 | 1 to 40 years | Short stays punish buyers — the purchase costs haven't been earned back yet. |
 | `sp` | Selling costs | 3 | 0 to 15 % | Agent and legal fees when you sell. |
 
@@ -108,6 +108,7 @@ bug.
 | `tax` | Your income tax rate | 30 | 0 to 60 % | Applied to net rental profit. |
 | `rc` | Interest you can deduct | 300000 | KES | Per year, cap. Owner-occupier relief — set to 0 if you don't get it. |
 | `cgt` | Capital gains tax | 15 | 0 to 40 % | On the gain when you sell. Set to 0 if your home is exempt. |
+| `icgt` | Tax on investment gains | 15 | 0 to 40 % | On the pot's gain when you cash it in. Its own rate, not the one above — a home can be exempt while a unit trust isn't. Set to 0 for a sheltered account. |
 
 ## Worked examples
 
@@ -125,18 +126,30 @@ https://vibes.obel.dev/rent-or-buy/?p=14500000&dp=25&rent=75000&h=7&c=USD
 Both paths start with the same cash. The renter invests the deposit and purchase
 costs on day one, and whichever path has the cheaper month invests the difference.
 Net worth in year `h` is the sale price less selling costs, the outstanding loan
-and capital gains tax, plus whatever has accumulated in the investment pot.
+and capital gains tax, plus whatever has accumulated in the investment pot less
+`icgt` on that pot's own gain.
+
+Both sides are cashed in on the same day and taxed on the same terms. A pot is
+taxed only on its growth: the deposit and purchase costs the renter never spent,
+and every monthly saving either side makes, are contributed principal and pass
+through untaxed. Either pot can be the one doing the saving, and both are taxed
+the same way — under `let`, or wherever renting is the dearer month, it is the
+buyer's surplus that accumulates.
 
 The page reports which path wins and by how much, the crossover year if there is
 one, and which single input would flip the verdict.
 
 The defaults are Kenyan, but nothing is hardcoded to Kenya. The tax knobs (`tax`,
-`rc`, `cgt`), the mortgage rate and the transaction costs are all plain inputs —
-set them for whatever market your reader is in.
+`rc`, `cgt`, `icgt`), the mortgage rate and the transaction costs are all plain
+inputs — set them for whatever market your reader is in. `icgt` starts at the same
+15% as `cgt` but is a separate knob, not a mirror of it: set it to 0 for a pension
+or other sheltered account, and note that a `cgt=0` link does not make it 0.
 
 Not modelled: mortgage insurance, service charge arrears, ground rent, moving
-costs. Appreciation and investment returns are steady averages; real ones arrive
-in lumps. It is a model, not advice.
+costs. On the tax side: fund fees, withholding on dividends and interest as they
+arrive, and any tax-free allowance on either gain — the pot is taxed once, on its
+gain, on the day it is cashed in. Appreciation and investment returns are steady
+averages; real ones arrive in lumps. It is a model, not advice.
 
 ## Related
 
