@@ -51,8 +51,11 @@ describe("loanInterest is computed over the full loan term, not the horizon (reg
 
 describe("solve() and the 40-year flip claim (regression: e2baf39)", () => {
   it("finds the crossover value for a lever within the given range", () => {
-    expect(Calc.solve("appr", -8, 30)).toBeCloseTo(11.611, 2);
-    expect(Calc.solve("invest", 0, 30)).toBeCloseTo(3.811, 2);
+    // Both moved when investment gains started paying `icgt` (issue #6): the
+    // renter's pot is worth less after tax, so the property needs less growth
+    // to beat it and the market needs more.
+    expect(Calc.solve("appr", -8, 30)).toBeCloseTo(10.914, 2);
+    expect(Calc.solve("invest", 0, 30)).toBeCloseTo(4.39, 2);
   });
 
   it("returns null when there is no sign change across the range, instead of guessing", () => {
@@ -331,10 +334,12 @@ describe("a month's saving earns nothing in the month it is made (regression: is
 
   it("still pays the opening deposit-and-costs lump its full first month", () => {
     // Raising the return can only move the one-month pot by a month's return on
-    // the lump. Anything more means the contribution was paid a return too.
+    // the lump, net of the tax that return now attracts (issue #6). Anything
+    // more means the contribution was paid a return too.
     const flat = Calc.simulate({ ...ONE_MONTH, invest: 0 }).finalRent;
     const grown = Calc.simulate({ ...ONE_MONTH, invest: 12 }).finalRent;
-    expect(grown - flat).toBeCloseTo(lump() * Calc.mrate(12), 6);
+    const afterTax = 1 - Calc.V.cgtInvest / 100;
+    expect(grown - flat).toBeCloseTo(lump() * Calc.mrate(12) * afterTax, 6);
   });
 
   it("treats the buyer's pot the same way when renting is the dearer path", () => {
@@ -461,6 +466,123 @@ describe("rental losses carry forward against later profits (regression: issue #
     const after = Calc.simulate({ horizon: 30 });
     expect(after.yr1.itax).toBe(0);
     expect(after.finalBuy).toBe(base.finalBuy);
+  });
+});
+
+describe("investment gains are taxed on the same terms as the property (regression: issue #6)", () => {
+  /* The property paid capital gains tax on sale while both investment pots
+     compounded entirely tax-free, and there was no input to change that. The
+     page calls the investment return "the single biggest lever" in its own
+     help text, so it was the lever being handed the untaxed side of the
+     comparison. `icgt` charges the pot's gain the way `cgt` charges the
+     property's, and opens on the same 15%. */
+
+  /* A month's contribution is pure cash flow — `diff` never touches the
+     investment return — so a run at invest 0 leaves each pot holding exactly
+     the principal that was put into it. That is the basis; anything above it
+     at a real return is gain. */
+  const flat = (o) => Calc.simulate({ ...o, invest: 0 });
+  const potOf = (s) => s.series[s.series.length - 1].pot;
+
+  /* Run something at a given rate without leaking it into the next test. */
+  const at = (rate, fn) => {
+    const was = Calc.V.cgtInvest;
+    Calc.V.cgtInvest = rate;
+    try { return fn(); } finally { Calc.V.cgtInvest = was; }
+  };
+
+  it("taxes the gain in the renter's pot and leaves the contributed principal alone", () => {
+    const gross = at(0, () => Calc.simulate().finalRent);
+    const basis = flat().finalRent;
+    const taxed = Calc.simulate().finalRent;
+
+    expect(basis).toBeGreaterThan(0);
+    expect(gross).toBeGreaterThan(basis); // there is a gain to tax in the first place
+    expect(taxed).toBeCloseTo(gross - (gross - basis) * (Calc.V.cgtInvest / 100), 6);
+  });
+
+  it("charges nothing on a pot that is all principal, even at a punitive rate", () => {
+    // Deposit, purchase costs and ten years of monthly savings, none of it
+    // grown. Taxing principal would show up here as a shortfall.
+    const untaxed = at(0, () => flat().finalRent);
+    expect(at(40, () => flat().finalRent)).toBeCloseTo(untaxed, 6);
+  });
+
+  it("reproduces the untaxed model exactly at a rate of 0", () => {
+    // The three figures this change moved, pinned at the values measured
+    // before it: a rate of 0 has to be a genuine opt-out, not an approximation.
+    Calc.V.cgtInvest = 0;
+    expect(Calc.simulate().finalBuy - Calc.simulate().finalRent).toBeCloseTo(-7719847.09, 2);
+    expect(Calc.solve("appr", -8, 30)).toBeCloseTo(11.611, 2);
+    expect(Calc.solve("invest", 0, 30)).toBeCloseTo(3.811, 2);
+  });
+
+  it("taxes the buyer's surplus pot too, not only the renter's", () => {
+    // Renting is the dearer month here, so the buyer is the one doing the
+    // saving, and with no deposit or purchase costs the renter's pot is never
+    // funded at all — anything the rate moves has to be the buyer's.
+    Calc.V.rent = 250000;
+    Calc.V.downPct = 0;
+    Calc.V.closingPct = 0;
+
+    const gross = at(0, () => Calc.simulate());
+    const taxed = Calc.simulate();
+    const gain = potOf(gross) - potOf(flat());
+
+    expect(taxed.finalRent).toBe(0);
+    expect(gain).toBeGreaterThan(0);
+    expect(gross.finalBuy - taxed.finalBuy).toBeCloseTo(gain * (Calc.V.cgtInvest / 100), 6);
+  });
+
+  it("charges the same tax at every year boundary, not only at the horizon", () => {
+    // snapshot() feeds the crossover chart. Taxing only the final point would
+    // leave the chart drawing a line the headline disagrees with.
+    const gross = at(0, () => Calc.simulate({ horizon: 20 }));
+    const basis = flat({ horizon: 20 });
+    const taxed = Calc.simulate({ horizon: 20 });
+
+    expect(taxed.series).toHaveLength(gross.series.length);
+    taxed.series.forEach((p, i) => {
+      const g = gross.series[i].rent;
+      const b = basis.series[i].rent;
+      expect(p.rent, "year " + p.y).toBeCloseTo(g - Math.max(0, g - b) * (Calc.V.cgtInvest / 100), 6);
+    });
+    // ...and it bites somewhere other than the last point, so the loop above
+    // isn't quietly comparing a series of zeros.
+    expect(taxed.series[10].rent).toBeLessThan(gross.series[10].rent);
+  });
+
+  it("moves the crossover year the chart reports, because breakEven scans the taxed series", () => {
+    // At an 8% return the untaxed model never crosses over inside 40 years.
+    // Taxing the pot's gain brings the crossing back into view.
+    Calc.V.invest = 8;
+    expect(at(0, () => Calc.simulate({ horizon: 40 }).breakEven)).toBeNull();
+    expect(Calc.simulate({ horizon: 40 }).breakEven).toBe(24);
+  });
+
+  it("round-trips through a shared link under its own short name", () => {
+    Calc.V.cgtInvest = 7.5;
+    const qs = Calc.buildQueryString();
+    expect(qs).toContain("icgt=7.5");
+
+    Calc.resetToDefaults();
+    expect(Calc.V.cgtInvest).toBe(Calc.DEFAULTS.cgtInvest);
+    Calc.loadFromURL("?" + qs);
+    expect(Calc.V.cgtInvest).toBe(7.5);
+  });
+
+  it("opens on the CGT rate's number without following the field, so old links keep meaning what they say", () => {
+    // "Defaults to the CGT rate" is a starting value, not a mirror: the two
+    // taxes are genuinely different in most places, and a default that tracked
+    // `cgt` could not be encoded in a URL that only ever compares against a
+    // fixed number. A link that exempts the home leaves the pot taxed unless
+    // it says `icgt=0` as well.
+    expect(Calc.DEFAULTS.cgtInvest).toBe(Calc.DEFAULTS.cgt);
+
+    Calc.loadFromURL("?cgt=0");
+    expect(Calc.V.cgt).toBe(0);
+    expect(Calc.V.cgtInvest).toBe(15);
+    expect(Calc.buildQueryString()).toBe("cgt=0"); // and `icgt` stays out of the link
   });
 });
 

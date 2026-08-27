@@ -28,7 +28,7 @@ var PARAM_MAP = { price:"p", downPct:"dp", rate:"mr", term:"term", closingPct:"c
   taxPct:"tx", insurance:"ins", maintPct:"mp", hoa:"hoa", rent:"rent",
   income:"inc", vacancy:"vac", mgmt:"mgmt", appr:"appr", rentGrowth:"rg",
   invest:"inv", inflation:"infl", horizon:"h", sellPct:"sp",
-  marginal:"tax", reliefCap:"rc", cgt:"cgt" };
+  marginal:"tax", reliefCap:"rc", cgt:"cgt", cgtInvest:"icgt" };
 var PARAM_MAP_REV = {};
 Object.keys(PARAM_MAP).forEach(function(k){ PARAM_MAP_REV[PARAM_MAP[k]] = k; });
 
@@ -70,7 +70,8 @@ var FIELDS = {
   fTax:[
     pct("marginal","Your income tax rate",0,60,1,"Applied to net rental profit."),
     money("reliefCap","Interest you can deduct","Per year, cap. Owner-occupier relief — set to 0 if you don't get it."),
-    pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt.")
+    pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt."),
+    pct("cgtInvest","Tax on investment gains",0,40,0.5,"On the pot's gain when you cash it in. Its own rate, not the one above — a home can be exempt while a unit trust isn't. Set to 0 for a sheltered account.")
   ]
 };
 var FIELD_BY_KEY = {};
@@ -130,7 +131,7 @@ class RentOrBuyCalculator {
       rent:55000,
       income:70000, vacancy:8, mgmt:8,
       appr:8, rentGrowth:5, invest:10, inflation:6, horizon:10, sellPct:3,
-      marginal:30, reliefCap:300000, cgt:15
+      marginal:30, reliefCap:300000, cgt:15, cgtInvest:15
     };
     this.DEFAULTS = {};
     Object.keys(this.V).forEach((k) => { this.DEFAULTS[k] = this.V[k]; });
@@ -272,17 +273,35 @@ class RentOrBuyCalculator {
 
     var home = price, bal = loan;
     var buyPot = 0, rentPot = down + closing;
+    /* A pot is part contributed principal and part growth, and only the growth
+       is a gain. Each pot therefore carries its own basis: the renter's opens
+       at the deposit and purchase costs they didn't spend, the buyer's at
+       nothing, and every monthly saving adds to whichever pot receives it.
+       Growth never touches basis — that is the whole point of tracking it. */
+    var buyBasis = 0, rentBasis = down + closing;
     var months = Math.round(horizon*12);
 
     var series = [], yr1 = null;
     var accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
 
+    /* The pot is taxed on the same terms as the property: on the gain, at the
+       moment it is cashed in, and never below zero. Charged at the snapshot
+       rather than month by month because every snapshot answers "what if you
+       sold this year" — a monthly charge would tax growth that hasn't been
+       realised and compound the loss of it, which is a heavier tax than the
+       one the property pays. */
+    function netPot(pot, basis){
+      return pot - Math.max(0, pot - basis) * V.cgtInvest/100;
+    }
+
     function snapshot(y){
       var sale  = home * (1 - V.sellPct/100);
       var basis = price + closing;
       var gain  = Math.max(0, sale - basis);
-      var net   = sale - bal - gain * V.cgt/100 + buyPot;
-      series.push({ y:y, buy:net, rent:rentPot, equity:sale - bal, pot:buyPot });
+      /* `equity` and `pot` stay gross, as the components they are; the tax
+         lands on `buy` and `rent`, which are the figures the page compares. */
+      var net   = sale - bal - gain * V.cgt/100 + netPot(buyPot, buyBasis);
+      series.push({ y:y, buy:net, rent:netPot(rentPot, rentBasis), equity:sale - bal, pot:buyPot });
     }
     snapshot(0);
 
@@ -337,7 +356,8 @@ class RentOrBuyCalculator {
 
       buyPot  *= (1+gInv);
       rentPot *= (1+gInv);
-      if(diff > 0) rentPot += diff; else buyPot += -diff;
+      if(diff > 0){ rentPot += diff; rentBasis += diff; }
+      else { buyPot += -diff; buyBasis += -diff; }
 
       home    *= (1+gAppr);
 

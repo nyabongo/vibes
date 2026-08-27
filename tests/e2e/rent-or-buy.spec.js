@@ -192,6 +192,50 @@ test.describe("rent-or-buy", () => {
     await expect(credit).not.toContainText("tax");
   });
 
+  /* The property paid capital gains tax on sale while both investment pots
+     compounded entirely tax-free, with no input to change it — and the page's
+     own help text calls the investment return "the single biggest lever". The
+     rate now has its own field beside `cgt` in the Tax fieldset, opening on the
+     same 15%. Separate knobs, not a mirror: exempting the home leaves the pot
+     taxed, which is the wrinkle a footnote would have hidden. (regression: #6) */
+  test("investment gains are taxed at their own rate, which survives a shared link", async ({ page, context }) => {
+    await page.goto("/rent-or-buy/?m=live");
+
+    const icgt = page.locator("#i_cgtInvest");
+    await expect(page.locator('label[for="i_cgtInvest"]')).toBeVisible();
+    await expect(icgt).toHaveValue("15");
+    await expect(page.locator("#v_cgtInvest")).toHaveText("15%");
+    await expect(page.locator("#printSummary")).toContainText("Tax on investment gains");
+
+    const taxed = await page.locator("#headline").innerText();
+
+    // A home that's exempt from CGT is not a sheltered investment account, so
+    // dropping `cgt` to 0 must leave the pot's rate exactly where it was.
+    await page.locator("#i_cgt").fill("0");
+    await page.locator("#i_cgt").dispatchEvent("input");
+    await expect(icgt).toHaveValue("15");
+
+    // Sheltering the pot is what turns the tax off, and it moves the verdict —
+    // the old tax-free model is now something you opt into.
+    await page.goto("/rent-or-buy/?m=live");
+    await icgt.fill("0");
+    await icgt.dispatchEvent("input");
+    await expect(page.locator("#headline")).not.toHaveText(taxed);
+
+    // ...and whatever rate you land on rides in the URL under its own name.
+    await icgt.fill("7.5");
+    await icgt.dispatchEvent("input");
+    await expect.poll(() => new URL(page.url()).searchParams.get("icgt")).toBe("7.5");
+
+    const sharedURL = page.url();
+    const sharedHeadline = await page.locator("#headline").innerText();
+    const fresh = await context.newPage();
+    await fresh.goto(sharedURL);
+    await expect(fresh.locator("#i_cgtInvest")).toHaveValue("7.5");
+    await expect(fresh.locator("#headline")).toHaveText(sharedHeadline);
+    await fresh.close();
+  });
+
   test("print summary stays populated with the current field values", async ({ page }) => {
     await page.goto("/rent-or-buy/");
     await page.locator("#i_price").fill("18500000");
