@@ -36,13 +36,30 @@ body{
 .masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
 .rule{height:1px;background:var(--ink);margin:14px 0 22px;}
 
-.mast-actions{display:flex;gap:8px;align-items:center;}
+.mast-actions{display:flex;gap:8px;align-items:center;min-width:0;}
 select.currency,.linkbtn{
   font:500 12px/1 "IBM Plex Mono",monospace;
   background:transparent;border:1px solid var(--line);
   padding:7px 9px;color:var(--ink);cursor:pointer;
 }
-.linkbtn{min-width:78px;text-align:center;}
+/* Sized to the longest label JS can put here — "Copy failed" and "Save as
+   PDF" are both 11 characters — so the row never reflows when the copy
+   feedback swaps in, and no label breaks across two lines. ch tracks the
+   fallback font if the webfont fails. The old 78px floor was SMALLER than
+   "Copy link" needs, so it prevented nothing and only licensed the wrap. */
+.linkbtn{min-width:calc(11ch + 22px);text-align:center;white-space:nowrap;flex:0 0 auto;}
+/* "Reload the page" is the widest thing the AI-prompt button ever says. */
+.aihelp .linkbtn{min-width:calc(15ch + 22px);}
+/* A native select sizes to its longest option, and currency-select builds
+   them as code + " — " + name, so "UGX — Ugandan shilling" forced 186px and
+   pushed the whole cluster past a 320px viewport. Let it take what is left.
+
+   The flex item here is the <currency-select> host, not the <select> it
+   renders inside itself — and a custom element with no display rule of its
+   own is display:inline, so flex sizing on the inner select would land on
+   something that is not a flex item at all. Size the host; fill it. */
+currency-select{flex:1 1 auto;min-width:0;display:block;}
+select.currency{width:100%;min-width:0;text-overflow:ellipsis;}
 .linkbtn:hover{border-color:var(--muted);}
 select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
@@ -73,6 +90,7 @@ select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--acc
   font-size:clamp(30px,5.4vw,52px);
   line-height:1.06;letter-spacing:-.015em;
   margin:0 0 10px;max-width:19ch;
+  overflow-wrap:anywhere;
 }
 .verdict .verdict-line .b{color:var(--accent);}
 .verdict .verdict-line .r{color:var(--accent2);}
@@ -92,8 +110,13 @@ select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--acc
 @media(max-width:900px){.grid{grid-template-columns:1fr;}}
 
 .panel{background:var(--surface);border:1px solid var(--line-soft);}
+/* Flex decides wrapping on max-content, so when the title and its hint cannot
+   share a line the hint drops to its own and the title gets the full width
+   back — one clean line each instead of two ragged interleaved ones. Above
+   ~450px they still fit side by side, so desktop is untouched. */
 .panel-hd{
   display:flex;justify-content:space-between;align-items:baseline;
+  flex-wrap:wrap;gap:3px 12px;
   padding:12px 16px;border-bottom:1px solid var(--line-soft);
 }
 .panel-hd h2{
@@ -103,10 +126,18 @@ select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--acc
 .panel-hd .hint{font-size:11px;color:var(--muted);}
 
 /* ---------- controls ---------- */
+/* Desktop pins the inputs beside the results you are watching change. In one
+   column there is no "beside": the inputs sit above the results, so sticky
+   would cover the very thing it exists to keep in view — and the panel is
+   taller than the viewport, so it would never actually pin on the way past.
+
+   The inputs used to be ordered BELOW the results on a phone, which put the
+   first slider about three screens down: changing a number and seeing what it
+   did was a round trip. It also left the tab order disagreeing with the visual
+   order, since the order property moves one and not the other. */
 .controls{position:sticky;top:20px;}
-@media(max-width:900px){.controls{position:static;order:2;}}
+@media(max-width:900px){.controls{position:static;}}
 .results{min-width:0;}
-@media(max-width:900px){.results{order:1;}}
 
 /* ---------- "ask an AI" helper ---------- */
 .aihelp{
@@ -150,18 +181,28 @@ input[type=number]{
   padding:8px 9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
 }
 input[type=number]:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent);}
-input[type=range]{width:100%;accent-color:var(--ink);height:20px;}
+input[type=range]{width:100%;margin:0;accent-color:var(--ink);height:20px;}
 input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
 
 /* ---------- chart ---------- */
 .chartbox{padding:16px 12px 8px;}
+/* The chart measures itself, so make its box unambiguous rather than leaving
+   an undeclared custom element as display:inline shrink-wrapping a block. */
+crossover-chart{display:block;}
 svg{display:block;width:100%;height:auto;}
-.axis{font:500 10px "IBM Plex Mono",monospace;fill:var(--muted);}
+/* 11px, not 10px: crossover-chart.js sets the viewBox to the element's
+   measured width, so these are real pixels at every size. Change one and
+   change the matching FS in draw(). */
+.axis{font:500 11px "IBM Plex Mono",monospace;fill:var(--muted);}
 .gridline{stroke:var(--line-soft);stroke-width:1;}
 .zeroline{stroke:var(--line);stroke-width:1;}
 .pathline{fill:none;stroke-width:2.25;stroke-linejoin:round;stroke-linecap:round;}
-.marker text{font:500 10px "IBM Plex Mono",monospace;fill:var(--ink);}
+.marker text{font:500 11px "IBM Plex Mono",monospace;fill:var(--ink);}
 .marker text.soft{fill:var(--muted);}
+/* Narrow charts print the y labels over the plot rather than in a gutter that
+   would eat a fifth of a 324px box. The halo is what keeps them legible where
+   a path or a marker label runs underneath. */
+.axis,.marker text{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;}
 .legend{display:flex;gap:18px;padding:4px 16px 14px;flex-wrap:wrap;}
 .legend span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
 .legend i{width:14px;height:3px;display:block;}
@@ -169,9 +210,14 @@ svg{display:block;width:100%;height:auto;}
 /* ---------- key figures ---------- */
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);}
 @media(max-width:720px){.tiles{grid-template-columns:repeat(2,1fr);}}
-.tile{background:var(--surface);padding:14px 16px;}
+/* fmt() emits sign + symbol + grouped digits with no space, so "KSh143,750,000"
+   is one unbreakable 14-character token — and a 1fr track cannot shrink below
+   its min-content. Two columns stop fitting one size before the numbers get
+   long, so go one-up rather than clip. */
+@media(max-width:400px){.tiles{grid-template-columns:1fr;}}
+.tile{background:var(--surface);padding:14px 16px;min-width:0;}
 .tile .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-.tile .v{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500;letter-spacing:-.02em;}
+.tile .v{font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500;letter-spacing:-.02em;overflow-wrap:anywhere;}
 .tile .s{font-size:11px;color:var(--muted);margin-top:3px;}
 
 /* ---------- money bars ---------- */
@@ -195,6 +241,13 @@ svg{display:block;width:100%;height:auto;}
 .flip .lever{flex:1;font-size:13px;}
 .flip .lever b{font-weight:600;}
 .flip .target{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;white-space:nowrap;}
+/* That nowrap is on a mono amount that reaches 25 characters (USh4,125,000,000
+   to build). Rather than break it mid-number, let the row wrap so the target
+   drops to its own line under the lever. */
+@media(max-width:900px){
+  .flip .item{flex-wrap:wrap;}
+  .flip .lever{flex:1 1 100%;}
+}
 .flip .target.na{font-size:12px;color:var(--muted);}
 
 footer{margin-top:26px;font-size:11.5px;color:var(--muted);max-width:74ch;line-height:1.55;}
@@ -215,6 +268,55 @@ footer b{color:var(--ink);font-weight:600;}
 .ps-row:first-of-type{border-top:0;}
 .ps-row .num{font-family:"IBM Plex Mono",monospace;white-space:nowrap;}
 
+/* ---------- small screens: type ---------- */
+/* Keyed on width, not pointer: type size is about the screen and the viewing
+   distance, where target size is about a fingertip. --muted on --surface is
+   4.82:1 — it passes AA, but only just, so small and muted compound. The test
+   for raising something is whether it is prose you have to read or a label you
+   glance at. */
+@media(max-width:900px){
+  /* The note is the only thing that says what an input means, and the tile
+     sub-line the only thing that says what a headline number means. 11px muted
+     is where a full sentence stopped being readable at arm's length. */
+  .f .note,.tile .s{font-size:12.5px;}
+  /* Wayfinding through a two-thousand-pixel input panel. */
+  legend,.tile .k{font-size:11px;}
+  /* The only explanation of what the dashed lines on the chart mean. */
+  .legend span{font-size:12.5px;}
+  /* No flex-shrink:0, so on the longer entries the swatch squeezed to nothing. */
+  .legend i{flex:0 0 auto;}
+}
+
+/* ---------- touch ---------- */
+/* 44px is the Apple HIG / WCAG 2.5.5 target size. Keyed on the pointer rather
+   than the viewport because the constraint is a fingertip, not a screen: a
+   768px tablet in the one-column layout needs this and a narrow desktop window
+   does not. pointer:coarse describes the PRIMARY pointer, so a touchscreen
+   laptop with a mouse reports fine and misses these — any-pointer:coarse would
+   catch it but would also inflate the UI for a desktop with a graphics tablet
+   plugged in, which is the worse trade.
+
+   Note for tests: Playwright only reports pointer:coarse when the context has
+   hasTouch:true. A bare setViewportSize misses every rule in here. */
+@media (pointer:coarse){
+  select.currency,.linkbtn{min-height:44px;padding:7px 12px;}
+  .linkbtn{display:inline-flex;align-items:center;justify-content:center;}
+  .mode button{min-height:44px;}
+  .aihelp summary{min-height:44px;}
+  .backlink{display:inline-flex;align-items:center;min-height:44px;padding:11px 0;}
+  /* A range input takes pointerdown across its whole border box in every
+     engine, so the box IS the target even though the native thumb stays
+     ~16-21px. Deliberately NOT appearance:none — that would let us draw a
+     bigger thumb, but it also kills accent-color, and WebKit and Chromium have
+     no ::-moz-range-progress equivalent, so we would lose the filled part of
+     the track that shows where the value sits. */
+  input[type=range]{height:44px;}
+  /* Under 16px, iOS Safari zooms the viewport on focus and does not zoom back. */
+  input[type=number],select.currency{font-size:16px;}
+  /* Touch has no hover, so these gave no feedback at all on tap — the only
+     signal was the JS text swap on the copy buttons. */
+  .linkbtn:active,.mode button:active{background:var(--line-soft);}
+}
 @media print{
   @page{margin:14mm;}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
