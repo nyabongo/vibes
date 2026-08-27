@@ -286,6 +286,13 @@ class RentOrBuyCalculator {
     }
     snapshot(0);
 
+    /* A loss-making month pays no tax and banks the loss against later
+       profits, the way jurisdictions that tax rental profit at a marginal
+       rate generally allow. Held as a running non-positive balance, and
+       local to this call: solve() runs simulate() dozens of times, so a
+       balance held any wider would carry one trial's losses into the next. */
+    var carry = 0;
+
     for(var m=1; m<=months; m++){
       var interest = bal * r;
       var principal = 0, payment = 0;
@@ -309,7 +316,9 @@ class RentOrBuyCalculator {
         grossIncome = V.income * Math.pow(1+gRent, m-1);
         netIncome = grossIncome * (1 - V.vacancy/100) * (1 - V.mgmt/100);
         var profit = netIncome - interest - tax - ins - mnt - hoa;
-        if(profit > 0) incomeTax = profit * V.marginal/100;
+        var taxable = profit + carry;
+        if(taxable > 0){ incomeTax = taxable * V.marginal/100; carry = 0; }
+        else { carry = taxable; }
       } else {
         var cap = V.reliefCap/12;
         relief = Math.min(interest, cap) * V.marginal/100;

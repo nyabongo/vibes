@@ -350,6 +350,120 @@ describe("a month's saving earns nothing in the month it is made (regression: is
   });
 });
 
+describe("rental losses carry forward against later profits (regression: issue #8)", () => {
+  /* A leveraged let runs at a loss while interest dominates and turns
+     profitable later, as rent grows and the balance amortises. Each month's
+     loss is banked and offset against the profit that follows, so what gets
+     taxed is cumulative profit, not the sum of the profitable months. */
+
+  const leveragedLet = () => {
+    Calc.mode = "let";
+    Calc.V.price = 12000000;
+    Calc.V.downPct = 10;
+    Calc.V.income = 140000;
+  };
+
+  /* The rental tax charged over a whole run isn't reported directly, but the
+     marginal rate reaches finalBuy through nothing else in let mode: the gap
+     between finalBuy at the real rate and at a rate of zero IS the tax, with
+     its forgone investment return. It collapses to exactly nothing when no
+     tax is due, which is the case this issue is about. */
+  const taxCost = (opts) => {
+    const rate = Calc.V.marginal;
+    const taxed = Calc.simulate(opts).finalBuy;
+    Calc.V.marginal = 0;
+    const untaxed = Calc.simulate(opts).finalBuy;
+    Calc.V.marginal = rate;
+    return untaxed - taxed;
+  };
+
+  /* Year one's annual net rental profit, rebuilt from the panel's own monthly
+     averages — the same figures the "Tax on rent" bar segment sits beside. */
+  const yr1Profit = (s) =>
+    12 * (s.yr1.income - s.yr1.interest - s.yr1.tax - s.yr1.ins - s.yr1.mnt - s.yr1.hoa);
+
+  it("charges nothing for a year that nets a loss, even though some of its months ran at a profit", () => {
+    // Rent growing at 20% turns the last months of year one profitable while
+    // the year as a whole still loses money. Taxing month by month billed
+    // those four months in full; the banked losses cancel them.
+    Calc.mode = "let";
+    Calc.V.price = 12000000;
+    Calc.V.downPct = 10;
+    Calc.V.income = 160000;
+    Calc.V.rentGrowth = 20;
+    const s = Calc.simulate({ horizon: 1 });
+    expect(yr1Profit(s)).toBeLessThan(0); // the year is a net loss...
+    expect(s.yr1.itax).toBe(0); // ...so nothing is owed on it
+  });
+
+  it("taxes year one on the year's net profit, not on its profitable months alone", () => {
+    // Same shape, higher rent: now year one ends ahead. Profit improves month
+    // on month here, so cumulative profit is the whole tax base and the bill
+    // is just the marginal rate applied to it.
+    Calc.mode = "let";
+    Calc.V.price = 12000000;
+    Calc.V.downPct = 10;
+    Calc.V.income = 170000;
+    Calc.V.rentGrowth = 20;
+    const s = Calc.simulate({ horizon: 1 });
+    expect(yr1Profit(s)).toBeGreaterThan(0);
+    expect(12 * s.yr1.itax).toBeCloseTo((yr1Profit(s) * Calc.V.marginal) / 100, 6);
+  });
+
+  it("leaves the issue's leveraged let untaxed for ten years, while its early losses are still unpaid", () => {
+    // The first profitable month is month 65, but the losses of years 1-5
+    // aren't worked off until year 11. Discarding them started the tax bill
+    // in year 6.
+    leveragedLet();
+    expect(taxCost({ horizon: 10 })).toBeCloseTo(0, 6);
+  });
+
+  it("starts taxing once the banked losses run out, so the carry can't shelter the let forever", () => {
+    leveragedLet();
+    expect(taxCost({ horizon: 11 })).toBeGreaterThan(0);
+    expect(taxCost({ horizon: 30 })).toBeGreaterThan(0);
+  });
+
+  it("owes nothing at any marginal rate on a let that has never been cumulatively profitable", () => {
+    // The defaults let out over 25 years: 117 of its 300 months run at a
+    // profit, yet it is still nearly KSh 3M down overall. A banked loss is
+    // never a refund either, so a punitive rate costs no more than a zero one.
+    Calc.mode = "let";
+    expect(taxCost({ horizon: 25 })).toBeCloseTo(0, 6);
+    Calc.V.marginal = 60;
+    expect(taxCost({ horizon: 25 })).toBeCloseTo(0, 6);
+  });
+
+  it("still taxes that same let once a longer hold puts it ahead", () => {
+    // Pairs with the test above: proves the zero there is a real verdict on
+    // the scenario and not a model that has stopped charging tax at all.
+    Calc.mode = "let";
+    expect(taxCost({ horizon: 40 })).toBeGreaterThan(0);
+  });
+
+  it("keeps the running loss inside one simulate() call, so repeated runs can't contaminate each other", () => {
+    // solve() calls simulate() dozens of times with different arguments. A
+    // loss balance held on the instance or the module would let a short,
+    // loss-making trial hand its losses to the next run and understate its tax.
+    leveragedLet();
+    const first = Calc.simulate({ horizon: 30 }).finalBuy;
+    Calc.simulate({ horizon: 5 }); // a run that ends deep in the red
+    expect(Calc.simulate({ horizon: 30 }).finalBuy).toBe(first);
+  });
+
+  it("does nothing in live mode, which never computes a rental profit to lose", () => {
+    Calc.mode = "live";
+    const base = Calc.simulate({ horizon: 30 });
+    expect(base.yr1.itax).toBe(0);
+    Calc.V.income = 500000;
+    Calc.V.vacancy = 35;
+    Calc.V.mgmt = 20;
+    const after = Calc.simulate({ horizon: 30 });
+    expect(after.yr1.itax).toBe(0);
+    expect(after.finalBuy).toBe(base.finalBuy);
+  });
+});
+
 describe("mode branching in simulate()", () => {
   it("live mode compares against the renter's own rent and applies the interest-relief cap", () => {
     Calc.mode = "live";
