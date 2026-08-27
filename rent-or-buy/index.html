@@ -225,10 +225,9 @@ function drawCashflow(s){
             Calc.fmt(s.upfront)+' plus '+Calc.fmt(Math.max(0,net))+' a month going into a mortgage, or into the market.</div></div>';
   }
   document.getElementById("cf").innerHTML = html;
-  return {buyNet:net, rentTotal:rentTotal};
 }
 
-function drawTiles(s, cash){
+function drawTiles(s){
   var gap = s.finalBuy - s.finalRent;
   var t = [
     {k:"Monthly repayment", v:Calc.fmt(s.payment), s:"On "+Calc.fmt(s.loan)+" over "+Calc.V.term+" years"},
@@ -339,8 +338,8 @@ function render(){
   var s = Calc.simulate();
   drawVerdict(s);
   drawChart(s);
-  var cash = drawCashflow(s);
-  drawTiles(s, cash);
+  drawCashflow(s);
+  drawTiles(s);
   drawFlip(s);
   buildPrintSummary();
   document.getElementById("chartHint").textContent = "Years 0–"+Calc.V.horizon;

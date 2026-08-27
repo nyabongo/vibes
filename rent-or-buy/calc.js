@@ -275,7 +275,7 @@ class RentOrBuyCalculator {
     var months = Math.round(horizon*12);
 
     var series = [], yr1 = null;
-    var accInterest = 0, accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
+    var accCosts = {int:0,pri:0,tax:0,ins:0,mnt:0,hoa:0,inc:0,itax:0,relief:0}, accRent = 0;
 
     function snapshot(y){
       var sale  = home * (1 - V.sellPct/100);
