@@ -126,6 +126,42 @@ test.describe("rent-or-buy", () => {
     await expect(thirdRow.locator(".target")).toHaveText("9 years");
   });
 
+  /* The flip panel used to solve appreciation over −8…30 and investment return
+     over 0…30, both wider than the sliders those levers are actually offered
+     on. Turning "Return if invested instead" up to its own maximum made it
+     name 22.3% appreciation, 2.3 points past the end of that slider — a target
+     the visitor is told about and then cannot set. (regression: #11) */
+  test("the flip panel never names a target its own slider cannot reach", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+
+    // Everything default except the one lever, pushed to its declared maximum.
+    await page.locator("#i_invest").fill("25");
+    await page.locator("#i_invest").dispatchEvent("input");
+
+    const flipRows = page.locator("#flip .item");
+    await expect(flipRows).toHaveCount(3);
+
+    // The appreciation root sits above the slider's 20% ceiling here, so the
+    // panel has to say so rather than quote a number nobody can dial in.
+    await expect(flipRows.nth(0).locator(".target")).toHaveText("no crossover in range");
+
+    // And whatever either percentage row does name has to be reachable. Bounds
+    // come from the same FIELDS the sliders are built from, so this keeps
+    // holding if a range is ever widened or narrowed.
+    const bounds = await page.evaluate(() => ({
+      appr: [Calc.FIELD_BY_KEY.appr.min, Calc.FIELD_BY_KEY.appr.max],
+      invest: [Calc.FIELD_BY_KEY.invest.min, Calc.FIELD_BY_KEY.invest.max]
+    }));
+    for (const [row, key] of [[0, "appr"], [1, "invest"]]) {
+      const target = await flipRows.nth(row).locator(".target").innerText();
+      if (target === "no crossover in range") continue;
+      const value = parseFloat(target);
+      expect(Number.isNaN(value), `${key} target "${target}" should be a percentage`).toBe(false);
+      expect(value, key).toBeGreaterThanOrEqual(bounds[key][0]);
+      expect(value, key).toBeLessThanOrEqual(bounds[key][1]);
+    }
+  });
+
   /* The credit line quotes yr1.income — gross rent after voids and the agent,
      with tax still in it. Income tax rides the other side of the same bar as
      its own "Tax on rent" segment, so the arithmetic nets out; only the label

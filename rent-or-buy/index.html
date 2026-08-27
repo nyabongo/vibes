@@ -243,7 +243,16 @@ function drawFlip(s){
   var buying = s.finalBuy >= s.finalRent;
   var items = [];
 
-  var a = Calc.solve("appr", -8, 30);
+  /* Solve across the slider's own range, not a wider one: naming a target the
+     visitor cannot dial in is worse than naming none. Out-of-range roots come
+     back null from solve() and fall through to "no crossover in range" below.
+     Reading the bounds off FIELDS keeps the two from drifting apart. */
+  function solveInRange(key){
+    var f = Calc.FIELD_BY_KEY[key];
+    return Calc.solve(key, f.min, f.max);
+  }
+
+  var a = solveInRange("appr");
   items.push({
     lever: buying ? "Buying stops winning if the property appreciates slower than"
                   : "Buying starts winning if the property appreciates faster than",
@@ -251,7 +260,7 @@ function drawFlip(s){
     now: "now "+Calc.pctS(Calc.V.appr)
   });
 
-  var iv = Calc.solve("invest", 0, 30);
+  var iv = solveInRange("invest");
   items.push({
     lever: buying ? "Buying stops winning if your investments return more than"
                   : "Buying starts winning if your investments return less than",
