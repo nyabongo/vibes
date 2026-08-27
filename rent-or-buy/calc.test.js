@@ -51,8 +51,8 @@ describe("loanInterest is computed over the full loan term, not the horizon (reg
 
 describe("solve() and the 40-year flip claim (regression: e2baf39)", () => {
   it("finds the crossover value for a lever within the given range", () => {
-    expect(Calc.solve("appr", -8, 30)).toBeCloseTo(11.645, 2);
-    expect(Calc.solve("invest", 0, 30)).toBeCloseTo(3.808, 2);
+    expect(Calc.solve("appr", -8, 30)).toBeCloseTo(11.611, 2);
+    expect(Calc.solve("invest", 0, 30)).toBeCloseTo(3.811, 2);
   });
 
   it("returns null when there is no sign change across the range, instead of guessing", () => {
@@ -272,6 +272,81 @@ describe("the worked examples published in llms.txt", () => {
       expect(typeof ex.label).toBe("string");
       expect(ex.label.length).toBeGreaterThan(0);
     });
+  });
+});
+
+describe("month one is today, so nothing has grown yet (regression: issue #9)", () => {
+  /* A one-month run makes month 1 readable on its own: months = round(1/12*12)
+     = 1, and yr1 divides by min(12, months), so every yr1 figure IS month 1. */
+  const ONE_MONTH = { horizon: 1 / 12 };
+
+  it("charges month one's rent at the figure the visitor typed, with no growth applied", () => {
+    const s = Calc.simulate(ONE_MONTH);
+    expect(s.yr1.rent).toBeCloseTo(Calc.V.rent, 6);
+  });
+
+  it("charges month one's insurance and service charge before any inflation", () => {
+    const s = Calc.simulate(ONE_MONTH);
+    expect(s.yr1.ins).toBeCloseTo(Calc.V.insurance / 12, 6);
+    expect(s.yr1.hoa).toBeCloseTo(Calc.V.hoa, 6);
+  });
+
+  it("collects month one's rent at the figure the visitor typed, in let mode", () => {
+    Calc.mode = "let";
+    const s = Calc.simulate(ONE_MONTH);
+    const net = Calc.V.income * (1 - Calc.V.vacancy / 100) * (1 - Calc.V.mgmt / 100);
+    expect(s.yr1.income).toBeCloseTo(net, 6);
+  });
+
+  it("rates and upkeep in month one sit on the price paid, not on an already-appreciated value", () => {
+    // `home` needs no exponent — it appreciates at the end of the loop body, so
+    // it is already on the same "month 1 is today" footing as the exponents.
+    const s = Calc.simulate(ONE_MONTH);
+    expect(s.yr1.tax).toBeCloseTo((Calc.V.price * Calc.V.taxPct) / 100 / 12, 6);
+    expect(s.yr1.mnt).toBeCloseTo((Calc.V.price * Calc.V.maintPct) / 100 / 12, 6);
+  });
+
+  it("averages months 0-11 for the year-one panel, matching the label", () => {
+    const g = Calc.mrate(Calc.V.rentGrowth);
+    let sum = 0;
+    for (let m = 0; m < 12; m++) sum += Calc.V.rent * Math.pow(1 + g, m);
+    expect(Calc.simulate().yr1.rent).toBeCloseTo(sum / 12, 6);
+  });
+});
+
+describe("a month's saving earns nothing in the month it is made (regression: issue #9)", () => {
+  const ONE_MONTH = { horizon: 1 / 12 };
+  const lump = () => (Calc.V.price * (Calc.V.downPct + Calc.V.closingPct)) / 100;
+
+  it("leaves the renter's pot untouched by the investment return when there is no opening lump", () => {
+    // Nothing is in the pot when the month starts, so the return has nothing to
+    // act on — the pot is the month's saving and no more, whatever the rate.
+    Calc.V.downPct = 0;
+    Calc.V.closingPct = 0;
+    const slow = Calc.simulate({ ...ONE_MONTH, invest: 4 }).finalRent;
+    const fast = Calc.simulate({ ...ONE_MONTH, invest: 25 }).finalRent;
+    expect(slow).toBeGreaterThan(0);
+    expect(fast).toBeCloseTo(slow, 6);
+  });
+
+  it("still pays the opening deposit-and-costs lump its full first month", () => {
+    // Raising the return can only move the one-month pot by a month's return on
+    // the lump. Anything more means the contribution was paid a return too.
+    const flat = Calc.simulate({ ...ONE_MONTH, invest: 0 }).finalRent;
+    const grown = Calc.simulate({ ...ONE_MONTH, invest: 12 }).finalRent;
+    expect(grown - flat).toBeCloseTo(lump() * Calc.mrate(12), 6);
+  });
+
+  it("treats the buyer's pot the same way when renting is the dearer path", () => {
+    Calc.V.rent = 250000; // renting now costs more, so the buyer does the saving
+    Calc.V.downPct = 0;
+    Calc.V.closingPct = 0;
+    const pot = (invest) => {
+      const s = Calc.simulate({ ...ONE_MONTH, invest: invest });
+      return s.series[s.series.length - 1].pot;
+    };
+    expect(pot(4)).toBeGreaterThan(0);
+    expect(pot(25)).toBeCloseTo(pot(4), 6);
   });
 });
 

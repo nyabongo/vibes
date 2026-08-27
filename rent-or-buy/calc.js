@@ -295,14 +295,18 @@ class RentOrBuyCalculator {
         bal = Math.max(0, bal - principal);
       } else { interest = 0; }
 
+      /* Growth exponents are m-1, not m: month 1 is today, so it carries no
+         growth yet. `home` follows the same convention without an exponent —
+         it is appreciated at the end of the loop body, so the tax and upkeep
+         charged in month m sit on the value the home had when the month began. */
       var tax = home * V.taxPct/100/12;
-      var ins = V.insurance/12 * Math.pow(1+gInf, m);
+      var ins = V.insurance/12 * Math.pow(1+gInf, m-1);
       var mnt = home * V.maintPct/100/12;
-      var hoa = V.hoa * Math.pow(1+gInf, m);
+      var hoa = V.hoa * Math.pow(1+gInf, m-1);
 
       var grossIncome = 0, netIncome = 0, incomeTax = 0, relief = 0;
       if(mode === "let"){
-        grossIncome = V.income * Math.pow(1+gRent, m);
+        grossIncome = V.income * Math.pow(1+gRent, m-1);
         netIncome = grossIncome * (1 - V.vacancy/100) * (1 - V.mgmt/100);
         var profit = netIncome - interest - tax - ins - mnt - hoa;
         if(profit > 0) incomeTax = profit * V.marginal/100;
@@ -312,14 +316,20 @@ class RentOrBuyCalculator {
       }
 
       var buyOut  = payment + tax + ins + mnt + hoa + incomeTax - netIncome - relief;
-      var rentNow = mode === "live" ? V.rent * Math.pow(1+gRent, m) : 0;
+      var rentNow = mode === "live" ? V.rent * Math.pow(1+gRent, m-1) : 0;
       var rentOut = rentNow;
 
+      /* Grow first, then contribute. The month's saving is an end-of-period
+         cash flow, so it earns nothing in the month it is made; the opening
+         lump sum is already in the pot and still earns its full first month.
+         Only one pot receives a contribution in any given month, so paying a
+         month's return on it would quietly favour whichever side is cheaper. */
       var diff = buyOut - rentOut;
-      if(diff > 0) rentPot += diff; else buyPot += -diff;
 
       buyPot  *= (1+gInv);
       rentPot *= (1+gInv);
+      if(diff > 0) rentPot += diff; else buyPot += -diff;
+
       home    *= (1+gAppr);
 
       if(m <= 12){
