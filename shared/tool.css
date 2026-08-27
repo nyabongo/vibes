@@ -34,10 +34,6 @@ body{
 
 /* ---------- masthead ---------- */
 .masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
-.eyebrow{
-  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted);font-weight:500;
-}
 .rule{height:1px;background:var(--ink);margin:14px 0 22px;}
 
 .mast-actions{display:flex;gap:8px;align-items:center;}
@@ -50,17 +46,36 @@ select.currency,.linkbtn{
 .linkbtn:hover{border-color:var(--muted);}
 select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
+/* ---------- back-link + tool identity (above the rule) ---------- */
+.backlink{
+  font:500 12px/1 "IBM Plex Mono",monospace;
+  color:var(--muted);text-decoration:none;
+  display:inline-block;padding:7px 0;
+}
+.backlink:hover{color:var(--ink);}
+.backlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+.tool-id{margin-top:14px;}
+.tool-name{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:17px;font-weight:600;letter-spacing:-.01em;
+  margin:0 0 3px;
+}
+.tool-what{
+  margin:0;color:var(--muted);
+  font-size:13.5px;line-height:1.45;max-width:64ch;
+}
+
 /* ---------- verdict ---------- */
-.verdict h1{
+.verdict .verdict-line{
   font-family:"Fraunces",Georgia,serif;
   font-weight:600;font-variation-settings:"SOFT" 50,"WONK" 1;
   font-size:clamp(30px,5.4vw,52px);
   line-height:1.06;letter-spacing:-.015em;
   margin:0 0 10px;max-width:19ch;
 }
-.verdict h1 em{font-style:normal;}
-.verdict h1 .b{color:var(--accent);}
-.verdict h1 .r{color:var(--accent2);}
+.verdict .verdict-line .b{color:var(--accent);}
+.verdict .verdict-line .r{color:var(--accent2);}
 .verdict p{margin:0;max-width:56ch;color:var(--muted);font-size:15px;}
 .verdict p b{color:var(--ink);font-weight:600;}
 
@@ -205,7 +220,7 @@ footer b{color:var(--ink);font-weight:600;}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:#fff;}
   .wrap{max-width:100%;padding:0;}
-  .mast-actions,.controls{display:none!important;}
+  .mast-actions,.controls,.backlink,.tool-what{display:none!important;}
   .grid{grid-template-columns:1fr;margin-top:16px;}
   .print-summary{display:block;margin-top:22px;}
   .panel,.tile,.cfrow,.flip .item{break-inside:avoid;}

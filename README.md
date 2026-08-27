@@ -9,9 +9,9 @@ Small tools, vibe-coded. A monorepo of standalone browser tools, live at
 
 | Tool | What it does | Source | Spec |
 | --- | --- | --- | --- |
-| [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Models net worth over time for buying and for renting, and shows the exact year buying overtakes renting — or doesn't. | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
-| [Build or invest](https://vibes.obel.dev/build-or-invest/) | Compares building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth. | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
-| [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Compares building a home for yourself a stage at a time out of salary, while renting, against renting for good and investing the same money. Works out when you move in and whether construction costs outrun you before the house is finished. | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
+| [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Should you buy a home, or rent and put the same money in the market? Models what you'd be worth on each path, and shows the exact year buying overtakes renting — or doesn't. | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
+| [Build or invest](https://vibes.obel.dev/build-or-invest/) | Should your money build a rental block, or just sit in the market? Models the construction drag, lease-up, and what the finished building is actually worth. | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
+| [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Should you build a home a bit at a time, or rent and invest instead? Builds it out of salary while you rent. Works out when you move in and whether construction costs outrun you before the house is finished. | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
 
 All three calculators take their whole input set from the URL query string, so a
 link opens with the scenario already filled in. The specs above document that URL
@@ -210,7 +210,7 @@ copying.
    `key-tiles` takes `render([{ k, v, s }])`, and `currency-select` exposes
    `setCode()` and emits `currencychange`. Script order matters — components,
    then `clipboard.js`, then `spec-text.js`, then the engine, as in
-   [rent-or-buy/index.html:141](rent-or-buy/index.html#L141).
+   [rent-or-buy/index.html:150](rent-or-buy/index.html#L150).
 
 6. **Add a `SPECS` entry** in [tools/llms-txt.js](tools/llms-txt.js) with the
    editorial half: `summary`, `model` (what the calculator does with the inputs,

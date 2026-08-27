@@ -4,7 +4,6 @@ test.describe("brick-by-brick", () => {
   test("loads with the default scenario and renders a verdict", async ({ page }) => {
     await page.goto("/brick-by-brick/");
     const headline = page.locator("#headline");
-    await expect(headline).not.toHaveText("…");
     await expect(headline).toContainText(/Build|Rent and invest/);
     await expect(page.locator("#tiles .tile")).toHaveCount(4);
   });
@@ -169,9 +168,9 @@ test.describe("brick-by-brick", () => {
 
     // Bisecting down to a cost of zero would land on "no house is ever built",
     // which is the wrong side of the sign change — the panel would give up and
-    // print "no crossover in range" for a lever that plainly has one.
+    // print "nothing in range flips it" for a lever that plainly has one.
     await expect(rows.nth(2)).toContainText("square metre");
-    await expect(rows.nth(2).locator(".target")).not.toHaveText("no crossover in range");
+    await expect(rows.nth(2).locator(".target")).not.toHaveText("nothing in range flips it");
     await expect(rows.nth(2).locator(".target")).toContainText("USh");
   });
 
@@ -284,7 +283,7 @@ test.describe("brick-by-brick", () => {
     await page.goto("/brick-by-brick/" + new URL(example[0]).search);
 
     await expect(page.locator("#i_sqm")).toHaveValue("90");
-    await expect(page.locator("#headline")).not.toHaveText("…");
+    await expect(page.locator("#headline")).not.toBeEmpty();
   });
 
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {

@@ -93,7 +93,7 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `sa` | Break ground once you have saved | 70 | 10 to 150 % | A share of the build cost. Waiting longer means a shorter build, but more months of rent. |
+| `sa` | Start building once you've saved | 70 | 10 to 150 % | A share of the build cost. Above 100% means the whole house is paid for before the first block is laid. |
 | `pm` | Months to build once you start | 12 | 3 to 60 months | The short push. Running out of money mid-push simply slows it down. |
 
 ### Renting now
@@ -109,7 +109,7 @@ bug.
 | --- | --- | --- | --- | --- |
 | `oc` | Running the place once you own it | 5226.4808 | KES | Per month. Ground rent, security, water, garbage — the things a rental quietly included. |
 | `mnt` | Repairs & upkeep | 1 | 0 to 5 % | Per year, as a share of what the house is worth. 1% is the usual rule of thumb. |
-| `infl` | Inflation | 6 | 0 to 20 % | Pushes up the running costs above. |
+| `infl` | Inflation | 6 | 0 to 20 % | Per year. Pushes up the running costs above. |
 
 ### What it's worth
 
@@ -123,8 +123,8 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `inv` | Return if invested instead | 14 | 0 to 30 % | Annual, compounding. Ugandan treasury bonds have run in the low-to-mid teens. |
-| `itx` | Tax on those returns | 15 | 0 to 40 % | Withholding tax. 15% on interest in Uganda. |
+| `inv` | Return if invested instead | 14 | 0 to 30 % | Per year, compounding. Ugandan treasury bonds have run in the low-to-mid teens. |
+| `itx` | Tax on those returns | 15 | 0 to 40 % | Tax taken off before you're paid — withholding tax. 15% on interest in Uganda. |
 | `ife` | Annual management fee | 1 | 0 to 5 % | Charged on the balance, so it bites every year. |
 
 ### Getting out

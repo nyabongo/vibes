@@ -23,19 +23,26 @@
 <div class="wrap">
 
   <div class="masthead">
-    <div>
-      <div class="eyebrow">Build vs invest &middot; development model</div>
-    </div>
+    <a class="backlink" href="../">&larr; vibes</a>
     <div class="mast-actions">
       <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
       <button class="linkbtn" id="copyLink" type="button">Copy link</button>
       <currency-select id="cur"></currency-select>
     </div>
   </div>
+
+  <div class="tool-id">
+    <h1 class="tool-name">Build or invest</h1>
+    <p class="tool-what">Should your money build a rental block, or just sit in the market? Set your numbers. The page picks.</p>
+  </div>
   <div class="rule"></div>
 
   <div class="verdict">
-    <h1 id="headline">…</h1>
+    <!-- Not a heading: a computed result that changes on every slider frame has
+         no business in the document outline, and heading-navigation would land
+         on it as a title for a section that doesn't exist. role="status"
+         implies aria-live="polite" + aria-atomic; do not also write those. -->
+    <div class="verdict-line" id="headline" role="status"></div>
     <p id="subline"></p>
   </div>
 
@@ -72,7 +79,7 @@
         </div>
 
         <fieldset>
-          <legend>What you're deploying</legend>
+          <legend>What you're putting in</legend>
           <field-group id="fCapital"></field-group>
         </fieldset>
 
@@ -122,12 +129,13 @@
     <div class="results">
 
       <div class="panel">
-        <div class="panel-hd"><h2>Net worth if you sell that year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="panel-hd"><h2>What you'd be worth if you sold that year</h2><span class="hint" id="chartHint"></span></div>
         <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for building versus investing"></crossover-chart></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i> Build the block</span>
           <span><i style="background:var(--accent2)"></i> Leave it invested</span>
-          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover &amp; completion</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover — where building overtakes investing</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--line)"></i> Complete — the block is finished</span>
           <span><i style="background:var(--muted);opacity:.25;height:10px"></i> Under construction</span>
         </div>
       </div>
@@ -138,12 +146,12 @@
       </div>
 
       <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>Where the money goes</h2><span class="hint" id="cfHint"></span></div>
+        <div class="panel-hd"><h2>Where the money goes</h2><span class="hint">Building it, then running it</span></div>
         <div class="cf" id="cf"></div>
       </div>
 
       <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>What would flip this</h2><span class="hint">Everything else held still</span></div>
+        <div class="panel-hd"><h2>What would change the answer</h2><span class="hint">One change at a time, everything else held still</span></div>
         <div class="flip" id="flip"></div>
       </div>
 
@@ -255,7 +263,7 @@ function drawCashflow(s){
   var y = s.stabYear;
   if(y){
     var runParts = [
-      {n:"Agent's cut", v:y.agent,  c:"var(--accent2)"},
+      {n:"Letting agent's fee", v:y.agent, c:"var(--accent2)"},
       {n:"Land rates",  v:y.rates,  c:"#4C6B4A"},
       {n:"Insurance",   v:y.ins,    c:"#8A9B7E"},
       {n:"Repairs",     v:y.rep,    c:"#B3A98C"},
@@ -289,12 +297,12 @@ function drawTiles(s){
     {k:"Total project cost", v:Model.fmt(s.projectCost),
      s:"Land, build, fees and contingency"},
     {k:"Yield on cost", v:Model.pctS(s.yieldOnCost),
-     s:"Against an exit yield of "+Model.pctS(Model.V.capRate)+" — "+
+     s:"Rent per shilling spent. Buyers want "+Model.pctS(Model.V.capRate)+" — "+
        (margin>=0 ? "worth "+Model.fmt(margin)+" more than it cost"
                   : "worth "+Model.fmt(-margin)+" less than it cost")},
     {k:"Project return", v: irr===null ? "—" : Model.pctS(irr),
      s: irr===null ? "No rate fits these cashflows"
-                   : "Against "+Model.pctS(netInv)+" net from the market"},
+                   : "What the project earns you a year, all in — its IRR. Market pays "+Model.pctS(netInv)+" net"},
     {k:"Gap at year "+Model.V.horizon, v:(gap>=0?"+":"−")+Model.fmt(Math.abs(gap)),
      s:(gap>=0?"in favour of building":"in favour of investing")}
   ];
@@ -340,7 +348,7 @@ function drawFlip(s){
 
   document.getElementById("flip").innerHTML = items.map(function(i){
     var tg = i.target ? '<span class="target">'+i.target+'</span>'
-                      : '<span class="target na">no crossover in range</span>';
+                      : '<span class="target na">nothing in range flips it</span>';
     return '<div class="item"><span class="lever">'+i.lever+
            ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
   }).join("");
@@ -425,7 +433,6 @@ function render(){
   buildPrintSummary();
   document.getElementById("chartHint").textContent = "Years 0–"+Model.V.horizon;
   document.getElementById("horizonHint").textContent = Model.V.horizon+"-year horizon";
-  document.getElementById("cfHint").textContent = Model.V.buildMonths+" months to build";
   document.getElementById("fnH").textContent = Model.V.horizon;
   document.getElementById("curhint").textContent = Model.cur.code;
   Model.updateURL();

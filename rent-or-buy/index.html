@@ -23,19 +23,26 @@
 <div class="wrap">
 
   <div class="masthead">
-    <div>
-      <div class="eyebrow">Rent vs buy · crossover model</div>
-    </div>
+    <a class="backlink" href="../">&larr; vibes</a>
     <div class="mast-actions">
       <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
       <button class="linkbtn" id="copyLink" type="button">Copy link</button>
       <currency-select id="cur"></currency-select>
     </div>
   </div>
+
+  <div class="tool-id">
+    <h1 class="tool-name">Rent or buy</h1>
+    <p class="tool-what">Should you buy a home, or rent and put the same money in the market? Set your numbers. The page picks.</p>
+  </div>
   <div class="rule"></div>
 
   <div class="verdict">
-    <h1 id="headline">…</h1>
+    <!-- Not a heading: a computed result that changes on every slider frame has
+         no business in the document outline, and heading-navigation would land
+         on it as a title for a section that doesn't exist. role="status"
+         implies aria-live="polite" + aria-atomic; do not also write those. -->
+    <div class="verdict-line" id="headline" role="status"></div>
     <p id="subline"></p>
   </div>
 
@@ -105,12 +112,12 @@
     <div class="results">
 
       <div class="panel">
-        <div class="panel-hd"><h2>Net worth if you sell that year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="panel-hd"><h2>What you'd be worth if you sold that year</h2><span class="hint" id="chartHint"></span></div>
         <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for buying versus renting"></crossover-chart></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i> Buy</span>
           <span><i style="background:var(--accent2)"></i> Rent &amp; invest the difference</span>
-          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover — where buying overtakes renting</span>
         </div>
       </div>
 
@@ -120,12 +127,12 @@
       </div>
 
       <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>Where the money goes each month</h2><span class="hint">Year one average</span></div>
+        <div class="panel-hd"><h2>Where the money goes each month</h2><span class="hint">Averaged over year one</span></div>
         <div class="cf" id="cf"></div>
       </div>
 
       <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>What would flip this</h2><span class="hint">Everything else held still</span></div>
+        <div class="panel-hd"><h2>What would change the answer</h2><span class="hint">One change at a time, everything else held still</span></div>
         <div class="flip" id="flip"></div>
       </div>
 
@@ -133,6 +140,8 @@
         <b>How this works.</b> Both paths start with the same cash. The renter invests the deposit and purchase costs on day one, and whichever path has the cheaper month invests the difference. Net worth at year <span id="fnH">10</span> is the sale price minus selling costs, remaining loan and capital gains tax, plus whatever's in the investment pot minus the tax on that pot's own gain. Both sides are cashed in on the same day and taxed on the same terms; what you contributed is never taxed, only the growth on top of it. When the property is a let, your own rent is the same either way, so it's left out entirely — the comparison is the rental property against the same money in the market.
         <br><br>
         <b>Not modelled:</b> mortgage insurance, service charge arrears, ground rent, the cost of moving, or the fact that a landlord can raise your rent and a bank can't raise your fixed repayment. On the tax side: fund fees, withholding on dividends and interest as they arrive, and any tax-free allowance on either gain — the pot is taxed once, on its gain, on the day you cash it in. Appreciation and returns are steady averages here; real ones arrive in lumps.
+        <br><br>
+        <b>This is a model, not advice.</b> It does what you tell it to. The numbers you put in matter far more than the arithmetic it does with them.
       </footer>
     </div>
   </div>
@@ -181,16 +190,17 @@ function drawCashflow(s){
   var y = s.yr1;
   var buyParts = [
     {n:"Interest",   v:y.interest, c:"var(--accent)"},
-    {n:"Principal",  v:y.principal, c:"#7EA3CC"},
-    {n:"Rates & tax",v:y.tax,      c:"#4C6B4A"},
+    {n:"Loan repaid", v:y.principal, c:"#7EA3CC"},
+    {n:"Land rates", v:y.tax,      c:"#4C6B4A"},
     {n:"Insurance",  v:y.ins,      c:"#8A9B7E"},
     {n:"Upkeep",     v:y.mnt,      c:"#B3A98C"},
     {n:"Service charge", v:y.hoa,  c:"#6B7069"}
   ];
   if(Calc.mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
   var buyTotal = buyParts.reduce(function(a,b){return a+b.v;},0);
-  /* y.income is netIncome — gross rent less voids and the agent, before tax.
-     Tax on it is its own bar segment above, so don't name it here too. */
+  /* y.income is netIncome — gross rent less the empty months and the agent,
+     before tax. Tax on it is its own bar segment above, so don't name it here
+     too. */
   var credit = Calc.mode==="let" ? y.income : y.relief;
   var net = buyTotal - credit;
 
@@ -214,11 +224,11 @@ function drawCashflow(s){
   }
 
   var html = block(Calc.mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
-                   Calc.mode==="let" ? "rent collected, after voids and agent" : "tax relief on interest", credit);
+                   Calc.mode==="let" ? "rent collected, after empty months and the agent" : "tax relief on interest", credit);
   if(Calc.mode==="live"){
     html += block("Renting", rentParts, rentTotal, rentTotal, "", 0);
   } else {
-    html += '<div class="cfrow"><div class="cfhead"><span class="who">Not buying</span>'+
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">Putting it in the market</span>'+
             '<span class="amt num">'+Calc.fmt(0)+'</span></div>'+
             '<div class="bar"></div>'+
             '<div class="credit">Your own rent is identical either way, so it drops out. What you\'re comparing is '+
@@ -244,7 +254,7 @@ function drawFlip(s){
 
   /* Solve across the slider's own range, not a wider one: naming a target the
      visitor cannot dial in is worse than naming none. Out-of-range roots come
-     back null from solve() and fall through to "no crossover in range" below.
+     back null from solve() and fall through to "nothing in range flips it" below.
      Reading the bounds off FIELDS keeps the two from drifting apart. */
   function solveInRange(key){
     var f = Calc.FIELD_BY_KEY[key];
@@ -276,7 +286,7 @@ function drawFlip(s){
 
   document.getElementById("flip").innerHTML = items.map(function(i){
     var tg = i.target ? '<span class="target">'+i.target+'</span>'
-                      : '<span class="target na">no crossover in range</span>';
+                      : '<span class="target na">nothing in range flips it</span>';
     return '<div class="item"><span class="lever">'+i.lever+
            ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
   }).join("");
@@ -298,7 +308,7 @@ function drawVerdict(s){
       : "Renting and investing the difference leaves you <b>"+amt+"</b> ahead by year "+Calc.V.horizon+". "+
         (s.breakEven ? "" : "At these assumptions the two lines don't cross within your horizon.");
   } else {
-    h.innerHTML = (buying ? '<span class="b">Buy the let</span>' : '<span class="r">Skip it</span>') +
+    h.innerHTML = (buying ? '<span class="b">Buy the let</span>' : '<span class="r">Invest instead</span>') +
                   ", by " + amt + " over " + Calc.V.horizon + (Calc.V.horizon===1?" year":" years") + ".";
     p.innerHTML = buying
       ? "The rental property beats putting the same money in the market by <b>"+amt+"</b>. "+

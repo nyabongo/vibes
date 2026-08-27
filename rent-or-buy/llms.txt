@@ -62,8 +62,8 @@ bug.
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
 | `p` | Property price | 12000000 | KES |  |
-| `dp` | Deposit | 20 | 0 to 100 % |  |
-| `mr` | Mortgage rate | 14.5 | 0 to 30 % | Annual, on the balance. Nominal, as banks quote it — monthly compounding makes the effective rate higher. |
+| `dp` | Deposit | 20 | 0 to 100 % | Your share of the price paid in cash up front. The rest is the mortgage. |
+| `mr` | Mortgage rate | 14.5 | 0 to 30 % | Per year, on what you still owe. The rate banks advertise; charged monthly, so you pay slightly more than it looks. |
 | `term` | Loan term | 20 | 1 to 35 years |  |
 | `cc` | Purchase costs | 5 | 0 to 15 % | Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered. |
 
@@ -71,10 +71,10 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `tx` | Land rates / property tax | 0.2 | 0 to 4 % | Per year, as a share of the property's value. |
+| `tx` | Land rates / property tax | 0.2 | 0 to 4 % | The council's annual charge on the property. Per year, as a share of its value. |
 | `ins` | Insurance | 24000 | KES | Per year. |
 | `mp` | Repairs & upkeep | 1 | 0 to 5 % | Per year, as a share of value. 1% is the usual rule of thumb. |
-| `hoa` | Service charge | 8000 | KES | Per month. |
+| `hoa` | Service charge | 8000 | KES | Per month. What the block charges for security, grounds, water and lifts. |
 
 ### Renting instead — mode `live` only
 
@@ -87,17 +87,17 @@ bug.
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
 | `inc` | Rent you'd collect | 70000 | KES | Per month, when occupied. |
-| `vac` | Empty months | 8 | 0 to 40 % | Share of the year with no tenant. |
-| `mgmt` | Agent's cut | 8 | 0 to 25 % | Letting and management fees on rent collected. |
+| `vac` | Time sitting empty | 8 | 0 to 40 % | Share of the year with no tenant. 8% is about one month in twelve. |
+| `mgmt` | Letting agent's fee | 8 | 0 to 25 % | What the agent takes for finding tenants and managing them. A share of the rent collected, every month. |
 
 ### What the future does
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `appr` | Property appreciation | 8 | -5 to 20 % | Effective annual. |
-| `rg` | Rent growth | 5 | -5 to 20 % | Effective annual. |
-| `inv` | Return if invested instead | 10 | 0 to 25 % | Effective annual. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever. |
-| `infl` | Inflation | 6 | 0 to 20 % | Effective annual. Pushes up insurance and service charge. |
+| `appr` | Property appreciation | 8 | -5 to 20 % | Per year. How fast the home's value rises. |
+| `rg` | Rent growth | 5 | -5 to 20 % | Per year. How fast rents rise. |
+| `inv` | Return if invested instead | 10 | 0 to 25 % | Per year, compounding. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever. |
+| `infl` | Inflation | 6 | 0 to 20 % | Per year. Pushes up insurance and the service charge. |
 | `h` | Years before you sell | 10 | 1 to 40 years | Short stays punish buyers — the purchase costs haven't been earned back yet. |
 | `sp` | Selling costs | 3 | 0 to 15 % | Agent and legal fees when you sell. |
 
@@ -105,10 +105,10 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `tax` | Your income tax rate | 30 | 0 to 60 % | Applied to net rental profit. |
-| `rc` | Interest you can deduct | 300000 | KES | Per year, cap. Owner-occupier relief — set to 0 if you don't get it. |
-| `cgt` | Capital gains tax | 15 | 0 to 40 % | On the gain when you sell. Set to 0 if your home is exempt. |
-| `icgt` | Tax on investment gains | 15 | 0 to 40 % | On the pot's gain when you cash it in. Its own rate, not the one above — a home can be exempt while a unit trust isn't. Set to 0 for a sheltered account. |
+| `tax` | Your income tax rate | 30 | 0 to 60 % | In let mode, taxes the profit left after interest and running costs. In live mode, it sets what your interest relief is worth. |
+| `rc` | Interest you can deduct | 300000 | KES | The most mortgage interest you can knock off your taxable income in a year. Set to 0 if you don't get this relief. |
+| `cgt` | Capital gains tax | 15 | 0 to 40 % | Charged only on what you sell for above what you paid, not on the whole price. Set to 0 if your home is exempt. |
+| `icgt` | Tax on investment gains | 15 | 0 to 40 % | On the pot's growth when you cash it in. Its own rate, not the one above — a home can be exempt while a unit trust isn't. Set to 0 for a sheltered account. |
 
 ## Worked examples
 

@@ -4,7 +4,6 @@ test.describe("rent-or-buy", () => {
   test("loads with the default scenario and renders a verdict", async ({ page }) => {
     await page.goto("/rent-or-buy/");
     const headline = page.locator("#headline");
-    await expect(headline).not.toHaveText("…");
     await expect(headline).toContainText(/Buy|Rent/);
     await expect(page.locator("#tiles .tile")).toHaveCount(4);
   });
@@ -143,7 +142,7 @@ test.describe("rent-or-buy", () => {
 
     // The appreciation root sits above the slider's 20% ceiling here, so the
     // panel has to say so rather than quote a number nobody can dial in.
-    await expect(flipRows.nth(0).locator(".target")).toHaveText("no crossover in range");
+    await expect(flipRows.nth(0).locator(".target")).toHaveText("nothing in range flips it");
 
     // And whatever either percentage row does name has to be reachable. Bounds
     // come from the same FIELDS the sliders are built from, so this keeps
@@ -154,7 +153,7 @@ test.describe("rent-or-buy", () => {
     }));
     for (const [row, key] of [[0, "appr"], [1, "invest"]]) {
       const target = await flipRows.nth(row).locator(".target").innerText();
-      if (target === "no crossover in range") continue;
+      if (target === "nothing in range flips it") continue;
       const value = parseFloat(target);
       expect(Number.isNaN(value), `${key} target "${target}" should be a percentage`).toBe(false);
       expect(value, key).toBeGreaterThanOrEqual(bounds[key][0]);
@@ -162,7 +161,8 @@ test.describe("rent-or-buy", () => {
     }
   });
 
-  /* The credit line quotes yr1.income — gross rent after voids and the agent,
+  /* The credit line quotes yr1.income — gross rent after the empty months and
+     the agent,
      with tax still in it. Income tax rides the other side of the same bar as
      its own "Tax on rent" segment, so the arithmetic nets out; only the label
      was wrong, and it claimed tax even in the common case where no tax segment
@@ -177,7 +177,7 @@ test.describe("rent-or-buy", () => {
     // The defaults don't turn a rental profit, so nothing is taxed and no
     // "Tax on rent" segment is drawn — the old wording promised one anyway.
     await expect(keys).not.toContainText("Tax on rent");
-    await expect(credit).toContainText("rent collected, after voids and agent");
+    await expect(credit).toContainText("rent collected, after empty months and the agent");
     await expect(credit).not.toContainText("tax");
 
     // Push the rent high enough to be taxed: the segment shows up, and the
@@ -286,7 +286,7 @@ test.describe("rent-or-buy", () => {
     await expect(page.locator("#i_price")).toHaveValue("14500000");
     await expect(page.locator("#i_rent")).toHaveValue("75000");
     await expect(page.locator("#i_horizon")).toHaveValue("7");
-    await expect(page.locator("#headline")).not.toHaveText("…");
+    await expect(page.locator("#headline")).not.toBeEmpty();
   });
 
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {

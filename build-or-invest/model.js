@@ -44,48 +44,48 @@ function num(k,label,min,max,step,note,unit){ return {k:k,label:label,min:min,ma
 
 var FIELDS = {
   fCapital:[
-    money("capital","Money you have to deploy","The same lump sum goes into the building or into the market. That's the whole comparison.")
+    money("capital","Money you have to put in","The same lump sum goes into the building or into the market. That's the whole comparison.")
   ],
   fProject:[
     money("land","Land cost","Set to 0 if you already own the plot."),
     num("units","Number of units",1,200,1,null,null),
     money("costPerUnit","Build cost per unit","Shell, finishes and services, per unit."),
-    pct("feesPct","Design, approvals & supervision",0,25,0.5,"Architect, engineer, county approvals, NEMA. A share of build cost."),
-    pct("contingencyPct","Contingency",0,30,1,"Overruns are the norm, not the exception."),
+    pct("feesPct","Design, approvals & supervision",0,25,0.5,"Architect, engineer, county approvals, and NEMA — Kenya's environment regulator, which signs off the site. A share of build cost."),
+    pct("contingencyPct","Contingency",0,30,1,"Spare money for overruns. They are the norm, not the exception. A share of build cost plus fees."),
     num("buildMonths","Months to build",1,60,1,"No rent arrives during these. This is the drag spreadsheets forget."," months"),
-    num("leaseMonths","Months to fill it",0,36,1,"Occupancy ramps from empty to your long-run vacancy over this stretch."," months")
+    num("leaseMonths","Months to fill it",0,36,1,"How long it takes to go from empty to fully let. No block fills the week it opens."," months")
   ],
   fIncome:[
     money("rentUnit","Rent per unit","Per month, when occupied."),
-    pct("vacancy","Long-run vacancy",0,40,1,"Share of the year a unit sits empty once the building has settled."),
-    pct("mgmt","Agent's cut",0,25,0.5,"Letting and management fees on rent collected."),
-    pct("rentGrowth","Rent growth",-5,20,0.25,"Per year. This also drives your exit value, so it works twice.")
+    pct("vacancy","Time sitting empty",0,40,1,"Share of the year an average unit has no tenant, once the block has settled. 8% is about a month."),
+    pct("mgmt","Letting agent's fee",0,25,0.5,"What the agent takes for finding tenants and managing them. A share of the rent collected, every month."),
+    pct("rentGrowth","Rent growth",-5,20,0.25,"Per year. This also lifts what a buyer will pay for the block, so it works twice.")
   ],
   fOperating:[
-    pct("ratesPct","Land rates",0,4,0.05,"Per year, as a share of the site value."),
+    pct("ratesPct","Land rates",0,4,0.05,"The council's annual charge on the plot, like property tax. Per year, as a share of the site value."),
     money("insurance","Insurance","Per year, for the whole building."),
     pct("repairsPct","Repairs & upkeep",0,5,0.1,"Per year, as a share of build cost. 1% is the usual rule of thumb."),
     money("commonCost","Common areas & security","Per month. Caretaker, water, lifts, grounds, lighting.")
   ],
   fExit:[
-    pct("capRate","Exit yield",1,20,0.25,"What a buyer demands. The building is worth a year's net income divided by this — the single biggest lever on your exit."),
+    pct("capRate","Exit yield",1,20,0.25,"What a buyer wants back each year for every shilling they pay. Low means they pay more for your block. Your biggest lever."),
     pct("sellPct","Selling costs",0,15,0.25,"Agent and legal fees when you sell."),
-    num("horizon","Years before you sell",1,40,1,null," years")
+    num("horizon","Years before you sell",1,40,1,"How long you hold the block before selling. The whole comparison is measured at this year."," years")
   ],
   fInvest:[
-    pct("invest","Return if invested instead",0,25,0.25,"Annual, compounding. Whatever you'd actually earn leaving the money in the market."),
-    pct("investTax","Tax on those returns",0,40,0.5,"Withholding tax. 15% on most Kenyan unit trusts."),
+    pct("invest","Return if invested instead",0,25,0.25,"Per year, compounding. Whatever you'd actually earn leaving the money in the market."),
+    pct("investTax","Tax on those returns",0,40,0.5,"Tax the fund takes off before paying you — withholding tax. 15% on most Kenyan unit trusts."),
     pct("investFee","Annual management fee",0,5,0.1,"Charged on the balance, so it bites every year.")
   ],
   fGross:[
-    pct("flatPct","Flat rate on gross rent",0,20,0.5,"Kenya's residential rental regime — a share of what you collect, before any costs.")
+    pct("flatPct","Flat rate on rent collected",0,20,0.5,"Kenya's residential rental regime — a share of everything you collect, before any costs come off.")
   ],
   fNet:[
-    pct("marginal","Your income tax rate",0,60,1,"Applied to net rental profit after operating costs.")
+    pct("marginal","Your income tax rate",0,60,1,"Applied to what's left of the rent after running costs — the profit, not the takings.")
   ],
   fTax:[
-    pct("cgt","Capital gains tax",0,40,0.5,"On the gain over total project cost when you sell."),
-    pct("inflation","Inflation",0,20,0.25,"Pushes up insurance, repairs and common-area costs.")
+    pct("cgt","Capital gains tax",0,40,0.5,"Charged on what you sell for above total project cost. Only the gain is taxed, not the whole price."),
+    pct("inflation","Inflation",0,20,0.25,"Per year. Pushes up insurance, repairs and common-area costs.")
   ]
 };
 var FIELD_BY_KEY = {};
@@ -99,7 +99,7 @@ Object.keys(FIELDS).forEach(function(id){
    numbers themselves come from FIELDS and DEFAULTS. Keep `legend` matching
    the <legend> text in index.html; `mode` gates a section to one mode. */
 var SECTION_META = {
-  fCapital:  { legend:"What you're deploying" },
+  fCapital:  { legend:"What you're putting in" },
   fProject:  { legend:"The project" },
   fIncome:   { legend:"What it earns" },
   fOperating:{ legend:"Cost of running it" },
@@ -126,7 +126,7 @@ var MODE_META = {
    through loadFromURL/buildQueryString — that catches an out-of-range value
    that got clamped, a param set to its own default, or a typo'd short name. */
 var EXAMPLES = [
-  { label:"An 8-unit block in Kikuyu: KES 30M to deploy, KES 6M for the plot, KES 1.9M a unit, renting at KES 28,000",
+  { label:"An 8-unit block in Kikuyu: KES 30M to put in, KES 6M for the plot, KES 1.9M a unit, renting at KES 28,000",
     params:{ cap:30000000, land:6000000, u:8, cpu:1900000, r:28000 } },
   { label:"A 24-unit development taxed on profit, sold after 15 years at a 9% exit yield",
     params:{ u:24, cap:80000000, cpu:2600000, h:15, cr:9, m:"net" } },

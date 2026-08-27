@@ -57,11 +57,11 @@ bug.
 
 ## Parameters
 
-### What you're deploying
+### What you're putting in
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `cap` | Money you have to deploy | 40000000 | KES | The same lump sum goes into the building or into the market. That's the whole comparison. |
+| `cap` | Money you have to put in | 40000000 | KES | The same lump sum goes into the building or into the market. That's the whole comparison. |
 
 ### The project
 
@@ -70,25 +70,25 @@ bug.
 | `land` | Land cost | 8000000 | KES | Set to 0 if you already own the plot. |
 | `u` | Number of units | 12 | 1 to 200 |  |
 | `cpu` | Build cost per unit | 2200000 | KES | Shell, finishes and services, per unit. |
-| `fee` | Design, approvals & supervision | 8 | 0 to 25 % | Architect, engineer, county approvals, NEMA. A share of build cost. |
-| `cont` | Contingency | 10 | 0 to 30 % | Overruns are the norm, not the exception. |
+| `fee` | Design, approvals & supervision | 8 | 0 to 25 % | Architect, engineer, county approvals, and NEMA — Kenya's environment regulator, which signs off the site. A share of build cost. |
+| `cont` | Contingency | 10 | 0 to 30 % | Spare money for overruns. They are the norm, not the exception. A share of build cost plus fees. |
 | `bm` | Months to build | 18 | 1 to 60 months | No rent arrives during these. This is the drag spreadsheets forget. |
-| `lm` | Months to fill it | 6 | 0 to 36 months | Occupancy ramps from empty to your long-run vacancy over this stretch. |
+| `lm` | Months to fill it | 6 | 0 to 36 months | How long it takes to go from empty to fully let. No block fills the week it opens. |
 
 ### What it earns
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
 | `r` | Rent per unit | 35000 | KES | Per month, when occupied. |
-| `vac` | Long-run vacancy | 8 | 0 to 40 % | Share of the year a unit sits empty once the building has settled. |
-| `mgmt` | Agent's cut | 8 | 0 to 25 % | Letting and management fees on rent collected. |
-| `rg` | Rent growth | 5 | -5 to 20 % | Per year. This also drives your exit value, so it works twice. |
+| `vac` | Time sitting empty | 8 | 0 to 40 % | Share of the year an average unit has no tenant, once the block has settled. 8% is about a month. |
+| `mgmt` | Letting agent's fee | 8 | 0 to 25 % | What the agent takes for finding tenants and managing them. A share of the rent collected, every month. |
+| `rg` | Rent growth | 5 | -5 to 20 % | Per year. This also lifts what a buyer will pay for the block, so it works twice. |
 
 ### Cost of running it
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `rt` | Land rates | 0.2 | 0 to 4 % | Per year, as a share of the site value. |
+| `rt` | Land rates | 0.2 | 0 to 4 % | The council's annual charge on the plot, like property tax. Per year, as a share of the site value. |
 | `ins` | Insurance | 180000 | KES | Per year, for the whole building. |
 | `rep` | Repairs & upkeep | 1 | 0 to 5 % | Per year, as a share of build cost. 1% is the usual rule of thumb. |
 | `cc` | Common areas & security | 60000 | KES | Per month. Caretaker, water, lifts, grounds, lighting. |
@@ -97,40 +97,40 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `cr` | Exit yield | 8 | 1 to 20 % | What a buyer demands. The building is worth a year's net income divided by this — the single biggest lever on your exit. |
+| `cr` | Exit yield | 8 | 1 to 20 % | What a buyer wants back each year for every shilling they pay. Low means they pay more for your block. Your biggest lever. |
 | `sp` | Selling costs | 3 | 0 to 15 % | Agent and legal fees when you sell. |
-| `h` | Years before you sell | 10 | 1 to 40 years |  |
+| `h` | Years before you sell | 10 | 1 to 40 years | How long you hold the block before selling. The whole comparison is measured at this year. |
 
 ### The alternative
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `inv` | Return if invested instead | 13 | 0 to 25 % | Annual, compounding. Whatever you'd actually earn leaving the money in the market. |
-| `itx` | Tax on those returns | 15 | 0 to 40 % | Withholding tax. 15% on most Kenyan unit trusts. |
+| `inv` | Return if invested instead | 13 | 0 to 25 % | Per year, compounding. Whatever you'd actually earn leaving the money in the market. |
+| `itx` | Tax on those returns | 15 | 0 to 40 % | Tax the fund takes off before paying you — withholding tax. 15% on most Kenyan unit trusts. |
 | `ife` | Annual management fee | 1 | 0 to 5 % | Charged on the balance, so it bites every year. |
 
 ### Tax on rent — mode `gross` only
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `flat` | Flat rate on gross rent | 7.5 | 0 to 20 % | Kenya's residential rental regime — a share of what you collect, before any costs. |
+| `flat` | Flat rate on rent collected | 7.5 | 0 to 20 % | Kenya's residential rental regime — a share of everything you collect, before any costs come off. |
 
 ### Tax on profit — mode `net` only
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `mtx` | Your income tax rate | 30 | 0 to 60 % | Applied to net rental profit after operating costs. |
+| `mtx` | Your income tax rate | 30 | 0 to 60 % | Applied to what's left of the rent after running costs — the profit, not the takings. |
 
 ### Tax & inflation
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `cgt` | Capital gains tax | 15 | 0 to 40 % | On the gain over total project cost when you sell. |
-| `infl` | Inflation | 6 | 0 to 20 % | Pushes up insurance, repairs and common-area costs. |
+| `cgt` | Capital gains tax | 15 | 0 to 40 % | Charged on what you sell for above total project cost. Only the gain is taxed, not the whole price. |
+| `infl` | Inflation | 6 | 0 to 20 % | Per year. Pushes up insurance, repairs and common-area costs. |
 
 ## Worked examples
 
-An 8-unit block in Kikuyu: KES 30M to deploy, KES 6M for the plot, KES 1.9M a unit, renting at KES 28,000:
+An 8-unit block in Kikuyu: KES 30M to put in, KES 6M for the plot, KES 1.9M a unit, renting at KES 28,000:
 https://vibes.obel.dev/build-or-invest/?cap=30000000&land=6000000&u=8&cpu=1900000&r=28000
 
 A 24-unit development taxed on profit, sold after 15 years at a 9% exit yield:
