@@ -126,6 +126,36 @@ test.describe("rent-or-buy", () => {
     await expect(thirdRow.locator(".target")).toHaveText("9 years");
   });
 
+  /* The credit line quotes yr1.income — gross rent after voids and the agent,
+     with tax still in it. Income tax rides the other side of the same bar as
+     its own "Tax on rent" segment, so the arithmetic nets out; only the label
+     was wrong, and it claimed tax even in the common case where no tax segment
+     is drawn at all. (regression: #10) */
+  test("the let-mode credit line names only what was actually taken out of it", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+    await page.locator("#mLet").click();
+
+    const credit = page.locator("#cf .credit").first();
+    const keys = page.locator("#cf .keys").first();
+
+    // The defaults don't turn a rental profit, so nothing is taxed and no
+    // "Tax on rent" segment is drawn — the old wording promised one anyway.
+    await expect(keys).not.toContainText("Tax on rent");
+    await expect(credit).toContainText("rent collected, after voids and agent");
+    await expect(credit).not.toContainText("tax");
+
+    // Push the rent high enough to be taxed: the segment shows up, and the
+    // credit still quotes the pre-tax figure, so naming tax here would be
+    // charging the reader for it twice.
+    await page.locator("#i_income").fill("400000");
+    await page.locator("#i_income").dispatchEvent("input");
+
+    await expect(keys).toContainText("Tax on rent");
+    const preTax = await page.evaluate(() => Calc.fmt(Calc.simulate().yr1.income));
+    await expect(credit).toContainText(preTax);
+    await expect(credit).not.toContainText("tax");
+  });
+
   test("print summary stays populated with the current field values", async ({ page }) => {
     await page.goto("/rent-or-buy/");
     await page.locator("#i_price").fill("18500000");

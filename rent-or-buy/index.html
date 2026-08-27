@@ -189,6 +189,8 @@ function drawCashflow(s){
   ];
   if(Calc.mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
   var buyTotal = buyParts.reduce(function(a,b){return a+b.v;},0);
+  /* y.income is netIncome — gross rent less voids and the agent, before tax.
+     Tax on it is its own bar segment above, so don't name it here too. */
   var credit = Calc.mode==="let" ? y.income : y.relief;
   var net = buyTotal - credit;
 
@@ -212,7 +214,7 @@ function drawCashflow(s){
   }
 
   var html = block(Calc.mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
-                   Calc.mode==="let" ? "rent collected, after voids, agent and tax" : "tax relief on interest", credit);
+                   Calc.mode==="let" ? "rent collected, after voids and agent" : "tax relief on interest", credit);
   if(Calc.mode==="live"){
     html += block("Renting", rentParts, rentTotal, rentTotal, "", 0);
   } else {
