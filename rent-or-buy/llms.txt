@@ -63,7 +63,7 @@ bug.
 | --- | --- | --- | --- | --- |
 | `p` | Property price | 12000000 | KES |  |
 | `dp` | Deposit | 20 | 0 to 100 % |  |
-| `mr` | Mortgage rate | 14.5 | 0 to 30 % | Annual, on the balance. |
+| `mr` | Mortgage rate | 14.5 | 0 to 30 % | Annual, on the balance. Nominal, as banks quote it — monthly compounding makes the effective rate higher. |
 | `term` | Loan term | 20 | 1 to 35 years |  |
 | `cc` | Purchase costs | 5 | 0 to 15 % | Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered. |
 
@@ -94,10 +94,10 @@ bug.
 
 | param | means | default | range | notes |
 | --- | --- | --- | --- | --- |
-| `appr` | Property appreciation | 8 | -5 to 20 % | Per year. |
-| `rg` | Rent growth | 5 | -5 to 20 % | Per year. |
-| `inv` | Return if invested instead | 10 | 0 to 25 % | What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever. |
-| `infl` | Inflation | 6 | 0 to 20 % | Pushes up insurance and service charge. |
+| `appr` | Property appreciation | 8 | -5 to 20 % | Effective annual. |
+| `rg` | Rent growth | 5 | -5 to 20 % | Effective annual. |
+| `inv` | Return if invested instead | 10 | 0 to 25 % | Effective annual. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever. |
+| `infl` | Inflation | 6 | 0 to 20 % | Effective annual. Pushes up insurance and service charge. |
 | `h` | Years before you sell | 10 | 1 to 40 years | Short stays punish buyers — the purchase costs haven't been earned back yet. |
 | `sp` | Selling costs | 3 | 0 to 15 % | Agent and legal fees when you sell. |
 

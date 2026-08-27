@@ -41,7 +41,7 @@ var FIELDS = {
   fPurchase:[
     money("price","Property price"),
     pct("downPct","Deposit",0,100,1,null),
-    pct("rate","Mortgage rate",0,30,0.1,"Annual, on the balance."),
+    pct("rate","Mortgage rate",0,30,0.1,"Annual, on the balance. Nominal, as banks quote it — monthly compounding makes the effective rate higher."),
     num("term","Loan term",1,35,1,null," years"),
     pct("closingPct","Purchase costs",0,15,0.25,"Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered.")
   ],
@@ -60,10 +60,10 @@ var FIELDS = {
     pct("mgmt","Agent's cut",0,25,0.5,"Letting and management fees on rent collected.")
   ],
   fMarket:[
-    pct("appr","Property appreciation",-5,20,0.25,"Per year."),
-    pct("rentGrowth","Rent growth",-5,20,0.25,"Per year."),
-    pct("invest","Return if invested instead",0,25,0.25,"What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
-    pct("inflation","Inflation",0,20,0.25,"Pushes up insurance and service charge."),
+    pct("appr","Property appreciation",-5,20,0.25,"Effective annual."),
+    pct("rentGrowth","Rent growth",-5,20,0.25,"Effective annual."),
+    pct("invest","Return if invested instead",0,25,0.25,"Effective annual. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
+    pct("inflation","Inflation",0,20,0.25,"Effective annual. Pushes up insurance and service charge."),
     num("horizon","Years before you sell",1,40,1,"Short stays punish buyers — the purchase costs haven't been earned back yet."," years"),
     pct("sellPct","Selling costs",0,15,0.25,"Agent and legal fees when you sell.")
   ],
