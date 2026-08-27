@@ -12,7 +12,6 @@ Small tools, vibe-coded. A monorepo of standalone browser tools, live at
 | [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Models net worth over time for buying and for renting, and shows the exact year buying overtakes renting — or doesn't. | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
 | [Build or invest](https://vibes.obel.dev/build-or-invest/) | Compares building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth. | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
 | [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Compares building a home for yourself a stage at a time out of salary, while renting, against renting for good and investing the same money. Works out when you move in and whether construction costs outrun you before the house is finished. | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
-| [Passport photo printer](https://vibes.obel.dev/passport-photo-printer/) | Crops a photo to passport dimensions and lays it out on an A4 sheet for printing. | [`passport-photo-printer/`](passport-photo-printer/) | — |
 
 All three calculators take their whole input set from the URL query string, so a
 link opens with the scenario already filled in. The specs above document that URL
@@ -40,12 +39,10 @@ npm is here for dev tooling only. `vitest` and `@playwright/test` are the only
 dependencies [package.json](package.json) has, both of them dev-only, and
 neither reaches what ships.
 
-That is not the same as zero dependencies. Three things load from a CDN at
-runtime, and they are the only ones:
+That is not the same as zero dependencies. One thing loads from a CDN at
+runtime, and it is the only one:
 
 - [`shared/tool.css`](shared/tool.css) imports Fraunces and IBM Plex from Google Fonts.
-- [`passport-photo-printer/`](passport-photo-printer/index.html) loads Tailwind from
-  `cdn.tailwindcss.com` and Cropper.js 1.5.13 from cdnjs.
 
 If you add a tool, keep it this way. The constraint is what makes the repo worth
 cloning.
@@ -62,7 +59,6 @@ rent-or-buy/
   llms.txt                 generated parameter spec
 build-or-invest/           same shape: index.html, model.js, model.test.js, llms.txt
 brick-by-brick/            same shape again; opens in UGX rather than KES
-passport-photo-printer/    crop and print-layout tool; no URL API, no engine
 shared/
   tool.css                 house style for the calculators (design tokens at the top)
   spec-text.js             renders a calculator's URL API as markdown (UMD)
