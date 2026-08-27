@@ -176,7 +176,7 @@ describe.each(TOOLS)("specText for %s", (_name, calc) => {
   });
 
   it("leaves no blank cell where a note is missing", () => {
-    // `price` has an undefined note and `downPct` a null one — neither may
+    // `price` has an undefined note and `term` a null one — neither may
     // reach the page as the string "undefined".
     expect(text).not.toContain("undefined");
     expect(text).not.toContain("null");

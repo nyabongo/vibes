@@ -23,19 +23,26 @@
 <div class="wrap">
 
   <div class="masthead">
-    <div>
-      <div class="eyebrow">Build slowly vs rent and invest · crossover model</div>
-    </div>
+    <a class="backlink" href="../">&larr; vibes</a>
     <div class="mast-actions">
       <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
       <button class="linkbtn" id="copyLink" type="button">Copy link</button>
       <currency-select id="cur"></currency-select>
     </div>
   </div>
+
+  <div class="tool-id">
+    <h1 class="tool-name">Brick by brick</h1>
+    <p class="tool-what">Should you build a home a bit at a time, or rent and invest instead? Set your numbers. The page picks.</p>
+  </div>
   <div class="rule"></div>
 
   <div class="verdict">
-    <h1 id="headline">…</h1>
+    <!-- Not a heading: a computed result that changes on every slider frame has
+         no business in the document outline, and heading-navigation would land
+         on it as a title for a section that doesn't exist. role="status"
+         implies aria-live="polite" + aria-atomic; do not also write those. -->
+    <div class="verdict-line" id="headline" role="status"></div>
     <p id="subline"></p>
   </div>
 
@@ -127,12 +134,14 @@
     <div class="results">
 
       <div class="panel">
-        <div class="panel-hd"><h2>What you'd be worth each year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="panel-hd"><h2>What you'd be worth if you sold that year</h2><span class="hint" id="chartHint"></span></div>
         <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for building a home slowly versus renting and investing"></crossover-chart></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i> Build</span>
           <span><i style="background:var(--accent2)"></i> Rent &amp; invest</span>
-          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover — where building overtakes renting</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--line)"></i> Move in — the rent stops</span>
+          <span><i style="background:var(--muted);opacity:.25;height:10px"></i> Still renting</span>
         </div>
       </div>
 
@@ -147,7 +156,7 @@
       </div>
 
       <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>What would flip this</h2><span class="hint">Everything else held still</span></div>
+        <div class="panel-hd"><h2>What would change the answer</h2><span class="hint">One change at a time, everything else held still</span></div>
         <div class="flip" id="flip"></div>
       </div>
 
@@ -157,6 +166,8 @@
         <b>What the money doesn't capture.</b> A landlord can raise your rent or ask you to leave; a finished house cannot do either. For most families this is also the only asset they will ever hold that a bank will lend against, and the discipline of building is savings that cannot be spent on something else. If the two lines come out close, those are the things that decide it.
         <br><br>
         <b>Not modelled:</b> a construction loan or mortgage part-way through, land disputes and title problems, materials bought in bulk ahead of a price rise, family labour, or renting out part of the plot while you build. Growth rates here are steady averages; real ones arrive in lumps, and so does the money to build with.
+        <br><br>
+        <b>This is a model, not advice.</b> It does what you tell it to. The numbers you put in matter far more than the arithmetic it does with them.
       </footer>
     </div>
   </div>
@@ -310,8 +321,8 @@ function drawTiles(s){
   var t = [
     {k:"You move in", v:moveV, s:moveS},
     {k:"House finished", v:doneV, s:doneS},
-    {k:"Crossover", v:s.breakEven ? "Year "+s.breakEven : "None",
-     s:s.breakEven ? "Building pulls ahead" : "No crossover in "+yrS(Brick.V.horizon)},
+    {k:"Building pulls ahead", v:s.breakEven ? "Year "+s.breakEven : "Never",
+     s:s.breakEven ? "Having been behind until then" : "Not within "+yrS(Brick.V.horizon)},
     {k:"Gap at year "+Brick.V.horizon, v:(gap>=0?"+":"−")+Brick.fmt(Math.abs(gap)),
      s:(gap>=0?"in favour of building":"in favour of renting")}
   ];
@@ -359,7 +370,7 @@ function drawFlip(s){
 
   document.getElementById("flip").innerHTML = items.map(function(i){
     var tg = i.target ? '<span class="target">'+i.target+'</span>'
-                      : '<span class="target na">no crossover in range</span>';
+                      : '<span class="target na">nothing in range flips it</span>';
     return '<div class="item"><span class="lever">'+i.lever+
            ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
   }).join("");

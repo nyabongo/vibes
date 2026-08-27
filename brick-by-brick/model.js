@@ -67,7 +67,7 @@ var FIELDS = {
     pct("decayPct","Deterioration while unfinished",0,20,0.5,"Per year. A shell standing out in the rain is worth less every season it waits for a roof.")
   ],
   fSaveFirst:[
-    pct("startAt","Break ground once you have saved",10,150,5,"A share of the build cost. Waiting longer means a shorter build, but more months of rent."),
+    pct("startAt","Start building once you've saved",10,150,5,"A share of the build cost. Above 100% means the whole house is paid for before the first block is laid."),
     num("pushMonths","Months to build once you start",3,60,1,"The short push. Running out of money mid-push simply slows it down."," months")
   ],
   fRent:[
@@ -77,7 +77,7 @@ var FIELDS = {
   fOwning:[
     money("ownCost","Running the place once you own it","Per month. Ground rent, security, water, garbage — the things a rental quietly included."),
     pct("maintPct","Repairs & upkeep",0,5,0.1,"Per year, as a share of what the house is worth. 1% is the usual rule of thumb."),
-    pct("inflation","Inflation",0,20,0.25,"Pushes up the running costs above.")
+    pct("inflation","Inflation",0,20,0.25,"Per year. Pushes up the running costs above.")
   ],
   fWorth:[
     pct("apprec","Land & house appreciation",-5,20,0.25,"Per year, on the plot from day one — including while you are still saving to buy it, which is what can put it out of reach — and on the house once it is finished."),
@@ -85,8 +85,8 @@ var FIELDS = {
     pct("partBuiltPct","An unfinished house fetches",0,100,5,"A share of the work standing in it, priced at what that work would cost today. Walls without a roof are not an asset at cost.")
   ],
   fInvest:[
-    pct("invest","Return if invested instead",0,30,0.25,"Annual, compounding. Ugandan treasury bonds have run in the low-to-mid teens."),
-    pct("investTax","Tax on those returns",0,40,0.5,"Withholding tax. 15% on interest in Uganda."),
+    pct("invest","Return if invested instead",0,30,0.25,"Per year, compounding. Ugandan treasury bonds have run in the low-to-mid teens."),
+    pct("investTax","Tax on those returns",0,40,0.5,"Tax taken off before you're paid — withholding tax. 15% on interest in Uganda."),
     pct("investFee","Annual management fee",0,5,0.1,"Charged on the balance, so it bites every year.")
   ],
   fExit:[

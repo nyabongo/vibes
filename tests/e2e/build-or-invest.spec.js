@@ -13,7 +13,6 @@ test.describe("build-or-invest", () => {
   test("loads with the default scenario and renders a verdict", async ({ page }) => {
     await page.goto("/build-or-invest/");
     const headline = page.locator("#headline");
-    await expect(headline).not.toHaveText("…");
     await expect(headline).toContainText(/Build|Invest/);
     await expect(page.locator("#tiles .tile")).toHaveCount(4);
     await expect(page.locator("#flip .item")).toHaveCount(4);
@@ -240,7 +239,7 @@ test.describe("build-or-invest", () => {
     await expect(page.locator("#i_capital")).toHaveValue("30000000");
     await expect(page.locator("#i_units")).toHaveValue("8");
     await expect(page.locator("#i_rentUnit")).toHaveValue("28000");
-    await expect(page.locator("#headline")).not.toHaveText("…");
+    await expect(page.locator("#headline")).not.toBeEmpty();
   });
 
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {

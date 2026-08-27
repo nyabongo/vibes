@@ -40,38 +40,38 @@ function num(k,label,min,max,step,note,unit){ return {k:k,label:label,min:min,ma
 var FIELDS = {
   fPurchase:[
     money("price","Property price"),
-    pct("downPct","Deposit",0,100,1,null),
-    pct("rate","Mortgage rate",0,30,0.1,"Annual, on the balance. Nominal, as banks quote it — monthly compounding makes the effective rate higher."),
+    pct("downPct","Deposit",0,100,1,"Your share of the price paid in cash up front. The rest is the mortgage."),
+    pct("rate","Mortgage rate",0,30,0.1,"Per year, on what you still owe. The rate banks advertise; charged monthly, so you pay slightly more than it looks."),
     num("term","Loan term",1,35,1,null," years"),
     pct("closingPct","Purchase costs",0,15,0.25,"Stamp duty, legal fees, valuation, bank charges. Paid up front and never recovered.")
   ],
   fOwn:[
-    pct("taxPct","Land rates / property tax",0,4,0.05,"Per year, as a share of the property's value."),
+    pct("taxPct","Land rates / property tax",0,4,0.05,"The council's annual charge on the property. Per year, as a share of its value."),
     money("insurance","Insurance","Per year."),
     pct("maintPct","Repairs & upkeep",0,5,0.1,"Per year, as a share of value. 1% is the usual rule of thumb."),
-    money("hoa","Service charge","Per month.")
+    money("hoa","Service charge","Per month. What the block charges for security, grounds, water and lifts.")
   ],
   fRent:[
     money("rent","Rent you'd pay","Per month, for a comparable home.")
   ],
   fLet:[
     money("income","Rent you'd collect","Per month, when occupied."),
-    pct("vacancy","Empty months",0,40,1,"Share of the year with no tenant."),
-    pct("mgmt","Agent's cut",0,25,0.5,"Letting and management fees on rent collected.")
+    pct("vacancy","Time sitting empty",0,40,1,"Share of the year with no tenant. 8% is about one month in twelve."),
+    pct("mgmt","Letting agent's fee",0,25,0.5,"What the agent takes for finding tenants and managing them. A share of the rent collected, every month.")
   ],
   fMarket:[
-    pct("appr","Property appreciation",-5,20,0.25,"Effective annual."),
-    pct("rentGrowth","Rent growth",-5,20,0.25,"Effective annual."),
-    pct("invest","Return if invested instead",0,25,0.25,"Effective annual. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
-    pct("inflation","Inflation",0,20,0.25,"Effective annual. Pushes up insurance and service charge."),
+    pct("appr","Property appreciation",-5,20,0.25,"Per year. How fast the home's value rises."),
+    pct("rentGrowth","Rent growth",-5,20,0.25,"Per year. How fast rents rise."),
+    pct("invest","Return if invested instead",0,25,0.25,"Per year, compounding. What the deposit and any monthly savings would earn elsewhere. This is the single biggest lever."),
+    pct("inflation","Inflation",0,20,0.25,"Per year. Pushes up insurance and the service charge."),
     num("horizon","Years before you sell",1,40,1,"Short stays punish buyers — the purchase costs haven't been earned back yet."," years"),
     pct("sellPct","Selling costs",0,15,0.25,"Agent and legal fees when you sell.")
   ],
   fTax:[
-    pct("marginal","Your income tax rate",0,60,1,"Applied to net rental profit."),
-    money("reliefCap","Interest you can deduct","Per year, cap. Owner-occupier relief — set to 0 if you don't get it."),
-    pct("cgt","Capital gains tax",0,40,0.5,"On the gain when you sell. Set to 0 if your home is exempt."),
-    pct("cgtInvest","Tax on investment gains",0,40,0.5,"On the pot's gain when you cash it in. Its own rate, not the one above — a home can be exempt while a unit trust isn't. Set to 0 for a sheltered account.")
+    pct("marginal","Your income tax rate",0,60,1,"In let mode, taxes the profit left after interest and running costs. In live mode, it sets what your interest relief is worth."),
+    money("reliefCap","Interest you can deduct","The most mortgage interest you can knock off your taxable income in a year. Set to 0 if you don't get this relief."),
+    pct("cgt","Capital gains tax",0,40,0.5,"Charged only on what you sell for above what you paid, not on the whole price. Set to 0 if your home is exempt."),
+    pct("cgtInvest","Tax on investment gains",0,40,0.5,"On the pot's growth when you cash it in. Its own rate, not the one above — a home can be exempt while a unit trust isn't. Set to 0 for a sheltered account.")
   ]
 };
 var FIELD_BY_KEY = {};
