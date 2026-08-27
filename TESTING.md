@@ -23,9 +23,6 @@ and they can hit numeric edge cases a browser test can't easily set up.
 **If an app is primarily DOM/canvas/interaction with no meaningful pure
 logic** — rely on Playwright E2E instead; there's nothing worth extracting.
 
-- `passport-photo-printer/` is almost entirely Cropper.js plus canvas/DOM
-  orchestration (upload → crop → grid render → print). Its first coverage
-  should be a Playwright spec exercising that flow, not an extraction.
 - The root landing page just needs a trivial Playwright smoke test (links
   resolve) once Playwright is already set up for another app — near-zero
   marginal cost.

@@ -34,9 +34,9 @@ var SPECS = [
     out: "llms.txt",
     title: "vibes — small, single-purpose web tools",
     summary:
-      "A handful of standalone browser tools at " + SITE + ". No accounts, no " +
+      "Three standalone browser tools at " + SITE + ". No accounts, no " +
       "tracking, no server: every one is a static page that computes in the " +
-      "browser. Three of them are financial calculators whose entire input set is " +
+      "browser. Each is a financial calculator whose entire input set is " +
       "encoded in the URL query string, so you can hand someone a link that " +
       "opens with their scenario already filled in.",
     body: [
@@ -52,12 +52,6 @@ var SPECS = [
       "  apartment block or compound in the market? Spec: " + SITE + "/build-or-invest/llms.txt",
       "- [Brick by brick](" + SITE + "/brick-by-brick/): should you build a home for yourself a",
       "  bit at a time while you rent, or rent and invest instead? Spec: " + SITE + "/brick-by-brick/llms.txt",
-      "",
-      "## Other tools",
-      "",
-      "- [Passport photo printer](" + SITE + "/passport-photo-printer/): crops a photo to",
-      "  passport dimensions and lays it out for printing. No URL parameters — it works",
-      "  on an uploaded image.",
       "",
       "## Notes",
       "",

@@ -1,6 +1,6 @@
 # vibes — small, single-purpose web tools
 
-> A handful of standalone browser tools at https://vibes.obel.dev. No accounts, no tracking, no server: every one is a static page that computes in the browser. Three of them are financial calculators whose entire input set is encoded in the URL query string, so you can hand someone a link that opens with their scenario already filled in.
+> Three standalone browser tools at https://vibes.obel.dev. No accounts, no tracking, no server: every one is a static page that computes in the browser. Each is a financial calculator whose entire input set is encoded in the URL query string, so you can hand someone a link that opens with their scenario already filled in.
 
 ## Calculators with a URL API
 
@@ -14,12 +14,6 @@ several mean different things in each.
   apartment block or compound in the market? Spec: https://vibes.obel.dev/build-or-invest/llms.txt
 - [Brick by brick](https://vibes.obel.dev/brick-by-brick/): should you build a home for yourself a
   bit at a time while you rent, or rent and invest instead? Spec: https://vibes.obel.dev/brick-by-brick/llms.txt
-
-## Other tools
-
-- [Passport photo printer](https://vibes.obel.dev/passport-photo-printer/): crops a photo to
-  passport dimensions and lays it out for printing. No URL parameters — it works
-  on an uploaded image.
 
 ## Notes
 
