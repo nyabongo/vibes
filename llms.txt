@@ -15,6 +15,21 @@ several mean different things in each.
 - [Brick by brick](https://vibes.obel.dev/brick-by-brick/): should you build a home for yourself a
   bit at a time while you rent, or rent and invest instead? Spec: https://vibes.obel.dev/brick-by-brick/llms.txt
 
+## Two ways into each calculator
+
+Every one of them has a second address, `/<tool>/guide/`, which reads exactly the
+same parameters and runs the same model. The difference is presentation: the plain
+page puts every input on screen at once, and the guided one asks a question at a
+time, explains what each number is and why it matters, offers typical values for
+developed and developing markets, and lets the reader skip anything they don't
+know. Send the guided link to someone who is not comfortable with the vocabulary:
+
+- https://vibes.obel.dev/rent-or-buy/guide/
+- https://vibes.obel.dev/build-or-invest/guide/
+- https://vibes.obel.dev/brick-by-brick/guide/
+
+The parameter names, defaults and ranges in each spec below apply to both.
+
 ## Notes
 
 - Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens

@@ -4,8 +4,9 @@ Allow: /
 Sitemap: https://vibes.obel.dev/sitemap.xml
 
 # The three calculators take their whole input set from the URL query string,
-# so a link can carry a filled-in scenario. The parameter specs — names, units,
-# defaults, ranges and worked examples — are published here:
+# so a link can carry a filled-in scenario. Each one has a guided walkthrough at
+# /<tool>/guide/ that reads exactly the same parameters. The specs — names,
+# units, defaults, ranges and worked examples — are published here:
 #   https://vibes.obel.dev/llms.txt
 #   https://vibes.obel.dev/rent-or-buy/llms.txt
 #   https://vibes.obel.dev/build-or-invest/llms.txt

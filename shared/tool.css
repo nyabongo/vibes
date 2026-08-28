@@ -82,6 +82,18 @@ select.currency:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--acc
   margin:0;color:var(--muted);
   font-size:13.5px;line-height:1.45;max-width:64ch;
 }
+/* The way into the guided walkthrough. It sits under the one-line description
+   rather than in .mast-actions because that row is already at its limit on a
+   320px screen, and because someone who needs the guided version is reading
+   the description, not scanning the buttons. */
+.tool-guide{
+  display:inline-block;margin-top:9px;
+  font:600 13px/1.3 "IBM Plex Sans",sans-serif;
+  color:var(--accent);text-decoration:none;
+  border-bottom:1px solid var(--accent);padding-bottom:1px;
+}
+.tool-guide:hover{color:var(--ink);border-color:var(--ink);}
+.tool-guide:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
 
 /* ---------- verdict ---------- */
 .verdict .verdict-line{
@@ -322,7 +334,7 @@ footer b{color:var(--ink);font-weight:600;}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   body{background:#fff;}
   .wrap{max-width:100%;padding:0;}
-  .mast-actions,.controls,.backlink,.tool-what{display:none!important;}
+  .mast-actions,.controls,.backlink,.tool-what,.tool-guide{display:none!important;}
   .grid{grid-template-columns:1fr;margin-top:16px;}
   .print-summary{display:block;margin-top:22px;}
   .panel,.tile,.cfrow,.flip .item{break-inside:avoid;}

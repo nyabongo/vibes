@@ -31,13 +31,22 @@
   h1{font-size:clamp(28px,6vw,40px);margin:0 0 10px;letter-spacing:-.02em;}
   p.lede{color:var(--muted);margin:0 0 36px;max-width:52ch;}
   .list{border-top:1px solid var(--line);}
-  .item{
-    display:block;padding:18px 4px;border-bottom:1px solid var(--line);
-    text-decoration:none;color:inherit;
+  .item{padding:18px 4px;border-bottom:1px solid var(--line);}
+  /* Two ways into the same tool, so the row is a container with two links in
+     it rather than one link wrapping everything — an anchor cannot nest. */
+  .item .name{
+    font-size:17px;font-weight:600;color:inherit;text-decoration:none;
+    transition:color .15s ease;
   }
-  .item:hover .name{color:var(--accent);}
-  .item .name{font-size:17px;font-weight:600;transition:color .15s ease;}
+  .item .name:hover{color:var(--accent);}
   .item .desc{font-size:13.5px;color:var(--muted);margin-top:3px;}
+  .item .guided{
+    display:inline-block;margin-top:8px;font-size:12.5px;font-weight:600;
+    color:var(--accent);text-decoration:none;
+    border-bottom:1px solid var(--accent);padding-bottom:1px;
+  }
+  .item .guided:hover{color:var(--ink);border-color:var(--ink);}
+  .item .name:focus-visible,.item .guided:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
   footer{margin-top:40px;font-size:12px;color:var(--muted);}
   footer a{color:inherit;}
 </style>
@@ -46,27 +55,32 @@
 <div class="wrap">
   <div class="eyebrow">nyabongo/vibes</div>
   <h1>Small tools, vibe-coded.</h1>
-  <p class="lede">A monorepo of standalone, single-file web tools. No build step, no dependencies — just open a folder.</p>
+  <p class="lede">A monorepo of standalone, single-file web tools. No build step, no dependencies — just
+     open a folder. Each calculator comes two ways: everything on one page, or a guided walkthrough
+     that asks one question at a time and explains what each number means.</p>
 
   <div class="list">
-    <a class="item" href="build-or-invest/">
-      <div class="name">Build or invest</div>
+    <div class="item">
+      <a class="name" href="build-or-invest/">Build or invest</a>
       <div class="desc">Should your money build a rental block, or just sit in the market? Models the construction drag, the lease-up, and what the finished block is worth.</div>
-    </a>
-    <a class="item" href="brick-by-brick/">
-      <div class="name">Brick by brick</div>
+      <a class="guided" href="build-or-invest/guide/">Guided walkthrough &rarr;</a>
+    </div>
+    <div class="item">
+      <a class="name" href="brick-by-brick/">Brick by brick</a>
       <div class="desc">Should you build a home a bit at a time, or rent and invest instead? Works out when you move in and whether you ever finish.</div>
-    </a>
-    <a class="item" href="rent-or-buy/">
-      <div class="name">Rent or buy</div>
+      <a class="guided" href="brick-by-brick/guide/">Guided walkthrough &rarr;</a>
+    </div>
+    <div class="item">
+      <a class="name" href="rent-or-buy/">Rent or buy</a>
       <div class="desc">Should you buy a home, or rent and put the same money in the market? Shows the exact year buying overtakes renting — or that it never does.</div>
-    </a>
+      <a class="guided" href="rent-or-buy/guide/">Guided walkthrough &rarr;</a>
+    </div>
   </div>
 
   <footer>
     Source on <a href="https://github.com/nyabongo/vibes">GitHub</a>.
     The calculators take their inputs from the URL — spec at <a href="llms.txt">llms.txt</a>,
-    so an AI assistant can hand you a filled-in link.
+    so an AI assistant can hand you a filled-in link. The guided walkthroughs read the same links.
   </footer>
 </div>
 </body>
