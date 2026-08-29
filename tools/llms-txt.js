@@ -53,6 +53,21 @@ var SPECS = [
       "- [Brick by brick](" + SITE + "/brick-by-brick/): should you build a home for yourself a",
       "  bit at a time while you rent, or rent and invest instead? Spec: " + SITE + "/brick-by-brick/llms.txt",
       "",
+      "## Two ways into each calculator",
+      "",
+      "Every one of them has a second address, `/<tool>/guide/`, which reads exactly the",
+      "same parameters and runs the same model. The difference is presentation: the plain",
+      "page puts every input on screen at once, and the guided one asks a question at a",
+      "time, explains what each number is and why it matters, offers typical values for",
+      "developed and developing markets, and lets the reader skip anything they don't",
+      "know. Send the guided link to someone who is not comfortable with the vocabulary:",
+      "",
+      "- " + SITE + "/rent-or-buy/guide/",
+      "- " + SITE + "/build-or-invest/guide/",
+      "- " + SITE + "/brick-by-brick/guide/",
+      "",
+      "The parameter names, defaults and ranges in each spec below apply to both.",
+      "",
       "## Notes",
       "",
       "- Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens",
@@ -226,6 +241,24 @@ function render(spec){
   L.push("calculator. The tables are generated from the calculator's own field");
   L.push("definitions — if this file and the app disagree, the app is right and this is a");
   L.push("bug.");
+  L.push("");
+  /* Both addresses run the same engine off the same query string, so one spec
+     covers both. Said here rather than in each tool's hand-written prose,
+     because it is a fact about how the pages are built and not an editorial
+     choice any one of them gets to make differently. */
+  L.push("There are two pages for this calculator, and they take exactly the same");
+  L.push("parameters:");
+  L.push("");
+  L.push("- " + spec.base);
+  L.push("  Every input on one screen, for someone who already knows what they mean.");
+  L.push("- " + spec.base + "guide/");
+  L.push("  One question at a time, in plain language. Each explains what the input is,");
+  L.push("  why it moves the answer, and what it typically runs to in developed and in");
+  L.push("  developing markets, and any of them can be skipped.");
+  L.push("");
+  L.push("Everything after the `?` is identical, so build the query string once and put");
+  L.push("either base in front of it. Prefer the guided one when whoever you are helping");
+  L.push("is not comfortable with the vocabulary.");
   L.push("");
   L.push(specText(spec.mod, spec.base));
   L.push(spec.model);

@@ -31,9 +31,13 @@ logic** — rely on Playwright E2E instead; there's nothing worth extracting.
 
 - Unit tests are co-located with the module they test, inside the app's own
   folder (`<app>/<name>.js` + `<app>/<name>.test.js`).
+- Shared modules are tested next to themselves too — `shared/wizard.test.js`
+  covers the guided walkthrough's state machine, and `shared/spec-text.test.js`
+  the spec renderer.
 - Playwright specs live under root `tests/e2e/<app>.spec.js` — browser
   tooling and config are shared across apps, so there's no reason to
-  duplicate a `tests/` folder per app.
+  duplicate a `tests/` folder per app. `tests/e2e/guide.spec.js` covers all
+  three guided walkthroughs together, since one view layer draws all of them.
 - `tests/serve.js` is a zero-dependency static file server used only by
   Playwright's `webServer`. It serves the repo root the same way GitHub
   Pages does, so specs exercise real relative paths instead of `file://`.
@@ -81,6 +85,22 @@ Two consequences worth knowing:
   everyone, most of whom have `core.autocrlf=true`. The golden check normalises
   CRLF before comparing as well, so a misconfigured checkout reports the real
   problem instead of a phantom staleness failure.
+
+## The guided walkthrough's contract test
+
+`<app>/guide.test.js` is the odd one out: what it mostly asserts is that the
+app's *prose* still matches the app's *code*. `Wizard.validateGuide()` walks the
+engine's `FIELDS` and the guide's questions and fails if they disagree — a field
+with no question written for it, a question for a field that no longer exists, a
+preset outside a slider's range, a mode-only question asked before the mode
+itself.
+
+So **adding an input to an engine turns that test red**, and the fix is to write
+the words: what the input is, why it matters, and what it typically runs to in a
+developed and in a developing market. That is deliberate. The whole point of the
+walkthrough is that nothing in it is unexplained, and the only reliable way to
+keep that true is to make a missing explanation a failing test rather than a
+thing somebody notices later.
 
 ## Writing a regression test
 

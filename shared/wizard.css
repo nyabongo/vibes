@@ -1,0 +1,268 @@
+/* The guided walkthrough. Loaded AFTER shared/tool.css, which it borrows every
+   design token and the type ramp from — this file only adds the wizard's own
+   furniture (progress rail, question card, chips, the answer screen) and the
+   handful of overrides a one-question-per-screen layout needs.
+
+   The calculator is a dashboard: dense, everything at once, for someone who
+   already knows what a cap rate is. This is the opposite brief. One question a
+   screen, bigger type, more white space, and nothing on screen the visitor
+   hasn't been introduced to yet. */
+
+.wrap.wiz{max-width:760px;padding-bottom:96px;}
+
+/* Several things in here are shown and hidden from JS, and every one of them
+   sets its own display — .sofar is a flex row, .btn goes to inline-flex under
+   a coarse pointer. A bare [hidden] loses to all of those, and the running
+   answer strip shipped as an empty box on the intro screen because of it. */
+[hidden]{display:none!important;}
+
+/* ---------- header ---------- */
+.wiz-mast{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.wiz-id{margin:14px 0 0;}
+.wiz-id h1{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:17px;font-weight:600;letter-spacing:-.01em;margin:0 0 3px;
+}
+.wiz-id p{margin:0;color:var(--muted);font-size:13.5px;max-width:64ch;}
+
+/* ---------- progress ---------- */
+.wiz-progress{margin:20px 0 26px;}
+.wiz-bar{height:4px;background:var(--line-soft);overflow:hidden;}
+.wiz-bar i{
+  display:block;height:100%;background:var(--ink);width:0;
+  transition:width .28s cubic-bezier(.2,.7,.3,1);
+}
+@media(prefers-reduced-motion:reduce){.wiz-bar i{transition:none;}}
+.wiz-meta{
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:10px;margin-top:8px;flex-wrap:wrap;
+}
+.wiz-meta .where{
+  font:500 11px/1.4 "IBM Plex Mono",monospace;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.wiz-meta .where b{color:var(--ink);font-weight:500;}
+.wiz-meta .escape{
+  font:500 12px/1 "IBM Plex Sans",sans-serif;
+  background:none;border:0;padding:4px 0;color:var(--muted);
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+}
+.wiz-meta .escape:hover{color:var(--ink);}
+.wiz-meta .escape:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ---------- the card ---------- */
+.card{
+  background:var(--surface);border:1px solid var(--line-soft);
+  padding:26px 26px 24px;
+}
+@media(max-width:560px){.card{padding:20px 16px;}}
+/* Focus is moved onto the heading of every new screen so it is announced.
+   That is a programmatic landing, not a control the visitor tabbed to, so it
+   should not draw a focus ring — the announcement is the feedback. */
+.card [data-focus]:focus{outline:none;}
+.card .eyebrow{
+  font:600 10.5px/1 "IBM Plex Sans",sans-serif;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:12px;
+}
+.card h2.q{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;font-variation-settings:"SOFT" 50,"WONK" 1;
+  font-size:clamp(23px,3.6vw,31px);line-height:1.14;letter-spacing:-.015em;
+  margin:0 0 12px;max-width:24ch;
+}
+.card p.what{margin:0 0 20px;color:var(--muted);font-size:15px;max-width:60ch;line-height:1.55;}
+.card p.what b{color:var(--ink);font-weight:600;}
+
+/* ---------- the control ---------- */
+.ask{margin-bottom:18px;}
+.ask + .ask{margin-top:26px;padding-top:22px;border-top:1px solid var(--line-soft);}
+.ask .aname{font-size:14px;font-weight:600;margin-bottom:3px;}
+.ask .awhat{font-size:12.5px;color:var(--muted);margin-bottom:11px;line-height:1.45;max-width:58ch;}
+
+.money-in{display:flex;align-items:stretch;border:1px solid var(--line);background:var(--paper);}
+.money-in .sym{
+  display:flex;align-items:center;padding:0 12px;
+  font:500 14px/1 "IBM Plex Mono",monospace;color:var(--muted);
+  border-right:1px solid var(--line);background:var(--surface);
+}
+.money-in input{
+  flex:1;min-width:0;border:0;background:transparent;
+  font:500 20px/1 "IBM Plex Mono",monospace;color:var(--ink);
+  padding:13px 12px;
+}
+.money-in input:focus{outline:none;}
+.money-in:focus-within{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.readback{font-size:12px;color:var(--muted);margin-top:6px;}
+.readback .num{color:var(--ink);}
+
+.slide-val{
+  font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:500;
+  letter-spacing:-.02em;margin-bottom:6px;
+}
+.slide-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ---------- preset chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px;}
+.chips .chiplab{
+  font-size:11.5px;color:var(--muted);align-self:center;margin-right:2px;
+}
+.chip{
+  font:500 12px/1 "IBM Plex Sans",sans-serif;
+  background:var(--paper);border:1px solid var(--line);
+  padding:8px 11px;cursor:pointer;color:var(--ink);
+}
+.chip:hover{border-color:var(--muted);}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink);}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ---------- choice buttons (the mode question) ---------- */
+.choices{display:grid;gap:10px;margin-bottom:8px;}
+.choice{
+  text-align:left;background:var(--paper);border:1px solid var(--line);
+  padding:15px 16px;cursor:pointer;color:inherit;font:inherit;
+  display:block;width:100%;
+}
+.choice:hover{border-color:var(--muted);}
+.choice[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--surface);}
+.choice .cl{font-size:15px;font-weight:600;display:block;margin-bottom:3px;}
+.choice .cb{font-size:12.5px;color:var(--muted);display:block;line-height:1.45;}
+.choice:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ---------- the two disclosures under every question ---------- */
+.tellme{margin-top:16px;border-top:1px solid var(--line-soft);}
+.tellme details{border-bottom:1px solid var(--line-soft);}
+/* The nav below draws its own rule, and the group layout separates asks with
+   one. Either way the last disclosure's border would be the second of two
+   lines a few pixels apart. */
+.tellme details:last-child{border-bottom:0;}
+.tellme summary{
+  cursor:pointer;list-style:none;padding:11px 0;
+  font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;
+}
+.tellme summary::-webkit-details-marker{display:none;}
+.tellme summary::before{content:"+";color:var(--muted);font-weight:400;width:9px;}
+.tellme details[open] summary::before{content:"–";}
+.tellme summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.tellme .dbody{padding:0 0 14px;font-size:13.5px;color:var(--muted);line-height:1.55;max-width:64ch;}
+.tellme .dbody b{color:var(--ink);font-weight:600;}
+.tellme .dbody p{margin:0 0 9px;}
+.tellme .dbody p:last-child{margin-bottom:0;}
+
+/* Typical values, side by side. Two worlds, because a "normal" mortgage rate
+   is 4% in one of them and 16% in the other, and a calculator that only
+   whispers one of those numbers is quietly telling most of the world it is
+   doing something wrong. */
+.worlds{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin-bottom:10px;}
+@media(max-width:560px){.worlds{grid-template-columns:1fr;}}
+.world{background:var(--surface);padding:12px 13px;}
+.world h4{
+  font:600 10px/1 "IBM Plex Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 7px;
+}
+.world p{margin:0;font-size:13px;color:var(--ink);line-height:1.5;}
+.worlds-note{font-size:12px;color:var(--muted);margin:0 0 4px;}
+
+/* ---------- navigation ---------- */
+.wiz-nav{
+  display:flex;gap:10px;align-items:center;
+  margin-top:20px;padding-top:18px;border-top:1px solid var(--line-soft);
+  flex-wrap:wrap;
+}
+.btn{
+  font:600 14px/1 "IBM Plex Sans",sans-serif;
+  border:1px solid var(--ink);background:var(--ink);color:var(--surface);
+  padding:13px 20px;cursor:pointer;
+}
+.btn:hover{background:#000;}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);font-weight:500;}
+.btn.ghost:hover{background:transparent;border-color:var(--muted);}
+.btn.quiet{background:none;border:0;color:var(--muted);font-weight:500;padding:13px 4px;text-decoration:underline;text-underline-offset:3px;}
+.btn.quiet:hover{color:var(--ink);}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.btn[disabled]{opacity:.4;cursor:default;}
+.wiz-nav .grow{flex:1;}
+.wiz-nav .next{min-width:132px;}
+@media(max-width:480px){
+  .wiz-nav{flex-direction:column-reverse;align-items:stretch;}
+  .wiz-nav .grow{display:none;}
+  .btn{width:100%;text-align:center;}
+}
+
+/* ---------- the running answer ---------- */
+/* Shown from the first question that can move it. The point is that the
+   verdict is never a surprise at the end — you watch it form, and you can see
+   which answer of yours moved it. */
+.sofar{
+  margin-top:14px;padding:13px 16px;
+  border:1px solid var(--line-soft);background:var(--surface);
+  font-size:13.5px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;
+}
+.sofar .lab{
+  font:600 10px/1.6 "IBM Plex Sans",sans-serif;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);flex:0 0 auto;
+}
+.sofar .txt{flex:1;min-width:0;}
+.sofar .txt b{font-weight:600;}
+.sofar .txt .b{color:var(--accent);}
+.sofar .txt .r{color:var(--accent2);}
+
+/* ---------- the answer screen ---------- */
+.answer .verdict{margin-bottom:22px;}
+.answer .verdict .verdict-line{max-width:22ch;}
+.answer .panel{margin-bottom:18px;}
+.answer .tiles{grid-template-columns:repeat(2,1fr);}
+@media(max-width:420px){.answer .tiles{grid-template-columns:1fr;}}
+.answer .warn{margin:0 0 18px;}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 8px;}
+
+/* Review list — every question, what it says now, and how it got there. */
+.review{padding:2px 16px 14px;}
+.rv-sec{
+  font:600 10px/1 "IBM Plex Sans",sans-serif;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:16px 0 2px;
+}
+.rv-row{
+  display:flex;align-items:baseline;gap:10px;
+  padding:9px 0;border-top:1px solid var(--line-soft);
+  flex-wrap:wrap;
+}
+.rv-row .rl{flex:1;min-width:0;font-size:13px;}
+.rv-row .rv{font-family:"IBM Plex Mono",monospace;font-size:13px;white-space:nowrap;}
+.rv-row .tag{
+  font:500 10px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent2);border:1px solid var(--accent2);padding:4px 6px;flex:0 0 auto;
+}
+.rv-row .edit{
+  font:500 12px/1 "IBM Plex Sans",sans-serif;background:none;border:0;padding:6px 0 6px 4px;
+  color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;flex:0 0 auto;
+}
+.rv-row .edit:hover{color:var(--ink);}
+.rv-row .edit:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+/* On a phone the label, a mono money amount, the tag and the edit button
+   cannot share a line — and the amount is one unbreakable token, so something
+   has to give. Send the label to its own line and let the rest sit under it
+   rather than running the page past the viewport. */
+@media(max-width:560px){
+  .rv-row .rl{flex:1 1 100%;}
+}
+
+/* ---------- the AI escape hatch ---------- */
+.aihelp.wiz-ai{margin:0 0 18px;font-size:13px;}
+.aihelp.wiz-ai .body{padding:0 14px 14px;}
+
+/* ---------- touch ---------- */
+@media (pointer:coarse){
+  .btn{min-height:48px;}
+  .chip{min-height:44px;}
+  .choice{min-height:56px;}
+  .tellme summary{min-height:44px;}
+  .money-in input{font-size:20px;}
+  .rv-row .edit,.wiz-meta .escape{min-height:44px;display:inline-flex;align-items:center;}
+}
+
+@media print{
+  .wiz-progress,.wiz-nav,.actions,.sofar,.aihelp,.wiz-mast{display:none!important;}
+  .card{border:0;padding:0;}
+}
