@@ -17,18 +17,19 @@ several mean different things in each.
 
 ## Two ways into each calculator
 
-Every one of them has a second address, `/<tool>/guide/`, which reads exactly the
-same parameters and runs the same model. The difference is presentation: the plain
-page puts every input on screen at once, and the guided one asks a question at a
-time, explains what each number is and why it matters, offers typical values for
-developed and developing markets, and lets the reader skip anything they don't
-know. Send the guided link to someone who is not comfortable with the vocabulary:
+Every one of them answers at two addresses, over one engine and one set of
+parameters. `/<tool>/` is the default: it asks a question at a time, explains what
+each number is and why it matters, offers typical values for developed and
+developing markets, and lets the reader skip anything they don't know.
+`/<tool>/advanced/` puts every input on screen at once, for someone who already
+knows what they mean:
 
-- https://vibes.obel.dev/rent-or-buy/guide/
-- https://vibes.obel.dev/build-or-invest/guide/
-- https://vibes.obel.dev/brick-by-brick/guide/
+- https://vibes.obel.dev/rent-or-buy/advanced/
+- https://vibes.obel.dev/build-or-invest/advanced/
+- https://vibes.obel.dev/brick-by-brick/advanced/
 
-The parameter names, defaults and ranges in each spec below apply to both.
+Link to the default unless you have a reason not to. The parameter names, defaults
+and ranges in each spec below apply to both.
 
 ## Notes
 

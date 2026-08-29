@@ -20,7 +20,7 @@ async function ready(page, path) {
 test.describe("mobile", () => {
   for (const tool of TOOLS) {
     test(`${tool}: the inputs come before the results, so a change is one scroll away`, async ({ page }) => {
-      await ready(page, `/${tool}/`);
+      await ready(page, `/${tool}/advanced/`);
       const controls = await page.locator(".controls").boundingBox();
       const results = await page.locator(".results").boundingBox();
       expect(controls.y, "the input panel should sit above the results").toBeLessThan(results.y);
@@ -48,7 +48,7 @@ test.describe("mobile", () => {
     for (const [tool, qs] of OVERFLOW_CASES) {
       test(`${tool} at ${width}px${qs ? " with large figures" : ""}: the page never scrolls sideways`, async ({ page }) => {
         await page.setViewportSize({ width, height: 780 });
-        await ready(page, `/${tool}/${qs}`);
+        await ready(page, `/${tool}/advanced/${qs}`);
         const { scrollW, clientW } = await page.evaluate(() => ({
           scrollW: document.documentElement.scrollWidth,
           clientW: document.documentElement.clientWidth
@@ -59,7 +59,7 @@ test.describe("mobile", () => {
   }
 
   test("every control is big enough to hit with a thumb", async ({ page }) => {
-    await ready(page, "/build-or-invest/");
+    await ready(page, "/build-or-invest/advanced/");
     const small = await page.evaluate(() => {
       const out = [];
       [".linkbtn", "select.currency", ".mode button", "input[type=range]", ".aihelp summary", ".backlink"]
@@ -78,7 +78,7 @@ test.describe("mobile", () => {
      if it were false the fix would have to be appearance:none, which would cost
      us accent-color and the filled portion of the track. */
   test("a slider drags from the top edge of its box, not just from the thumb", async ({ page }) => {
-    await ready(page, "/build-or-invest/");
+    await ready(page, "/build-or-invest/advanced/");
     const slider = page.locator("#i_units");
     const box = await slider.boundingBox();
     expect(Math.round(box.height)).toBeGreaterThanOrEqual(44);
@@ -92,7 +92,7 @@ test.describe("mobile", () => {
   });
 
   test("the chart is drawn at its own size, so its labels are real pixels", async ({ page }) => {
-    await ready(page, "/build-or-invest/");
+    await ready(page, "/build-or-invest/advanced/");
     const chart = await page.evaluate(() => {
       const host = document.getElementById("chart");
       const svg = host.querySelector("svg");
@@ -112,7 +112,7 @@ test.describe("mobile", () => {
   });
 
   test("chart markers stay inside the plot, and the crossover label survives", async ({ page }) => {
-    await ready(page, "/build-or-invest/");
+    await ready(page, "/build-or-invest/advanced/");
     await expect(page.locator("#chart")).toContainText("CROSSOVER");
     const escaped = await page.evaluate(() => {
       const host = document.getElementById("chart").getBoundingClientRect();
@@ -130,7 +130,7 @@ test.describe("mobile", () => {
      across its whole range and check the labels never crowd. */
   test("year ticks thin out instead of colliding as the horizon grows", async ({ page }) => {
     for (const h of [1, 10, 20, 40]) {
-      await ready(page, `/build-or-invest/?h=${h}`);
+      await ready(page, `/build-or-invest/advanced/?h=${h}`);
       const gap = await page.evaluate(() => {
         const xs = [...document.querySelectorAll("#chart text.axis")]
           .filter((n) => /^\d+$/.test(n.textContent))
@@ -145,7 +145,7 @@ test.describe("mobile", () => {
   });
 
   test("the chart redraws when the phone is rotated", async ({ page }) => {
-    await ready(page, "/build-or-invest/");
+    await ready(page, "/build-or-invest/advanced/");
     const viewBox = () => page.evaluate(() => document.querySelector("#chart svg").getAttribute("viewBox"));
     const portrait = await viewBox();
 
@@ -164,7 +164,7 @@ test.describe("mobile", () => {
     const errors = [];
     page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
     page.on("pageerror", (e) => errors.push(String(e)));
-    await ready(page, "/build-or-invest/");
+    await ready(page, "/build-or-invest/advanced/");
     for (const w of [320, 500, 390, 700, 390]) {
       await page.setViewportSize({ width: w, height: 780 });
       await page.waitForTimeout(120);

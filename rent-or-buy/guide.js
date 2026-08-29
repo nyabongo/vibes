@@ -1,4 +1,5 @@
-/* The editorial half of the guided walkthrough at /rent-or-buy/guide/.
+/* The editorial half of the walkthrough at /rent-or-buy/ — the page this
+ * calculator opens on.
  *
  * shared/wizard.js holds the machinery; this holds the words. For every input
  * the calculator has: how to ask for it in plain language, what it is, why it

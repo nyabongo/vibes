@@ -8,8 +8,8 @@
  *
  * Everything on screen is built from the calculator's own field definitions
  * plus the guide's prose, so there is one of these for all three tools rather
- * than three near-identical pages. A tool's guide/index.html is only a
- * masthead, an empty <div>, and one mount() call. */
+ * than three near-identical pages. A tool's index.html is only a masthead, an
+ * empty <div>, and one mount() call. */
 var WizardUI = (function(){
 
 /* ===================== small helpers ===================== */
@@ -54,7 +54,7 @@ function mount(opts){
   var engine = opts.engine;
   var guide = opts.guide;
   var host = opts.mount;
-  var calcHref = opts.calcHref || "../";
+  var calcHref = opts.calcHref || "advanced/";
   var specHref = opts.specHref || "../llms.txt";
 
   /* A guide that has drifted from its calculator is a content bug, and it is
@@ -436,7 +436,7 @@ function mount(opts){
     var full = document.createElement("a");
     full.className = "btn ghost";
     full.style.textDecoration = "none";
-    full.textContent = "Open the full calculator";
+    full.textContent = "Open the advanced view";
     var pdf = el("button", "btn ghost", "Save as PDF");
     pdf.type = "button";
     pdf.title = 'Opens the print dialog — choose "Save as PDF" as the destination';
@@ -530,7 +530,7 @@ function mount(opts){
     lines.push("rather than inventing precision.");
     lines.push("");
     lines.push("Then give me one link, built to the rules below. The same query string also");
-    lines.push("works on the plain calculator at " + new URL(calcHref, base).href + ".");
+    lines.push("works on the advanced view at " + new URL(calcHref, base).href + ".");
     lines.push("");
     lines.push(specText(engine, base));
     return lines.join("\n");
@@ -670,6 +670,10 @@ function mount(opts){
 
     drawSoFar();
     engine.updateURL();
+    /* The query string is the whole scenario, so the way out to the other view
+       has to carry whatever the visitor has answered so far. */
+    var vs = document.querySelector("view-switch");
+    if(vs && vs.sync) vs.sync();
     if(started) (card.querySelector("[data-focus]") || card).focus();
     window.scrollTo({ top: 0, behavior: started ? "smooth" : "auto" });
   }

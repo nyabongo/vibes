@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("brick-by-brick", () => {
   test("loads with the default scenario and renders a verdict", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     const headline = page.locator("#headline");
     await expect(headline).toContainText(/Build|Rent and invest/);
     await expect(page.locator("#tiles .tile")).toHaveCount(4);
@@ -11,7 +11,7 @@ test.describe("brick-by-brick", () => {
   test("opens in Ugandan shillings without being asked", async ({ page }) => {
     // The other two calculators open in KES. This one is aimed at a reader for
     // whom that is the wrong currency and the wrong order of magnitude.
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await expect(page.locator("#curhint")).toHaveText("UGX");
     await expect(page.locator("#tiles .tile").last()).toContainText("USh");
     // ...and picking a different default currency costs nothing at the URL:
@@ -24,7 +24,7 @@ test.describe("brick-by-brick", () => {
      block rather than the engine — so it is pinned here, the same way it is for
      the other two calculators. */
   test("only a link with a recognised parameter shows the defaults, as llms.txt claims", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     const defaultSqm = await page.locator("#i_sqm").inputValue();
 
     await page.locator("#i_sqm").fill("310");
@@ -35,14 +35,14 @@ test.describe("brick-by-brick", () => {
 
     // A bare URL, and one carrying only parameters the calculator doesn't know,
     // both restore what this visitor last had.
-    for (const url of ["/brick-by-brick/", "/brick-by-brick/?utm_source=x"]) {
+    for (const url of ["/brick-by-brick/advanced/", "/brick-by-brick/advanced/?utm_source=x"]) {
       await page.goto(url);
       await expect(page.locator("#i_sqm"), url).toHaveValue("310");
     }
 
     // The defaults link llms.txt recommends: one recognised parameter, set to
     // its own default, so it changes nothing but still trips the branch.
-    await page.goto("/brick-by-brick/?m=asyougo");
+    await page.goto("/brick-by-brick/advanced/?m=asyougo");
     await expect(page.locator("#i_sqm")).toHaveValue(defaultSqm);
 
     // ...and opening it left the saved scenario alone.
@@ -50,7 +50,7 @@ test.describe("brick-by-brick", () => {
   });
 
   test("changing an input updates the headline and tiles live, without a reload", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     const before = await page.locator("#headline").innerText();
 
     const sqm = page.locator("#i_sqm");
@@ -62,7 +62,7 @@ test.describe("brick-by-brick", () => {
   });
 
   test("mode toggle shows the right fieldset and moves the move-in date", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await expect(page.locator("#secAsYouGo")).toBeVisible();
     await expect(page.locator("#secSaveFirst")).toBeHidden();
 
@@ -88,7 +88,7 @@ test.describe("brick-by-brick", () => {
     // The headline behaviour of this calculator. Construction inflation well
     // above salary growth means progress converges short of the finish, and
     // the page has to report that rather than extrapolate past the horizon.
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await expect(page.locator("#stallWarn")).toBeHidden();
 
     for (const [id, value] of [["i_buildInflation", "20"], ["i_incomeGrowth", "1"], ["i_saveMonthly", "300000"]]) {
@@ -106,7 +106,7 @@ test.describe("brick-by-brick", () => {
   });
 
   test("a shared link fully reproduces the scenario in a fresh context", async ({ page, context }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await page.locator("#i_sqm").fill("180");
     await page.locator("#i_sqm").dispatchEvent("input");
     await page.locator("#mSaveFirst").click();
@@ -124,13 +124,13 @@ test.describe("brick-by-brick", () => {
   });
 
   test("a shared link leaves the visitor's own saved scenario alone", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await page.locator("#i_sqm").fill("450");
     await page.locator("#i_sqm").dispatchEvent("input");
     const saved = await page.evaluate(() => localStorage.getItem("brickByBrick.v1"));
     expect(JSON.parse(saved).V.sqm).toBe(450);
 
-    await page.goto("/brick-by-brick/?sqm=95");
+    await page.goto("/brick-by-brick/advanced/?sqm=95");
     await expect(page.locator("#i_sqm")).toHaveValue("95");
 
     const after = await page.evaluate(() => localStorage.getItem("brickByBrick.v1"));
@@ -138,7 +138,7 @@ test.describe("brick-by-brick", () => {
   });
 
   test("currency switcher changes the displayed symbol and scale", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await expect(page.locator("#tiles .tile").last()).toContainText("USh");
 
     await page.locator("#cur select").selectOption({ label: "USD — US dollar" });
@@ -151,7 +151,7 @@ test.describe("brick-by-brick", () => {
   test("copy link button copies the current URL to the clipboard", async ({ page, context, browserName }) => {
     test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
 
     const btn = page.locator("#copyLink");
     await btn.click();
@@ -162,7 +162,7 @@ test.describe("brick-by-brick", () => {
   });
 
   test("the flip panel offers four levers and answers the build-cost one", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     const rows = page.locator("#flip .item");
     await expect(rows).toHaveCount(4);
 
@@ -178,7 +178,7 @@ test.describe("brick-by-brick", () => {
     // The first month of a build is the savings pile going into the ground, so
     // charting it as a monthly income produced slices that summed to far more
     // than the stated total and a bar that overflowed its track.
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
 
     const rows = await page.evaluate(() => {
       const num = (t) => Number(t.replace(/[^0-9]/g, ""));
@@ -204,7 +204,7 @@ test.describe("brick-by-brick", () => {
   });
 
   test("print summary stays populated with the current field values", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
     await page.locator("#i_landCost").fill("55000000");
     await page.locator("#i_landCost").dispatchEvent("input");
 
@@ -214,7 +214,7 @@ test.describe("brick-by-brick", () => {
   test("the AI prompt carries the whole spec plus the visitor's current scenario", async ({ page, context, browserName }) => {
     test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.goto("/brick-by-brick/?sqm=95&h=30");
+    await page.goto("/brick-by-brick/advanced/?sqm=95&h=30");
 
     await page.locator("details.aihelp > summary").click();
     const btn = page.locator("#copyPrompt");
@@ -244,7 +244,7 @@ test.describe("brick-by-brick", () => {
 
     // Arriving on tracking junk with nothing saved is not a scenario, and the
     // prompt must not tell a chatbot it is.
-    await page.goto("/brick-by-brick/?utm_source=twitter&fbclid=abc123");
+    await page.goto("/brick-by-brick/advanced/?utm_source=twitter&fbclid=abc123");
     let prompt = await copy();
     expect(prompt).not.toContain("I've already set some of it up");
 
@@ -257,7 +257,7 @@ test.describe("brick-by-brick", () => {
     // now claim a scenario, but only the normalised one, still carrying no junk.
     await page.locator("#i_sqm").fill("310");
     await page.locator("#i_sqm").dispatchEvent("input");
-    await page.goto("/brick-by-brick/?utm_source=twitter&fbclid=abc123");
+    await page.goto("/brick-by-brick/advanced/?utm_source=twitter&fbclid=abc123");
     await expect(page.locator("#i_sqm")).toHaveValue("310");
 
     prompt = await copy();
@@ -271,8 +271,8 @@ test.describe("brick-by-brick", () => {
     expect(res.status()).toBe(200);
     expect(res.headers()["content-type"]).toContain("text/plain");
 
-    await page.goto("/brick-by-brick/");
-    await expect(page.locator('.aihelp a[href="llms.txt"]')).toHaveCount(1);
+    await page.goto("/brick-by-brick/advanced/");
+    await expect(page.locator('.aihelp a[href="../llms.txt"]')).toHaveCount(1);
   });
 
   test("a worked example copied out of llms.txt opens the scenario it claims", async ({ page, request }) => {
@@ -280,14 +280,14 @@ test.describe("brick-by-brick", () => {
     const example = doc.match(/https:\/\/vibes\.obel\.dev\/brick-by-brick\/\?\S+/);
     expect(example, "llms.txt should publish at least one worked example").not.toBeNull();
 
-    await page.goto("/brick-by-brick/" + new URL(example[0]).search);
+    await page.goto("/brick-by-brick/advanced/" + new URL(example[0]).search);
 
     await expect(page.locator("#i_sqm")).toHaveValue("90");
     await expect(page.locator("#headline")).not.toBeEmpty();
   });
 
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {
-    await page.goto("/brick-by-brick/");
+    await page.goto("/brick-by-brick/advanced/");
 
     await expect(page.locator('label[for="i_sqm"]')).toBeVisible();
     await expect(page.locator("#i_sqm")).toHaveId("i_sqm");

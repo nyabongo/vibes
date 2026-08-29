@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rent or buy — advanced view</title>
+<meta name="description" content="Every input to the rent-vs-buy calculator on one page: net worth over time for both paths, and the exact year buying overtakes renting — or doesn't.">
+<link rel="canonical" href="https://vibes.obel.dev/rent-or-buy/advanced/">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../../shared/tool.css">
+<link rel="alternate" type="text/plain" href="../llms.txt" title="Parameter spec for AI assistants">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibes.obel.dev/rent-or-buy/advanced/">
+<meta property="og:title" content="Rent or buy — advanced view">
+<meta property="og:description" content="Every input to the rent-vs-buy calculator on one page, for someone who already knows what they mean.">
+<meta property="og:image" content="https://vibes.obel.dev/rent-or-buy/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rent or buy — advanced view">
+<meta name="twitter:description" content="Every input to the rent-vs-buy calculator on one page, for someone who already knows what they mean.">
+<meta name="twitter:image" content="https://vibes.obel.dev/rent-or-buy/og.png">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <a class="backlink" href="../../">&larr; vibes</a>
+    <div class="mast-actions">
+      <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
+      <button class="linkbtn" id="copyLink" type="button">Copy link</button>
+      <currency-select id="cur"></currency-select>
+    </div>
+  </div>
+
+  <div class="tool-id">
+    <h1 class="tool-name">Rent or buy</h1>
+    <p class="tool-what">Every input on one page, live. Set your numbers. The page picks.</p>
+    <view-switch current="advanced" other="../"></view-switch>
+  </div>
+  <div class="rule"></div>
+
+  <div class="verdict">
+    <!-- Not a heading: a computed result that changes on every slider frame has
+         no business in the document outline, and heading-navigation would land
+         on it as a title for a section that doesn't exist. role="status"
+         implies aria-live="polite" + aria-atomic; do not also write those. -->
+    <div class="verdict-line" id="headline" role="status"></div>
+    <p id="subline"></p>
+  </div>
+
+  <div class="print-summary" id="printSummary"></div>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="controls">
+      <details class="aihelp">
+        <summary>Don't know your numbers? Ask an AI</summary>
+        <div class="body">
+          <p>Copy the prompt below into ChatGPT, Claude or any chatbot that can search
+             the web. It explains every input on this page and asks for a link back that
+             opens the calculator with your numbers already filled in.</p>
+          <button class="linkbtn" id="copyPrompt" type="button">Copy prompt</button>
+          <p class="fineprint">The same spec is published at <a href="../llms.txt">llms.txt</a>,
+             if you'd rather point the chatbot straight at it.</p>
+        </div>
+      </details>
+      <noscript>
+        <p>This calculator needs JavaScript. The full parameter reference —
+           every input, its range and its default — is published as plain text at
+           <a href="../llms.txt">llms.txt</a>.</p>
+      </noscript>
+      <div class="panel">
+        <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">KES</span></div>
+
+        <div class="mode" role="group" aria-label="What is the property for">
+          <button id="mLive" aria-pressed="true">I'd live in it</button>
+          <button id="mLet" aria-pressed="false">I'd rent it out</button>
+        </div>
+
+        <fieldset>
+          <legend>The purchase</legend>
+          <field-group id="fPurchase"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>Cost of owning it</legend>
+          <field-group id="fOwn"></field-group>
+        </fieldset>
+
+        <fieldset id="secRent">
+          <legend>Renting instead</legend>
+          <field-group id="fRent"></field-group>
+        </fieldset>
+
+        <fieldset id="secLet" class="hidden">
+          <legend>Letting it out</legend>
+          <field-group id="fLet"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>What the future does</legend>
+          <field-group id="fMarket"></field-group>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tax</legend>
+          <field-group id="fTax"></field-group>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="panel">
+        <div class="panel-hd"><h2>What you'd be worth if you sold that year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for buying versus renting"></crossover-chart></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i> Buy</span>
+          <span><i style="background:var(--accent2)"></i> Rent &amp; invest the difference</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover — where buying overtakes renting</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
+        <key-tiles class="tiles" id="tiles"></key-tiles>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Where the money goes each month</h2><span class="hint">Averaged over year one</span></div>
+        <div class="cf" id="cf"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>What would change the answer</h2><span class="hint">One change at a time, everything else held still</span></div>
+        <div class="flip" id="flip"></div>
+      </div>
+
+      <footer>
+        <b>How this works.</b> Both paths start with the same cash. The renter invests the deposit and purchase costs on day one, and whichever path has the cheaper month invests the difference. Net worth at year <span id="fnH">10</span> is the sale price minus selling costs, remaining loan and capital gains tax, plus whatever's in the investment pot minus the tax on that pot's own gain. Both sides are cashed in on the same day and taxed on the same terms; what you contributed is never taxed, only the growth on top of it. When the property is a let, your own rent is the same either way, so it's left out entirely — the comparison is the rental property against the same money in the market.
+        <br><br>
+        <b>Not modelled:</b> mortgage insurance, service charge arrears, ground rent, the cost of moving, or the fact that a landlord can raise your rent and a bank can't raise your fixed repayment. On the tax side: fund fees, withholding on dividends and interest as they arrive, and any tax-free allowance on either gain — the pot is taxed once, on its gain, on the day you cash it in. Appreciation and returns are steady averages here; real ones arrive in lumps.
+        <br><br>
+        <b>This is a model, not advice.</b> It does what you tell it to. The numbers you put in matter far more than the arithmetic it does with them.
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="../../shared/components/currency-select.js"></script>
+<script src="../../shared/components/view-switch.js"></script>
+<script src="../../shared/components/field-group.js"></script>
+<script src="../../shared/components/crossover-chart.js"></script>
+<script src="../../shared/components/key-tiles.js"></script>
+<script src="../../shared/clipboard.js"></script>
+<script src="../../shared/spec-text.js"></script>
+<script src="../calc.js"></script>
+<script>
+"use strict";
+
+/* ===================== rendering ===================== */
+function buildFields(){
+  Object.keys(Calc.FIELDS).forEach(function(id){
+    document.getElementById(id).configure({
+      fields: Calc.FIELDS[id],
+      get: function(k){ return Calc.V[k]; },
+      set: function(k, v){ Calc.V[k] = v; },
+      onInput: render
+    });
+  });
+}
+
+function syncFields(){
+  Object.keys(Calc.FIELDS).forEach(function(id){
+    document.getElementById(id).refresh(Calc.cur.rate);
+  });
+}
+
+function drawChart(s){
+  document.getElementById("chart").draw({
+    series: s.series.map(function(p){ return {y:p.y, a:p.buy, b:p.rent}; }),
+    colorA: "var(--accent)",
+    colorB: "var(--accent2)",
+    formatY: function(v){ return Calc.fmtC(v); },
+    zeroFloor: true,
+    breakEven: s.breakEven
+  });
+}
+
+function drawCashflow(s){
+  var y = s.yr1;
+  var buyParts = [
+    {n:"Interest",   v:y.interest, c:"var(--accent)"},
+    {n:"Loan repaid", v:y.principal, c:"#7EA3CC"},
+    {n:"Land rates", v:y.tax,      c:"#4C6B4A"},
+    {n:"Insurance",  v:y.ins,      c:"#8A9B7E"},
+    {n:"Upkeep",     v:y.mnt,      c:"#B3A98C"},
+    {n:"Service charge", v:y.hoa,  c:"#6B7069"}
+  ];
+  if(Calc.mode==="let" && y.itax>0) buyParts.push({n:"Tax on rent", v:y.itax, c:"#3A3F45"});
+  var buyTotal = buyParts.reduce(function(a,b){return a+b.v;},0);
+  /* y.income is netIncome — gross rent less the empty months and the agent,
+     before tax. Tax on it is its own bar segment above, so don't name it here
+     too. */
+  var credit = Calc.mode==="let" ? y.income : y.relief;
+  var net = buyTotal - credit;
+
+  var rentParts = [{n:"Rent", v:y.rent, c:"var(--accent2)"}];
+  var rentTotal = y.rent;
+  var scale = Math.max(buyTotal, rentTotal, 1);
+
+  function block(title, parts, total, netAmt, creditLabel, creditAmt){
+    var bar = parts.map(function(p){
+      return '<div style="width:'+(p.v/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
+    }).join("");
+    var keys = parts.map(function(p){
+      return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+Calc.fmt(p.v)+'</span>';
+    }).join("");
+    var extra = creditAmt>0
+      ? '<div class="credit">Less '+creditLabel+' '+Calc.fmt(creditAmt)+' → <b class="num">'+Calc.fmt(netAmt)+' out of pocket</b></div>'
+      : '';
+    return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
+           '<span class="amt num">'+Calc.fmt(total)+'</span></div>'+
+           '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+extra+'</div>';
+  }
+
+  var html = block(Calc.mode==="let"?"Owning the let":"Owning", buyParts, buyTotal, net,
+                   Calc.mode==="let" ? "rent collected, after empty months and the agent" : "tax relief on interest", credit);
+  if(Calc.mode==="live"){
+    html += block("Renting", rentParts, rentTotal, rentTotal, "", 0);
+  } else {
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">Putting it in the market</span>'+
+            '<span class="amt num">'+Calc.fmt(0)+'</span></div>'+
+            '<div class="bar"></div>'+
+            '<div class="credit">Your own rent is identical either way, so it drops out. What you\'re comparing is '+
+            Calc.fmt(s.upfront)+' plus '+Calc.fmt(Math.max(0,net))+' a month going into a mortgage, or into the market.</div></div>';
+  }
+  document.getElementById("cf").innerHTML = html;
+}
+
+function drawTiles(s){
+  var gap = s.finalBuy - s.finalRent;
+  var t = [
+    {k:"Monthly repayment", v:Calc.fmt(s.payment), s:"On "+Calc.fmt(s.loan)+" over "+Calc.V.term+" years"},
+    {k:"Cash needed on day one", v:Calc.fmt(s.upfront), s:"Deposit plus purchase costs"},
+    {k:"Interest over the loan", v:Calc.fmt(s.loanInterest), s:Calc.pctS(s.loanInterest/Math.max(1,s.loan)*100)+" of what you borrowed"},
+    {k:"Gap at year "+Calc.V.horizon, v:(gap>=0?"+":"−")+Calc.fmt(Math.abs(gap)), s:(gap>=0?"in favour of buying":"in favour of renting")}
+  ];
+  document.getElementById("tiles").render(t);
+}
+
+function drawFlip(s){
+  var buying = s.finalBuy >= s.finalRent;
+  var items = [];
+
+  /* Solve across the slider's own range, not a wider one: naming a target the
+     visitor cannot dial in is worse than naming none. Out-of-range roots come
+     back null from solve() and fall through to "nothing in range flips it" below.
+     Reading the bounds off FIELDS keeps the two from drifting apart. */
+  function solveInRange(key){
+    var f = Calc.FIELD_BY_KEY[key];
+    return Calc.solve(key, f.min, f.max);
+  }
+
+  var a = solveInRange("appr");
+  items.push({
+    lever: buying ? "Buying stops winning if the property appreciates slower than"
+                  : "Buying starts winning if the property appreciates faster than",
+    target: a===null ? null : Calc.pctS(a)+" a year",
+    now: "now "+Calc.pctS(Calc.V.appr)
+  });
+
+  var iv = solveInRange("invest");
+  items.push({
+    lever: buying ? "Buying stops winning if your investments return more than"
+                  : "Buying starts winning if your investments return less than",
+    target: iv===null ? null : Calc.pctS(iv)+" a year",
+    now: "now "+Calc.pctS(Calc.V.invest)
+  });
+
+  var be40 = Calc.simulate({horizon:40}).breakEven;
+  items.push({
+    lever: be40 ? "Buying pulls ahead once you've held it for" : "Within 40 years, buying never pulls ahead",
+    target: be40 ? be40 + (be40===1?" year":" years") : null,
+    now: be40 ? "you plan on "+Calc.V.horizon : "at these assumptions"
+  });
+
+  document.getElementById("flip").innerHTML = items.map(function(i){
+    var tg = i.target ? '<span class="target">'+i.target+'</span>'
+                      : '<span class="target na">nothing in range flips it</span>';
+    return '<div class="item"><span class="lever">'+i.lever+
+           ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
+  }).join("");
+}
+
+function drawVerdict(s){
+  var gap = s.finalBuy - s.finalRent;
+  var buying = gap >= 0;
+  var h = document.getElementById("headline");
+  var p = document.getElementById("subline");
+  var word = buying ? '<span class="b">Buy</span>' : '<span class="r">Rent</span>';
+  var amt = Calc.fmt(Math.abs(gap));
+
+  if(Calc.mode==="live"){
+    h.innerHTML = word + ", by " + amt + " over " + Calc.V.horizon + (Calc.V.horizon===1?" year":" years") + ".";
+    p.innerHTML = buying
+      ? "Owning leaves you <b>"+amt+"</b> better off by year "+Calc.V.horizon+", after selling costs and tax. "+
+        (s.breakEven ? "You cross over in <b>year "+s.breakEven+"</b> — leave earlier and buying loses." : "")
+      : "Renting and investing the difference leaves you <b>"+amt+"</b> ahead by year "+Calc.V.horizon+". "+
+        (s.breakEven ? "" : "At these assumptions the two lines don't cross within your horizon.");
+  } else {
+    h.innerHTML = (buying ? '<span class="b">Buy the let</span>' : '<span class="r">Invest instead</span>') +
+                  ", by " + amt + " over " + Calc.V.horizon + (Calc.V.horizon===1?" year":" years") + ".";
+    p.innerHTML = buying
+      ? "The rental property beats putting the same money in the market by <b>"+amt+"</b>. "+
+        (s.breakEven ? "It turns positive in <b>year "+s.breakEven+"</b>." : "")
+      : "The same cash in the market beats the rental property by <b>"+amt+"</b> — the rent collected doesn't cover the cost of the money.";
+  }
+}
+
+function buildPrintSummary(){
+  var groups = [
+    { name:"The purchase", id:"fPurchase" },
+    { name:"Cost of owning it", id:"fOwn" },
+    { name: Calc.mode==="live" ? "Renting instead" : "Letting it out", id: Calc.mode==="live" ? "fRent" : "fLet" },
+    { name:"What the future does", id:"fMarket" },
+    { name:"Tax", id:"fTax" }
+  ];
+  var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  var html = '<div class="ps-head"><h2>Rent vs buy report</h2><span>'+
+    (Calc.mode==="live"?"Living in it":"Letting it out")+" &middot; "+Calc.cur.code+" &middot; generated "+today+'</span></div>';
+  html += '<div class="ps-grid">';
+  groups.forEach(function(g){
+    html += '<div class="ps-col"><h3>'+g.name+'</h3>';
+    Calc.FIELDS[g.id].forEach(function(f){
+      var shown = f.type==="money" ? Calc.fmt(Calc.V[f.k])
+                : f.type==="num" ? FieldGroup.formatNum(Calc.V[f.k], f.unit)
+                : Calc.pctS(Calc.V[f.k]);
+      html += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+shown+'</span></div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById("printSummary").innerHTML = html;
+}
+
+function render(){
+  syncFields();
+  var s = Calc.simulate();
+  drawVerdict(s);
+  drawChart(s);
+  drawCashflow(s);
+  drawTiles(s);
+  drawFlip(s);
+  buildPrintSummary();
+  document.getElementById("chartHint").textContent = "Years 0–"+Calc.V.horizon;
+  document.getElementById("horizonHint").textContent = Calc.V.horizon+"-year horizon";
+  document.getElementById("fnH").textContent = Calc.V.horizon;
+  document.getElementById("curhint").textContent = Calc.cur.code;
+  Calc.updateURL();
+  /* The query string is the whole scenario, so the way out to the guided
+     view has to carry whatever is set here. */
+  document.querySelector("view-switch").sync();
+}
+
+/* ===================== wiring ===================== */
+document.getElementById("mLive").addEventListener("click", function(){ setMode("live"); });
+document.getElementById("mLet").addEventListener("click", function(){ setMode("let"); });
+function applyModeUI(){
+  document.getElementById("mLive").setAttribute("aria-pressed", Calc.mode==="live");
+  document.getElementById("mLet").setAttribute("aria-pressed", Calc.mode==="let");
+  document.getElementById("secRent").classList.toggle("hidden", Calc.mode!=="live");
+  document.getElementById("secLet").classList.toggle("hidden", Calc.mode!=="let");
+}
+function setMode(m){
+  Calc.mode = m;
+  applyModeUI();
+  render();
+}
+function syncCurrencySelect(){
+  document.getElementById("cur").setCode(Calc.cur.code);
+}
+document.getElementById("cur").addEventListener("currencychange", function(e){
+  Calc.applyCurrency(e.detail.code);
+  render();
+});
+
+document.getElementById("copyLink").addEventListener("click", function(){
+  copyWithFeedback(this, location.href, "Copy link");
+});
+
+/* The chatbot gets the spec plus wherever the visitor has already got to, so
+   it refines their scenario instead of starting from the defaults. */
+function aiPrompt(){
+  var base = location.origin + location.pathname;
+  var lines = [
+    "I'm deciding whether to buy a home or keep renting. Help me fill in this calculator:",
+    base,
+    ""
+  ];
+  /* Only worth carrying the scenario across if there is one — at the defaults
+     location.href is bare, and calling that "my assumptions" would be a lie. */
+  if(location.search){
+    lines.push("I've already set some of it up: " + location.href);
+    lines.push("Treat those as a starting point and correct any you can research.");
+    lines.push("");
+  }
+  return lines.concat([
+    "Ask me what you need to know about my situation, then look up current figures for",
+    "my city and market — asking prices, rents, mortgage rates, transaction costs and",
+    "the relevant taxes. Tell me where each number came from and how confident you are.",
+    "",
+    "Then give me one link, built to the rules below.",
+    "",
+    specText(Calc, base)
+  ]).join("\n");
+}
+document.getElementById("copyPrompt").addEventListener("click", function(){
+  var prompt;
+  try{
+    prompt = aiPrompt();
+  }catch(e){
+    /* A stale cached calc.js has a fix the reader can act on; anything else is a
+       real bug and pointing them at reload would just misdirect. Either way the
+       button has to say something — going silent is what made the original
+       report read as a broken site. */
+    var btn = this;
+    btn.textContent = e.name === "StaleEngineError" ? "Reload the page" : "Copy failed";
+    setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
+    throw e;
+  }
+  copyWithFeedback(this, prompt, "Copy prompt");
+});
+document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+
+buildFields();
+if(Calc.hasScenarioParams()){
+  Calc.resetToDefaults();
+  Calc.loadFromURL();
+  Calc.suppressPersist = true;
+} else {
+  Calc.loadFromStorage();
+}
+syncCurrencySelect();
+applyModeUI();
+render();
+Calc.suppressPersist = false;
+</script>
+</body>
+</html>

@@ -55,18 +55,19 @@ var SPECS = [
       "",
       "## Two ways into each calculator",
       "",
-      "Every one of them has a second address, `/<tool>/guide/`, which reads exactly the",
-      "same parameters and runs the same model. The difference is presentation: the plain",
-      "page puts every input on screen at once, and the guided one asks a question at a",
-      "time, explains what each number is and why it matters, offers typical values for",
-      "developed and developing markets, and lets the reader skip anything they don't",
-      "know. Send the guided link to someone who is not comfortable with the vocabulary:",
+      "Every one of them answers at two addresses, over one engine and one set of",
+      "parameters. `/<tool>/` is the default: it asks a question at a time, explains what",
+      "each number is and why it matters, offers typical values for developed and",
+      "developing markets, and lets the reader skip anything they don't know.",
+      "`/<tool>/advanced/` puts every input on screen at once, for someone who already",
+      "knows what they mean:",
       "",
-      "- " + SITE + "/rent-or-buy/guide/",
-      "- " + SITE + "/build-or-invest/guide/",
-      "- " + SITE + "/brick-by-brick/guide/",
+      "- " + SITE + "/rent-or-buy/advanced/",
+      "- " + SITE + "/build-or-invest/advanced/",
+      "- " + SITE + "/brick-by-brick/advanced/",
       "",
-      "The parameter names, defaults and ranges in each spec below apply to both.",
+      "Link to the default unless you have a reason not to. The parameter names, defaults",
+      "and ranges in each spec below apply to both.",
       "",
       "## Notes",
       "",
@@ -250,15 +251,15 @@ function render(spec){
   L.push("parameters:");
   L.push("");
   L.push("- " + spec.base);
+  L.push("  The default. One question at a time, in plain language. Each explains what the");
+  L.push("  input is, why it moves the answer, and what it typically runs to in developed");
+  L.push("  and in developing markets, and any of them can be skipped.");
+  L.push("- " + spec.base + "advanced/");
   L.push("  Every input on one screen, for someone who already knows what they mean.");
-  L.push("- " + spec.base + "guide/");
-  L.push("  One question at a time, in plain language. Each explains what the input is,");
-  L.push("  why it moves the answer, and what it typically runs to in developed and in");
-  L.push("  developing markets, and any of them can be skipped.");
   L.push("");
   L.push("Everything after the `?` is identical, so build the query string once and put");
-  L.push("either base in front of it. Prefer the guided one when whoever you are helping");
-  L.push("is not comfortable with the vocabulary.");
+  L.push("either base in front of it. Use the default unless the person you are helping");
+  L.push("has asked for the dense one.");
   L.push("");
   L.push(specText(spec.mod, spec.base));
   L.push(spec.model);

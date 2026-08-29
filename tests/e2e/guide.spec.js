@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-/* The guided walkthrough at /<tool>/guide/. The state machine is unit tested in
+/* The walkthrough, which is what /<tool>/ now serves. The state machine is unit tested in
    shared/wizard.test.js and the copy in <tool>/guide.test.js, so what is left
    for a browser is the wiring: that a question renders its control, that
    answering one reaches the URL, that skipping leaves the default visibly
@@ -13,14 +13,14 @@ const TOOLS = [
 ];
 
 async function start(page, slug, qs = "") {
-  await page.goto(`/${slug}/guide/${qs}`);
+  await page.goto(`/${slug}/${qs}`);
   await page.getByRole("button", { name: "Start" }).click();
 }
 
 test.describe("guided walkthrough", () => {
   for (const { slug, firstQuestion } of TOOLS) {
     test(`${slug}: opens on the intro and walks to a first question`, async ({ page }) => {
-      await page.goto(`/${slug}/guide/`);
+      await page.goto(`/${slug}/`);
       await expect(page.locator(".card .eyebrow")).toHaveText("Before we start");
       await expect(page.locator(".wiz-meta .where")).toContainText(/\d+ questions/);
       // Nothing has been asked yet, so nothing is claimed about the answer.
@@ -140,15 +140,15 @@ test.describe("guided walkthrough", () => {
     await expect(page.locator(".card h2.q")).toContainText("yield would a buyer want");
   });
 
-  test("the answer hands the same scenario on to the full calculator", async ({ page }) => {
+  test("the answer hands the same scenario on to the advanced view", async ({ page }) => {
     await start(page, "brick-by-brick");
     await page.getByRole("button", { name: "Next", exact: true }).click(); // past the mode question
     await page.locator("#w_savings").fill("2000000");
     await page.locator(".wiz-meta .escape").click();
 
-    const href = await page.getByRole("link", { name: "Open the full calculator" }).getAttribute("href");
-    expect(href).toMatch(/^\.\.\/\?/);
-    await page.getByRole("link", { name: "Open the full calculator" }).click();
+    const href = await page.getByRole("link", { name: "Open the advanced view" }).getAttribute("href");
+    expect(href).toMatch(/^advanced\/\?/);
+    await page.getByRole("link", { name: "Open the advanced view" }).click();
     await expect(page.locator("#headline")).not.toBeEmpty();
     await expect(page.locator("#i_savings")).toHaveValue("2000000");
   });
@@ -160,7 +160,7 @@ test.describe("guided walkthrough", () => {
     await page.locator(".wiz-meta .escape").click();
     await page.getByRole("button", { name: "Start over" }).click();
 
-    await expect(page).toHaveURL(/\/rent-or-buy\/guide\/$/);
+    await expect(page).toHaveURL(/\/rent-or-buy\/$/);
     await expect(page.locator(".card .eyebrow")).toHaveText("Before we start");
   });
 
@@ -186,16 +186,70 @@ test.describe("guided walkthrough", () => {
 
   test("the AI prompt carries the walkthrough's own address and the full spec", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.goto("/rent-or-buy/guide/");
+    await page.goto("/rent-or-buy/");
     await page.locator(".aihelp.wiz-ai summary").click();
     await page.locator("#copyPrompt").click();
     await expect(page.locator("#copyPrompt")).toHaveText("Copied");
 
     const text = await page.evaluate(() => navigator.clipboard.readText());
-    expect(text).toContain("/rent-or-buy/guide/");
+    expect(text).toContain("/rent-or-buy/");
     expect(text).toContain("## How to build a link");
     expect(text).toContain("All money is Kenyan shillings");
   });
+});
+
+/* The two views are one tool. What makes that true for a visitor is that the
+   switch is in the same place on both pages and that jumping does not cost
+   them the numbers they have already given — the query string IS the
+   scenario. */
+test.describe("the Guided / Advanced switch", () => {
+  for (const { slug } of TOOLS) {
+    test(`${slug}: sits on both pages and marks the one you are on`, async ({ page }) => {
+      await page.goto(`/${slug}/`);
+      await expect(page.locator('view-switch [aria-current="page"]')).toHaveText("Guided");
+      await expect(page.locator("view-switch a")).toHaveText("Advanced");
+
+      await page.goto(`/${slug}/advanced/`);
+      await expect(page.locator('view-switch [aria-current="page"]')).toHaveText("Advanced");
+      await expect(page.locator("view-switch a")).toHaveText("Guided");
+    });
+  }
+
+  test("carries the scenario from the walkthrough into the advanced view", async ({ page }) => {
+    await start(page, "rent-or-buy");
+    await page.getByRole("button", { name: "Next", exact: true }).click(); // past the mode question
+    await page.locator("#w_price").fill("26000000");
+
+    await page.locator("view-switch a").click();
+    await expect(page).toHaveURL(/\/rent-or-buy\/advanced\/\?.*p=26000000/);
+    await expect(page.locator("#i_price")).toHaveValue("26000000");
+  });
+
+  test("and back the other way, without losing it", async ({ page }) => {
+    await page.goto("/rent-or-buy/advanced/");
+    await page.locator("#i_price").fill("31000000");
+    await page.locator("#i_price").dispatchEvent("input");
+
+    await page.locator("view-switch a").click();
+    await expect(page).toHaveURL(/\/rent-or-buy\/\?.*p=31000000/);
+    await page.getByRole("button", { name: "Start" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page.locator("#w_price")).toHaveValue("31000000");
+  });
+});
+
+/* /<tool>/guide/ was the walkthrough's first address and went out in
+   sitemap.xml and the published llms.txt before it moved. The stub left behind
+   has one job, and it includes the query string — a bare meta refresh would
+   drop the scenario and hand back the defaults. */
+test.describe("the old /guide/ address", () => {
+  for (const { slug } of TOOLS) {
+    test(`${slug}: forwards to the walkthrough, scenario and all`, async ({ page }) => {
+      await page.goto(`/${slug}/guide/?h=7`);
+      await expect(page).toHaveURL(new RegExp(`/${slug}/\\?h=7$`));
+      await expect(page.locator(".card .eyebrow")).toHaveText("Before we start");
+    });
+  }
 });
 
 test.describe("guided walkthrough on a phone", () => {
@@ -210,7 +264,7 @@ test.describe("guided walkthrough on a phone", () => {
         }));
         expect(scrollW, where).toBe(clientW);
       };
-      await page.goto(`/${slug}/guide/`);
+      await page.goto(`/${slug}/`);
       await noOverflow("the intro");
       await page.getByRole("button", { name: "Start" }).click();
       await noOverflow("the first question");

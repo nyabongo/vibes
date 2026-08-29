@@ -11,15 +11,15 @@ There are two pages for this calculator, and they take exactly the same
 parameters:
 
 - https://vibes.obel.dev/build-or-invest/
+  The default. One question at a time, in plain language. Each explains what the
+  input is, why it moves the answer, and what it typically runs to in developed
+  and in developing markets, and any of them can be skipped.
+- https://vibes.obel.dev/build-or-invest/advanced/
   Every input on one screen, for someone who already knows what they mean.
-- https://vibes.obel.dev/build-or-invest/guide/
-  One question at a time, in plain language. Each explains what the input is,
-  why it moves the answer, and what it typically runs to in developed and in
-  developing markets, and any of them can be skipped.
 
 Everything after the `?` is identical, so build the query string once and put
-either base in front of it. Prefer the guided one when whoever you are helping
-is not comfortable with the vocabulary.
+either base in front of it. Use the default unless the person you are helping
+has asked for the dense one.
 
 ## How to build a link
 
