@@ -1,4 +1,5 @@
-/* The editorial half of the guided walkthrough at /build-or-invest/guide/.
+/* The editorial half of the walkthrough at /build-or-invest/ — the page this
+ * calculator opens on.
  *
  * Same shape as rent-or-buy/guide.js: shared/wizard.js holds the machinery,
  * this holds the words. Every input model.js has gets a plain-language

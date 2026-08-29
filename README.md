@@ -7,11 +7,11 @@ Small tools, vibe-coded. A monorepo of standalone browser tools, live at
 
 ## The tools
 
-| Tool | What it does | Guided | Source | Spec |
+| Tool | What it does | Advanced | Source | Spec |
 | --- | --- | --- | --- | --- |
-| [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Should you buy a home, or rent and put the same money in the market? Models what you'd be worth on each path, and shows the exact year buying overtakes renting — or doesn't. | [walkthrough](https://vibes.obel.dev/rent-or-buy/guide/) | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
-| [Build or invest](https://vibes.obel.dev/build-or-invest/) | Should your money build a rental block, or just sit in the market? Models the construction drag, lease-up, and what the finished building is actually worth. | [walkthrough](https://vibes.obel.dev/build-or-invest/guide/) | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
-| [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Should you build a home a bit at a time, or rent and invest instead? Builds it out of salary while you rent. Works out when you move in and whether construction costs outrun you before the house is finished. | [walkthrough](https://vibes.obel.dev/brick-by-brick/guide/) | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
+| [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Should you buy a home, or rent and put the same money in the market? Models what you'd be worth on each path, and shows the exact year buying overtakes renting — or doesn't. | [all on one page](https://vibes.obel.dev/rent-or-buy/advanced/) | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
+| [Build or invest](https://vibes.obel.dev/build-or-invest/) | Should your money build a rental block, or just sit in the market? Models the construction drag, lease-up, and what the finished building is actually worth. | [all on one page](https://vibes.obel.dev/build-or-invest/advanced/) | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
+| [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Should you build a home a bit at a time, or rent and invest instead? Builds it out of salary while you rent. Works out when you move in and whether construction costs outrun you before the house is finished. | [all on one page](https://vibes.obel.dev/brick-by-brick/advanced/) | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
 
 All three calculators take their whole input set from the URL query string, so a
 link opens with the scenario already filled in. The specs above document that URL
@@ -19,9 +19,10 @@ API — they are generated from the code, and
 [how that works](#how-a-calculator-is-put-together) is worth reading before you
 change one.
 
-Each also has a second address, `/<tool>/guide/`, which runs the same engine off
-the same query string and asks for the numbers one at a time instead of putting
-them all on screen. See [the guided walkthrough](#the-guided-walkthrough).
+Each tool answers at two addresses over one engine and one query string.
+`/<tool>/` is the default and asks for the numbers one at a time;
+`/<tool>/advanced/` puts them all on screen at once. See
+[the two views](#the-two-views).
 
 Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens
 on Ugandan ones. Nothing is hardcoded to either: every tax, rate and transaction
@@ -57,14 +58,15 @@ cloning.
 index.html                 landing page — the list of tools
 llms.txt                   generated index of the tools, for AI assistants
 rent-or-buy/
-  index.html               page markup + view layer
+  index.html               the walkthrough — markup + one mount() call
+  advanced/index.html      everything on one page: markup + view layer
+  guide/index.html         a redirect; the walkthrough used to live here
   calc.js                  the engine (a UMD module — see below)
   calc.test.js             unit tests, co-located with what they test
   guide.js                 the walkthrough's editorial copy (UMD)
   guide.test.js            checks that copy against the engine's own fields
-  guide/index.html         the guided walkthrough — markup + one mount() call
   llms.txt                 generated parameter spec
-build-or-invest/           same shape: index.html, model.js, model.test.js, guide.js, guide/, llms.txt
+build-or-invest/           same shape: index.html, advanced/, model.js, guide.js, llms.txt
 brick-by-brick/            same shape again; opens in UGX rather than KES
 shared/
   tool.css                 house style for the calculators (design tokens at the top)
@@ -73,7 +75,7 @@ shared/
   wizard-ui.js             the walkthrough's view layer, shared by all three
   spec-text.js             renders a calculator's URL API as markdown (UMD)
   clipboard.js             copyWithFeedback() — copy, then report on the button itself
-  components/              the four custom elements every calculator uses
+  components/              the five custom elements the calculators use
 tools/llms-txt.js          generates the committed llms.txt files
 tests/
   serve.js                 zero-dependency static server, for Playwright only
@@ -160,23 +162,33 @@ the published spec cannot drift from the code that parses the query string. Only
 the editorial prose — what a tool is for, what its model does and does not
 cover — is hand-written, and it lives in the generator.
 
-## The guided walkthrough
+## The two views
 
-Every calculator has a second front door at `/<tool>/guide/`. Same engine, same
-query string, same answer — a different way of asking. The plain page is a
-dashboard: every input on screen at once, for someone who already knows what a
-cap rate is. The walkthrough asks one question at a time, in plain language,
-says why the number matters, offers what it typically runs to in a developed and
-in a developing market, and lets you skip anything you don't know.
+Every calculator answers at two addresses over one engine:
 
-Three ideas hold it together.
+| | |
+| --- | --- |
+| `/<tool>/` | The default. One question a screen, in plain language, saying why the number matters and what it typically runs to in a developed and in a developing market. Anything can be skipped. |
+| `/<tool>/advanced/` | Every input on screen at once, for someone who already knows what a cap rate is. |
 
-**The engine is untouched.** The walkthrough reads `FIELDS`, `DEFAULTS`,
-`SECTION_META` and `MODE_META`, writes to `V` and `mode`, and calls
-`simulate()`, `hasScenarioParams()`, `loadFromURL()` and `updateURL()`. It adds
-nothing to `calc.js` / `model.js` and changes nothing in them, so the URL API and
-the published spec are the same on both pages. A link built for one opens the
-other: swap the base, keep everything after the `?`.
+Same query string, same model, same answer. A `view-switch` element sits under
+the one-line description on both pages and carries the current scenario across,
+because the query string *is* the state — a jump that dropped it would hand the
+visitor the defaults back without saying so.
+
+`/<tool>/guide/` is a redirect. The walkthrough shipped there first, and the
+URL went out in `sitemap.xml` and the published `llms.txt` before it moved, so
+the stub is there to hand the link on. It carries the query string too, which a
+`<meta http-equiv="refresh">` cannot do on its own.
+
+Three ideas hold the walkthrough together.
+
+**The engine is untouched.** It reads `FIELDS`, `DEFAULTS`, `SECTION_META` and
+`MODE_META`, writes to `V` and `mode`, and calls `simulate()`,
+`hasScenarioParams()`, `loadFromURL()` and `updateURL()`. It adds nothing to
+`calc.js` / `model.js` and changes nothing in them, so the URL API and the
+published spec are the same on both pages. A link built for one opens the other:
+swap the base, keep everything after the `?`.
 
 **The prose is data, and it is checked against the code.** Each tool's
 [`guide.js`](rent-or-buy/guide.js) holds the running order of the questions and,
@@ -194,8 +206,8 @@ engine and the walkthrough's test goes red until someone writes the words.
 state machine — which question you are on, which answers are the visitor's own,
 how far through you are — with no DOM in it, so it unit tests under Node like the
 engines do. [`shared/wizard-ui.js`](shared/wizard-ui.js) draws it. A tool's
-`guide/index.html` is a masthead, an empty `<div>`, and one `mount({ engine,
-guide, … })` call.
+`index.html` is a masthead, an empty `<div>`, and one `mount({ engine, guide, … })`
+call.
 
 Two things worth knowing before you change it:
 
@@ -287,13 +299,13 @@ copying.
    test normalises CRLF before comparing as well, so a misconfigured checkout
    reports the real problem instead of a phantom staleness failure.
 
-8. **Add the guided walkthrough** (optional, but it is what makes the tool
-   usable by someone who is not a financial expert). Write `<tool>/guide.js` to
-   the contract in [the section above](#the-guided-walkthrough), copy a
-   `guide/index.html` from another tool and change the four arguments to
-   `mount()`, and add `<tool>/guide.test.js`. Link it from the tool's own page
-   (`.tool-guide`), from the list in [index.html](index.html), and add
-   `/<tool>/guide/` to [sitemap.xml](sitemap.xml).
+8. **Write the walkthrough**, which is the page people actually land on. Put
+   the dense one at `<tool>/advanced/index.html` and the walkthrough at
+   `<tool>/index.html`. Write `<tool>/guide.js` to the contract in
+   [the section above](#the-two-views), copy an `index.html` from another tool
+   and change the four arguments to `mount()`, and add `<tool>/guide.test.js`.
+   Put a `<view-switch>` on both pages, `sync()` it from whatever loop keeps the
+   URL current, and add `/<tool>/advanced/` to [sitemap.xml](sitemap.xml).
 
 9. **Add tests**: `<tool>/<name>.test.js` for the engine, and
    `tests/e2e/<tool>.spec.js` for the page.

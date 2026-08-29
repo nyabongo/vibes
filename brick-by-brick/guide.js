@@ -1,4 +1,5 @@
-/* The editorial half of the guided walkthrough at /brick-by-brick/guide/.
+/* The editorial half of the walkthrough at /brick-by-brick/ — the page this
+ * calculator opens on.
  *
  * Same shape as the other two guides: shared/wizard.js holds the machinery,
  * this holds the words. Every input model.js has gets a plain-language

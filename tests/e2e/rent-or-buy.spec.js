@@ -2,14 +2,14 @@ import { test, expect } from "@playwright/test";
 
 test.describe("rent-or-buy", () => {
   test("loads with the default scenario and renders a verdict", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     const headline = page.locator("#headline");
     await expect(headline).toContainText(/Buy|Rent/);
     await expect(page.locator("#tiles .tile")).toHaveCount(4);
   });
 
   test("changing an input updates the headline and tiles live, without a reload", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     const before = await page.locator("#headline").innerText();
 
     const priceInput = page.locator("#i_price");
@@ -21,7 +21,7 @@ test.describe("rent-or-buy", () => {
   });
 
   test("mode toggle shows/hides the right fieldset and changes verdict copy", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     await expect(page.locator("#secRent")).toBeVisible();
     await expect(page.locator("#secLet")).toBeHidden();
 
@@ -34,7 +34,7 @@ test.describe("rent-or-buy", () => {
   });
 
   test("a shared link fully reproduces the scenario in a fresh context (regression: 51811df)", async ({ page, context }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     await page.locator("#i_price").fill("35000000");
     await page.locator("#i_price").dispatchEvent("input");
     await page.locator("#mLet").click();
@@ -56,7 +56,7 @@ test.describe("rent-or-buy", () => {
      Pinned here rather than only against the engine, because the branch itself
      lives in the page's init block. */
   test("only a link with a recognised parameter shows the defaults, as llms.txt claims", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     const defaultPrice = await page.locator("#i_price").inputValue();
 
     await page.locator("#i_price").fill("18500000");
@@ -67,14 +67,14 @@ test.describe("rent-or-buy", () => {
 
     // A bare URL, and one carrying only parameters the calculator doesn't know,
     // both restore what this visitor last had.
-    for (const url of ["/rent-or-buy/", "/rent-or-buy/?utm_source=x"]) {
+    for (const url of ["/rent-or-buy/advanced/", "/rent-or-buy/advanced/?utm_source=x"]) {
       await page.goto(url);
       await expect(page.locator("#i_price"), url).toHaveValue("18500000");
     }
 
     // The defaults link llms.txt recommends: one recognised parameter, set to
     // its own default, so it changes nothing but still trips the branch.
-    await page.goto("/rent-or-buy/?m=live");
+    await page.goto("/rent-or-buy/advanced/?m=live");
     await expect(page.locator("#i_price")).toHaveValue(defaultPrice);
 
     // ...and opening it left the saved scenario alone.
@@ -82,7 +82,7 @@ test.describe("rent-or-buy", () => {
   });
 
   test("currency switcher changes the displayed symbol and scale", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     await expect(page.locator("#tiles .tile").first()).toContainText("KSh");
 
     await page.locator("#cur select").selectOption({ label: "USD — US dollar" });
@@ -95,7 +95,7 @@ test.describe("rent-or-buy", () => {
   test("copy link button copies the current URL to the clipboard", async ({ page, context, browserName }) => {
     test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
 
     const btn = page.locator("#copyLink");
     await btn.click();
@@ -106,7 +106,7 @@ test.describe("rent-or-buy", () => {
   });
 
   test("the 40-year flip claim reflects an actual 40-year run, not the chosen horizon (regression: e2baf39)", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
 
     // At these settings there's no crossover within the chosen 5-year horizon,
     // but a real 40-year simulation does cross over at year 9. The pre-fix
@@ -131,7 +131,7 @@ test.describe("rent-or-buy", () => {
      name 22.3% appreciation, 2.3 points past the end of that slider — a target
      the visitor is told about and then cannot set. (regression: #11) */
   test("the flip panel never names a target its own slider cannot reach", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
 
     // Everything default except the one lever, pushed to its declared maximum.
     await page.locator("#i_invest").fill("25");
@@ -168,7 +168,7 @@ test.describe("rent-or-buy", () => {
      was wrong, and it claimed tax even in the common case where no tax segment
      is drawn at all. (regression: #10) */
   test("the let-mode credit line names only what was actually taken out of it", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     await page.locator("#mLet").click();
 
     const credit = page.locator("#cf .credit").first();
@@ -199,7 +199,7 @@ test.describe("rent-or-buy", () => {
      same 15%. Separate knobs, not a mirror: exempting the home leaves the pot
      taxed, which is the wrinkle a footnote would have hidden. (regression: #6) */
   test("investment gains are taxed at their own rate, which survives a shared link", async ({ page, context }) => {
-    await page.goto("/rent-or-buy/?m=live");
+    await page.goto("/rent-or-buy/advanced/?m=live");
 
     const icgt = page.locator("#i_cgtInvest");
     await expect(page.locator('label[for="i_cgtInvest"]')).toBeVisible();
@@ -217,7 +217,7 @@ test.describe("rent-or-buy", () => {
 
     // Sheltering the pot is what turns the tax off, and it moves the verdict —
     // the old tax-free model is now something you opt into.
-    await page.goto("/rent-or-buy/?m=live");
+    await page.goto("/rent-or-buy/advanced/?m=live");
     await icgt.fill("0");
     await icgt.dispatchEvent("input");
     await expect(page.locator("#headline")).not.toHaveText(taxed);
@@ -237,7 +237,7 @@ test.describe("rent-or-buy", () => {
   });
 
   test("print summary stays populated with the current field values", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     await page.locator("#i_price").fill("18500000");
     await page.locator("#i_price").dispatchEvent("input");
 
@@ -247,7 +247,7 @@ test.describe("rent-or-buy", () => {
   test("the AI prompt carries the whole spec plus the visitor's current scenario", async ({ page, context, browserName }) => {
     test.skip(browserName !== "chromium", "clipboard permissions are only reliably grantable in Chromium");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.goto("/rent-or-buy/?p=14500000&h=7");
+    await page.goto("/rent-or-buy/advanced/?p=14500000&h=7");
 
     await page.locator("details.aihelp > summary").click();
     const btn = page.locator("#copyPrompt");
@@ -270,10 +270,10 @@ test.describe("rent-or-buy", () => {
     expect(res.status()).toBe(200);
     expect(res.headers()["content-type"]).toContain("text/plain");
 
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
     // In the body, not just <head> — a fetch-only agent never runs the JS that
     // would reveal anything else about this page.
-    await expect(page.locator('.aihelp a[href="llms.txt"]')).toHaveCount(1);
+    await expect(page.locator('.aihelp a[href="../llms.txt"]')).toHaveCount(1);
   });
 
   test("a worked example copied out of llms.txt opens the scenario it claims", async ({ page, request }) => {
@@ -281,7 +281,7 @@ test.describe("rent-or-buy", () => {
     const example = doc.match(/https:\/\/vibes\.obel\.dev\/rent-or-buy\/\?\S+/);
     expect(example, "llms.txt should publish at least one worked example").not.toBeNull();
 
-    await page.goto("/rent-or-buy/" + new URL(example[0]).search);
+    await page.goto("/rent-or-buy/advanced/" + new URL(example[0]).search);
 
     await expect(page.locator("#i_price")).toHaveValue("14500000");
     await expect(page.locator("#i_rent")).toHaveValue("75000");
@@ -290,7 +290,7 @@ test.describe("rent-or-buy", () => {
   });
 
   test("accessibility: inputs have labels, mode buttons expose aria-pressed, chart has an aria-label", async ({ page }) => {
-    await page.goto("/rent-or-buy/");
+    await page.goto("/rent-or-buy/advanced/");
 
     await expect(page.locator('label[for="i_price"]')).toBeVisible();
     await expect(page.locator("#i_price")).toHaveId("i_price");

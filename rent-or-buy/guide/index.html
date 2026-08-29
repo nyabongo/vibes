@@ -3,68 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rent or buy — guided walkthrough</title>
-<meta name="description" content="A guided, one-question-at-a-time walkthrough of the rent-vs-buy decision. Every question explains what it is, why it matters, and what the number typically looks like in developed and developing markets. Skip anything you don't know.">
-<link rel="canonical" href="https://vibes.obel.dev/rent-or-buy/guide/">
+<title>Rent or buy — moved to /rent-or-buy/</title>
+<!-- The guided walkthrough used to live here and is now the calculator's own
+     front page, one level up. This stub is here because /rent-or-buy/guide/
+     shipped: it went out in sitemap.xml and in the published llms.txt, so
+     something may hold the link. It exists only to hand that link on.
+
+     The query string is the whole scenario in these tools, so the redirect has
+     to carry it — which a meta refresh cannot do. The script does the real
+     work; the refresh below is the no-JavaScript fallback, and it lands on the
+     defaults rather than nowhere. -->
+<script>location.replace("../" + location.search + location.hash);</script>
+<meta http-equiv="refresh" content="0; url=../">
+<link rel="canonical" href="https://vibes.obel.dev/rent-or-buy/">
+<meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-<link rel="stylesheet" href="../../shared/tool.css">
-<link rel="stylesheet" href="../../shared/wizard.css">
-<link rel="alternate" type="text/plain" href="../llms.txt" title="Parameter spec for AI assistants">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://vibes.obel.dev/rent-or-buy/guide/">
-<meta property="og:title" content="Rent or buy — guided walkthrough">
-<meta property="og:description" content="A guided, one-question-at-a-time walkthrough of the rent-vs-buy decision. Every question explains what it is, why it matters, and what's typical in developed and developing markets.">
-<meta property="og:image" content="https://vibes.obel.dev/rent-or-buy/og.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Rent or buy — guided walkthrough">
-<meta name="twitter:description" content="A guided, one-question-at-a-time walkthrough of the rent-vs-buy decision, for people who are not financial experts.">
-<meta name="twitter:image" content="https://vibes.obel.dev/rent-or-buy/og.png">
 </head>
 <body>
-<div class="wrap wiz">
-
-  <div class="wiz-mast">
-    <a class="backlink" href="../../">&larr; vibes</a>
-    <div class="mast-actions">
-      <a class="linkbtn" href="../" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">All at once</a>
-      <currency-select id="cur"></currency-select>
-    </div>
-  </div>
-
-  <div class="wiz-id">
-    <h1>Rent or buy &middot; guided</h1>
-    <p>A question at a time, in plain language. Skip anything you don't know — every question already
-       has a sensible number in it.</p>
-  </div>
-
-  <noscript>
-    <p style="margin-top:22px">This walkthrough needs JavaScript. The
-       <a href="../">full calculator</a> does too; the complete parameter reference — every input,
-       its range and its default — is published as plain text at <a href="../llms.txt">llms.txt</a>.</p>
-  </noscript>
-
-  <div id="wiz"></div>
-</div>
-
-<script src="../../shared/components/currency-select.js"></script>
-<script src="../../shared/components/crossover-chart.js"></script>
-<script src="../../shared/components/key-tiles.js"></script>
-<script src="../../shared/clipboard.js"></script>
-<script src="../../shared/spec-text.js"></script>
-<script src="../../shared/wizard.js"></script>
-<script src="../../shared/wizard-ui.js"></script>
-<script src="../calc.js"></script>
-<script src="../guide.js"></script>
-<script>
-"use strict";
-WizardUI.mount({
-  engine: Calc,
-  guide: RentOrBuyGuide,
-  mount: document.getElementById("wiz"),
-  currency: document.getElementById("cur"),
-  calcHref: "../",
-  specHref: "../llms.txt"
-});
-</script>
+<p>The guided walkthrough has moved to <a href="../">/rent-or-buy/</a>.</p>
 </body>
 </html>

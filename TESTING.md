@@ -37,7 +37,9 @@ logic** — rely on Playwright E2E instead; there's nothing worth extracting.
 - Playwright specs live under root `tests/e2e/<app>.spec.js` — browser
   tooling and config are shared across apps, so there's no reason to
   duplicate a `tests/` folder per app. `tests/e2e/guide.spec.js` covers all
-  three guided walkthroughs together, since one view layer draws all of them.
+  three walkthroughs together, since one view layer draws all of them, and
+  `tests/e2e/<app>.spec.js` covers that app's advanced view at
+  `/<app>/advanced/`.
 - `tests/serve.js` is a zero-dependency static file server used only by
   Playwright's `webServer`. It serves the repo root the same way GitHub
   Pages does, so specs exercise real relative paths instead of `file://`.
@@ -86,7 +88,7 @@ Two consequences worth knowing:
   CRLF before comparing as well, so a misconfigured checkout reports the real
   problem instead of a phantom staleness failure.
 
-## The guided walkthrough's contract test
+## The walkthrough's contract test
 
 `<app>/guide.test.js` is the odd one out: what it mostly asserts is that the
 app's *prose* still matches the app's *code*. `Wizard.validateGuide()` walks the

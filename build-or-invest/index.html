@@ -4,525 +4,67 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Build or invest — the development calculator</title>
-<meta name="description" content="Compare building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth.">
+<meta name="description" content="Should a lump sum build a rental block or stay in the market? A guided calculator that asks one question at a time, explains what each number means and what it typically runs to in developed and developing markets, and prices the years the site spends earning nothing.">
 <link rel="canonical" href="https://vibes.obel.dev/build-or-invest/">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="../shared/tool.css">
+<link rel="stylesheet" href="../shared/wizard.css">
 <link rel="alternate" type="text/plain" href="llms.txt" title="Parameter spec for AI assistants">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://vibes.obel.dev/build-or-invest/">
 <meta property="og:title" content="Build or invest — the development calculator">
-<meta property="og:description" content="Compare building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth.">
+<meta property="og:description" content="A guided build-vs-invest calculator: one question at a time, in plain language, pricing the construction drag most spreadsheets forget.">
 <meta property="og:image" content="https://vibes.obel.dev/build-or-invest/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Build or invest — the development calculator">
-<meta name="twitter:description" content="Compare building an apartment block against leaving the same lump sum in a compounding investment. Models the construction drag, lease-up, and what the finished building is actually worth.">
+<meta name="twitter:description" content="A guided build-vs-invest calculator: one question at a time, in plain language, pricing the construction drag most spreadsheets forget.">
 <meta name="twitter:image" content="https://vibes.obel.dev/build-or-invest/og.png">
 </head>
 <body>
-<div class="wrap">
+<div class="wrap wiz">
 
-  <div class="masthead">
+  <div class="wiz-mast">
     <a class="backlink" href="../">&larr; vibes</a>
     <div class="mast-actions">
-      <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
-      <button class="linkbtn" id="copyLink" type="button">Copy link</button>
       <currency-select id="cur"></currency-select>
     </div>
   </div>
 
-  <div class="tool-id">
-    <h1 class="tool-name">Build or invest</h1>
-    <p class="tool-what">Should your money build a rental block, or just sit in the market? Set your numbers. The page picks.</p>
-    <a class="tool-guide" href="guide/">New to this? Take the guided walkthrough &rarr;</a>
-  </div>
-  <div class="rule"></div>
-
-  <div class="verdict">
-    <!-- Not a heading: a computed result that changes on every slider frame has
-         no business in the document outline, and heading-navigation would land
-         on it as a title for a section that doesn't exist. role="status"
-         implies aria-live="polite" + aria-atomic; do not also write those. -->
-    <div class="verdict-line" id="headline" role="status"></div>
-    <p id="subline"></p>
+  <div class="wiz-id">
+    <h1>Build or invest</h1>
+    <p>Should your money build a rental block, or just sit in the market? One question at a time, in plain language — skip anything you don't know.</p>
+    <view-switch current="guided" other="advanced/"></view-switch>
   </div>
 
-  <div class="warn hidden" id="shortfallWarn"></div>
+  <noscript>
+    <p style="margin-top:22px">This walkthrough needs JavaScript. The
+       <a href="advanced/">advanced view</a> does too; the complete parameter reference — every input,
+       its range and its default — is published as plain text at <a href="llms.txt">llms.txt</a>.</p>
+  </noscript>
 
-  <div class="print-summary" id="printSummary"></div>
-
-  <div class="grid">
-
-    <!-- ============ CONTROLS ============ -->
-    <div class="controls">
-      <details class="aihelp">
-        <summary>Don't know your numbers? Ask an AI</summary>
-        <div class="body">
-          <p>Copy the prompt below into ChatGPT, Claude or any chatbot that can search
-             the web. It explains every input on this page and asks for a link back that
-             opens the calculator with your numbers already filled in.</p>
-          <button class="linkbtn" id="copyPrompt" type="button">Copy prompt</button>
-          <p class="fineprint">The same spec is published at <a href="llms.txt">llms.txt</a>,
-             if you'd rather point the chatbot straight at it.</p>
-        </div>
-      </details>
-      <noscript>
-        <p>This calculator needs JavaScript. The full parameter reference —
-           every input, its range and its default — is published as plain text at
-           <a href="llms.txt">llms.txt</a>.</p>
-      </noscript>
-      <div class="panel">
-        <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">KES</span></div>
-
-        <div class="mode" role="group" aria-label="How rental income is taxed">
-          <button id="mGross" aria-pressed="true">Flat rate on rent</button>
-          <button id="mNet" aria-pressed="false">Tax on profit</button>
-        </div>
-
-        <fieldset>
-          <legend>What you're putting in</legend>
-          <field-group id="fCapital"></field-group>
-        </fieldset>
-
-        <fieldset>
-          <legend>The project</legend>
-          <field-group id="fProject"></field-group>
-        </fieldset>
-
-        <fieldset>
-          <legend>What it earns</legend>
-          <field-group id="fIncome"></field-group>
-        </fieldset>
-
-        <fieldset>
-          <legend>Cost of running it</legend>
-          <field-group id="fOperating"></field-group>
-        </fieldset>
-
-        <fieldset>
-          <legend>Getting out</legend>
-          <field-group id="fExit"></field-group>
-        </fieldset>
-
-        <fieldset>
-          <legend>The alternative</legend>
-          <field-group id="fInvest"></field-group>
-        </fieldset>
-
-        <fieldset id="secGross">
-          <legend>Tax on rent</legend>
-          <field-group id="fGross"></field-group>
-        </fieldset>
-
-        <fieldset id="secNet" class="hidden">
-          <legend>Tax on profit</legend>
-          <field-group id="fNet"></field-group>
-        </fieldset>
-
-        <fieldset>
-          <legend>Tax &amp; inflation</legend>
-          <field-group id="fTax"></field-group>
-        </fieldset>
-      </div>
-    </div>
-
-    <!-- ============ RESULTS ============ -->
-    <div class="results">
-
-      <div class="panel">
-        <div class="panel-hd"><h2>What you'd be worth if you sold that year</h2><span class="hint" id="chartHint"></span></div>
-        <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for building versus investing"></crossover-chart></div>
-        <div class="legend">
-          <span><i style="background:var(--accent)"></i> Build the block</span>
-          <span><i style="background:var(--accent2)"></i> Leave it invested</span>
-          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover — where building overtakes investing</span>
-          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--line)"></i> Complete — the block is finished</span>
-          <span><i style="background:var(--muted);opacity:.25;height:10px"></i> Under construction</span>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
-        <key-tiles class="tiles" id="tiles"></key-tiles>
-      </div>
-
-      <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>Where the money goes</h2><span class="hint">Building it, then running it</span></div>
-        <div class="cf" id="cf"></div>
-      </div>
-
-      <div class="panel" style="margin-top:22px;">
-        <div class="panel-hd"><h2>What would change the answer</h2><span class="hint">One change at a time, everything else held still</span></div>
-        <div class="flip" id="flip"></div>
-      </div>
-
-      <footer>
-        <b>How this works.</b> Both paths start with the same lump sum. The build path pays for the land on day one and draws the rest of the project cost evenly over the construction months; whatever hasn't been spent yet keeps earning the investment return, and so does every shilling of rent the finished building throws off. While it's under construction the building is worth what you've sunk into it — no more. Once complete it's worth a year's stabilised net income divided by your exit yield, which is where a development actually makes or loses its money. Net worth at year <span id="fnH">10</span> is that value less selling costs and capital gains tax, plus the cash pot.
-        <br><br>
-        <b>Why the lump sum doesn't move the verdict.</b> It enters both paths identically, so it cancels out of the gap between them — change it and the headline number stays put. What it decides is whether you can fund the thing at all, which is what the warning above is for. To change the answer, move the rent, the exit yield, the build cost or the market return.
-        <br><br>
-        <b>Not modelled:</b> construction finance or interest during the build, phased or pre-sold units, selling units off individually, VAT and capital allowances, or the cost of a project that stalls. Drawdown is even across the build months, and a finished building is priced on stabilised income from its first month even while it's still filling. Land rates are charged on site value only. Rent growth and investment returns are steady averages here; real ones arrive in lumps, and a half-built block earns nothing while you argue with a contractor. If the project costs more than you have, the gap is charged at the same rate your investments earn — a stand-in for finance you'd actually have to go and raise.
-        <br><br>
-        <b>This is a model, not advice.</b> It does what you tell it to. The numbers you put in matter far more than the arithmetic it does with them.
-      </footer>
-    </div>
-  </div>
+  <div id="wiz"></div>
 </div>
 
 <script src="../shared/components/currency-select.js"></script>
-<script src="../shared/components/field-group.js"></script>
+<script src="../shared/components/view-switch.js"></script>
 <script src="../shared/components/crossover-chart.js"></script>
 <script src="../shared/components/key-tiles.js"></script>
 <script src="../shared/clipboard.js"></script>
 <script src="../shared/spec-text.js"></script>
+<script src="../shared/wizard.js"></script>
+<script src="../shared/wizard-ui.js"></script>
 <script src="model.js"></script>
+<script src="guide.js"></script>
 <script>
 "use strict";
-
-/* ===================== rendering ===================== */
-/* Dragging a slider fires `input` faster than the browser paints, and a render
-   costs a few milliseconds — almost all of it the four bisections behind the
-   "what would flip this" panel. Measured at ~3.6ms here, which fits in a frame
-   comfortably, but that's a desktop; the same work on a cheap phone is where it
-   would start dropping frames. Coalescing bursts into one render per frame makes
-   the handler frame-bound by construction, whatever it's running on.
-   Discrete events — the mode toggle, the currency select — still call render()
-   directly, since one click can't burst. */
-var renderQueued = false;
-function scheduleRender(){
-  if(renderQueued) return;
-  renderQueued = true;
-  function run(){ renderQueued = false; render(); }
-  if(typeof requestAnimationFrame === "function") requestAnimationFrame(run);
-  else setTimeout(run, 16);
-}
-
-function fieldDisplay(f){
-  var v = Model.V[f.k];
-  if(f.type==="money") return Model.fmt(v);
-  if(f.type==="num")   return v + (f.unit || "");
-  return Model.pctS(v);
-}
-
-function buildFields(){
-  Object.keys(Model.FIELDS).forEach(function(id){
-    document.getElementById(id).configure({
-      fields: Model.FIELDS[id],
-      get: function(k){ return Model.V[k]; },
-      set: function(k, v){ Model.V[k] = v; },
-      onInput: scheduleRender
-    });
-  });
-}
-
-function syncFields(){
-  Object.keys(Model.FIELDS).forEach(function(id){
-    document.getElementById(id).refresh(Model.cur.rate);
-  });
-}
-
-function drawChart(s){
-  document.getElementById("chart").draw({
-    series: s.series.map(function(p){ return {y:p.y, a:p.build, b:p.invest}; }),
-    colorA: "var(--accent)",
-    colorB: "var(--accent2)",
-    formatY: function(v){ return Model.fmtC(v); },
-    zeroFloor: false, // both paths start at the same lump sum, far from zero
-    breakEven: s.breakEven,
-    band: {to: s.completionYear},
-    bandMarker: s.completionYear > 0 ? {at: s.completionYear, label: "COMPLETE"} : null
-  });
-}
-
-function block(title, parts, total, extraHTML){
-  var scale = Math.max(total, 1);
-  var bar = parts.map(function(p){
-    return '<div style="width:'+(Math.max(0,p.v)/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
-  }).join("");
-  var keys = parts.map(function(p){
-    return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+Model.fmt(p.v)+'</span>';
-  }).join("");
-  return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
-         '<span class="amt num">'+Model.fmt(total)+'</span></div>'+
-         '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+
-         (extraHTML||'')+'</div>';
-}
-
-function drawCashflow(s){
-  var costParts = [
-    {n:"Land",         v:s.land,        c:"var(--accent)"},
-    {n:"Construction", v:s.buildCost,   c:"#7EA3CC"},
-    {n:"Fees & approvals", v:s.softCost, c:"#4C6B4A"},
-    {n:"Contingency",  v:s.contingency, c:"#B3A98C"}
-  ];
-  var left = Model.V.capital - s.projectCost;
-  var costExtra = left >= 0
-    ? '<div class="credit">Leaves <b class="num">'+Model.fmt(left)+'</b> of your capital, which stays invested.</div>'
-    : '<div class="credit">That is <b class="num">'+Model.fmt(-left)+'</b> more than you have.</div>';
-  var html = block("What it costs to build", costParts, s.projectCost, costExtra);
-
-  var y = s.stabYear;
-  if(y){
-    var runParts = [
-      {n:"Letting agent's fee", v:y.agent, c:"var(--accent2)"},
-      {n:"Land rates",  v:y.rates,  c:"#4C6B4A"},
-      {n:"Insurance",   v:y.ins,    c:"#8A9B7E"},
-      {n:"Repairs",     v:y.rep,    c:"#B3A98C"},
-      {n:"Common areas",v:y.common, c:"#6B7069"},
-      {n:"Tax",         v:y.tax,    c:"#3A3F45"}
-    ];
-    var outgoings = runParts.reduce(function(a,b){return a+b.v;},0);
-    var extra = '<div class="credit">Out of <b class="num">'+Model.fmt(y.gross)+'</b> collected → '+
-                '<b class="num">'+Model.fmt(y.net)+'</b> in your pocket that month.</div>';
-    /* what the other tax regime would have cost over the whole hold */
-    var other = Model.simulate({ mode: Model.mode==="gross" ? "net" : "gross" });
-    var otherName = Model.mode==="gross" ? "taxing profit instead" : "the flat rate on gross rent instead";
-    extra += '<div class="credit">Over '+Model.V.horizon+' years this regime takes <b class="num">'+
-             Model.fmt(s.totalTax)+'</b> in rental tax. With '+otherName+' it would be <b class="num">'+
-             Model.fmt(other.totalTax)+'</b>.</div>';
-    html += block("A month once it's full", runParts, outgoings, extra);
-  } else {
-    html += '<div class="cfrow"><div class="cfhead"><span class="who">A month once it\'s full</span></div>'+
-            '<div class="credit">The building isn\'t finished and let within your '+Model.V.horizon+
-            '-year horizon, so there\'s no settled month to show.</div></div>';
-  }
-  document.getElementById("cf").innerHTML = html;
-}
-
-function drawTiles(s){
-  var gap = s.finalBuild - s.finalInvest;
-  var irr = Model.irr(s.cashflows);
-  var netInv = Model.netInvestReturn();
-  var margin = s.devMargin;
-  var t = [
-    {k:"Total project cost", v:Model.fmt(s.projectCost),
-     s:"Land, build, fees and contingency"},
-    {k:"Yield on cost", v:Model.pctS(s.yieldOnCost),
-     s:"Rent per shilling spent. Buyers want "+Model.pctS(Model.V.capRate)+" — "+
-       (margin>=0 ? "worth "+Model.fmt(margin)+" more than it cost"
-                  : "worth "+Model.fmt(-margin)+" less than it cost")},
-    {k:"Project return", v: irr===null ? "—" : Model.pctS(irr),
-     s: irr===null ? "No rate fits these cashflows"
-                   : "What the project earns you a year, all in — its IRR. Market pays "+Model.pctS(netInv)+" net"},
-    {k:"Gap at year "+Model.V.horizon, v:(gap>=0?"+":"−")+Model.fmt(Math.abs(gap)),
-     s:(gap>=0?"in favour of building":"in favour of investing")}
-  ];
-  document.getElementById("tiles").render(t);
-}
-
-function drawFlip(s){
-  var building = s.finalBuild >= s.finalInvest;
-  var V = Model.V;
-  var items = [];
-
-  var r = Model.solve("rentUnit", 0, Math.max(100000, V.rentUnit*5));
-  items.push({
-    lever: building ? "Building stops winning if a unit rents for less than"
-                    : "Building starts winning if a unit rents for more than",
-    target: r===null ? null : Model.fmt(r)+" a month",
-    now: "now "+Model.fmt(V.rentUnit)
-  });
-
-  var cr = Model.solve("capRate", 1, 20);
-  items.push({
-    lever: building ? "Building stops winning if buyers demand a yield above"
-                    : "Building starts winning if buyers accept a yield below",
-    target: cr===null ? null : Model.pctS(cr),
-    now: "now "+Model.pctS(V.capRate)
-  });
-
-  var iv = Model.solve("invest", 0, 25);
-  items.push({
-    lever: building ? "Building stops winning if the market returns more than"
-                    : "Building starts winning if the market returns less than",
-    target: iv===null ? null : Model.pctS(iv)+" a year",
-    now: "now "+Model.pctS(V.invest)
-  });
-
-  var cpu = Model.solve("costPerUnit", 0, Math.max(1000000, V.costPerUnit*4));
-  items.push({
-    lever: building ? "Building stops winning if each unit costs more than"
-                    : "Building starts winning if each unit costs less than",
-    target: cpu===null ? null : Model.fmt(cpu)+" to build",
-    now: "now "+Model.fmt(V.costPerUnit)
-  });
-
-  document.getElementById("flip").innerHTML = items.map(function(i){
-    var tg = i.target ? '<span class="target">'+i.target+'</span>'
-                      : '<span class="target na">nothing in range flips it</span>';
-    return '<div class="item"><span class="lever">'+i.lever+
-           ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
-  }).join("");
-}
-
-function drawVerdict(s){
-  var gap = s.finalBuild - s.finalInvest;
-  var building = gap >= 0;
-  var h = document.getElementById("headline");
-  var p = document.getElementById("subline");
-  var word = building ? '<span class="b">Build</span>' : '<span class="r">Invest</span>';
-  var amt = Model.fmt(Math.abs(gap));
-  var yrs = Model.V.horizon + (Model.V.horizon===1?" year":" years");
-
-  h.innerHTML = word + ", by " + amt + " over " + yrs + ".";
-  p.innerHTML = building
-    ? "The block leaves you <b>"+amt+"</b> ahead of the same money left in the market, after selling costs and tax. "+
-      (s.breakEven
-        ? "You cross over in <b>year "+s.breakEven+"</b> — sell before that and building loses."
-        : "The lines don't actually cross within your horizon; building only gets there at the very end.")
-    : "The same lump sum left invested beats the block by <b>"+amt+"</b>. "+
-      (s.devMargin < 0
-        ? "At this exit yield the finished building is worth less than it costs to put up, so the rent never makes that back."
-        : "The rent it earns doesn't cover the years it spends earning nothing.");
-}
-
-function drawWarning(s){
-  var el = document.getElementById("shortfallWarn");
-  var msgs = [];
-  if(s.shortfall > 0){
-    msgs.push("<b>This project costs "+Model.fmt(s.shortfall)+" more than you have.</b> "+
-      "There's no construction loan in this model, so the gap is charged at the same rate your "+
-      "investments earn. Real finance costs more — treat the build side as optimistic until you close it.");
-  }
-  if(s.horizonBeforeCompletion){
-    msgs.push("<b>Your horizon ends before the block is finished.</b> "+
-      "It's sold as a part-built site, valued at what you've sunk into it — which is the most "+
-      "generous thing you can assume about an unfinished building.");
-  }
-  if(msgs.length){
-    el.classList.remove("hidden");
-    el.innerHTML = msgs.join("<br><br>");
-  } else {
-    el.classList.add("hidden");
-    el.innerHTML = "";
-  }
-}
-
-function buildPrintSummary(){
-  var groups = [
-    { name:"The project", ids:["fCapital","fProject"] },
-    { name:"Income & running costs", ids:["fIncome","fOperating"] },
-    { name:"Getting out", ids:["fExit"] },
-    { name:"Alternative & tax", ids:["fInvest", Model.mode==="gross" ? "fGross" : "fNet", "fTax"] }
-  ];
-  var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
-  var html = '<div class="ps-head"><h2>Build vs invest report</h2><span>'+
-    (Model.mode==="gross"?"Flat rate on gross rent":"Tax on net profit")+" &middot; "+Model.cur.code+" &middot; generated "+today+'</span></div>';
-  html += '<div class="ps-grid">';
-  groups.forEach(function(g){
-    html += '<div class="ps-col"><h3>'+g.name+'</h3>';
-    g.ids.forEach(function(id){
-      Model.FIELDS[id].forEach(function(f){
-        html += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+fieldDisplay(f)+'</span></div>';
-      });
-    });
-    html += '</div>';
-  });
-  html += '</div>';
-  document.getElementById("printSummary").innerHTML = html;
-}
-
-function render(){
-  syncFields();
-  var s = Model.simulate();
-  drawVerdict(s);
-  drawWarning(s);
-  drawChart(s);
-  drawCashflow(s);
-  drawTiles(s);
-  drawFlip(s);
-  buildPrintSummary();
-  document.getElementById("chartHint").textContent = "Years 0–"+Model.V.horizon;
-  document.getElementById("horizonHint").textContent = Model.V.horizon+"-year horizon";
-  document.getElementById("fnH").textContent = Model.V.horizon;
-  document.getElementById("curhint").textContent = Model.cur.code;
-  Model.updateURL();
-}
-
-/* ===================== wiring ===================== */
-document.getElementById("mGross").addEventListener("click", function(){ setMode("gross"); });
-document.getElementById("mNet").addEventListener("click", function(){ setMode("net"); });
-function applyModeUI(){
-  document.getElementById("mGross").setAttribute("aria-pressed", Model.mode==="gross");
-  document.getElementById("mNet").setAttribute("aria-pressed", Model.mode==="net");
-  document.getElementById("secGross").classList.toggle("hidden", Model.mode!=="gross");
-  document.getElementById("secNet").classList.toggle("hidden", Model.mode!=="net");
-}
-function setMode(m){
-  Model.mode = m;
-  applyModeUI();
-  render();
-}
-function syncCurrencySelect(){
-  document.getElementById("cur").setCode(Model.cur.code);
-}
-document.getElementById("cur").addEventListener("currencychange", function(e){
-  Model.applyCurrency(e.detail.code);
-  render();
+WizardUI.mount({
+  engine: Model,
+  guide: BuildOrInvestGuide,
+  mount: document.getElementById("wiz"),
+  currency: document.getElementById("cur"),
+  calcHref: "advanced/",
+  specHref: "llms.txt"
 });
-
-document.getElementById("copyLink").addEventListener("click", function(){
-  copyWithFeedback(this, location.href, "Copy link");
-});
-
-/* The chatbot gets the spec plus wherever the visitor has already got to, so
-   it refines their scenario instead of starting from the defaults. */
-function aiPrompt(){
-  var base = location.origin + location.pathname;
-  var lines = [
-    "I'm deciding whether to put a lump sum into building rental units or into the",
-    "market instead. Help me fill in this calculator:",
-    base,
-    ""
-  ];
-  /* Only worth carrying the scenario across if there is one — at the defaults
-     location.href is bare, and calling that "my assumptions" would be a lie. */
-  if(location.search){
-    lines.push("I've already set some of it up: " + location.href);
-    lines.push("Treat those as a starting point and correct any you can research.");
-    lines.push("");
-  }
-  return lines.concat([
-    "Ask me what you need to know about the site and my budget, then look up current",
-    "figures for that market — land prices, build cost per unit, achievable rents,",
-    "vacancy, exit yields and the relevant taxes. Tell me where each number came from",
-    "and how confident you are.",
-    "",
-    "Then give me one link, built to the rules below.",
-    "",
-    specText(Model, base)
-  ]).join("\n");
-}
-document.getElementById("copyPrompt").addEventListener("click", function(){
-  var prompt;
-  try{
-    prompt = aiPrompt();
-  }catch(e){
-    /* A stale cached model.js has a fix the reader can act on; anything else is a
-       real bug and pointing them at reload would just misdirect. Either way the
-       button has to say something — going silent is what made the original
-       report read as a broken site. */
-    var btn = this;
-    btn.textContent = e.name === "StaleEngineError" ? "Reload the page" : "Copy failed";
-    setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
-    throw e;
-  }
-  copyWithFeedback(this, prompt, "Copy prompt");
-});
-document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
-
-buildFields();
-if(Model.hasScenarioParams()){
-  Model.resetToDefaults();
-  Model.loadFromURL();
-  Model.suppressPersist = true;
-} else {
-  Model.loadFromStorage();
-}
-syncCurrencySelect();
-applyModeUI();
-render();
-Model.suppressPersist = false;
 </script>
 </body>
 </html>
