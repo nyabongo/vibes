@@ -176,6 +176,18 @@ the one-line description on both pages and carries the current scenario across,
 because the query string *is* the state — a jump that dropped it would hand the
 visitor the defaults back without saying so.
 
+**The walkthrough also keeps its place in the URL fragment.** `/rent-or-buy/#term`
+opens on the loan-term question rather than at the beginning, `#answer` opens on
+the result, and the query string still applies either way — so a link can put
+somebody straight on the one number you want them to look at. The fragment is a
+step's own `id`, which is why `validateGuide()` insists those are lowercase
+hyphenated words and refuses the two names the wizard's own opening and answer
+screens already answer to. Written with `replaceState` rather than by assigning
+`location.hash`: assigning it would push a history entry per question and leave
+anyone who walked the whole thing twenty presses of Back from leaving the page.
+The opener writes no fragment at all, so a fresh arrival keeps a clean URL. Each
+tool's `llms.txt` publishes the full list, generated from the guide.
+
 `/<tool>/guide/` is a redirect. The walkthrough shipped there first, and the
 URL went out in `sitemap.xml` and the published `llms.txt` before it moved, so
 the stub is there to hand the link on. It carries the query string too, which a

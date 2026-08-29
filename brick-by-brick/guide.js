@@ -80,7 +80,7 @@ var GUIDE = {
 
     { id: "savings",  section: "What you're working with", keys: ["savings"] },
     { id: "monthly",  section: "What you're working with", keys: ["saveMonthly"] },
-    { id: "raise",    section: "What you're working with", keys: ["incomeGrowth"] },
+    { id: "income-growth",    section: "What you're working with", keys: ["incomeGrowth"] },
 
     { id: "plot",     section: "The plot", keys: ["landCost", "landFeesPct"],
       title: "What does the land cost?",
@@ -95,38 +95,38 @@ var GUIDE = {
       title: "What gets added on top?",
       blurb: "Two percentages that are easy to leave out of a plan and impossible to leave out of a " +
         "build. Together they routinely add a fifth to what you thought the house would cost." },
-    { id: "buildinf", section: "The house", keys: ["buildInflation"] },
+    { id: "build-inflation", section: "The house", keys: ["buildInflation"] },
 
-    { id: "movein",   section: "Building as you go", keys: ["moveInAt", "decayPct"],
+    { id: "move-in",   section: "Building as you go", keys: ["moveInAt", "decayPct"],
       title: "When would you move in, and what does waiting cost the shell?",
       blurb: "Almost nobody waits for a finished house. Moving in early stops the rent, which is the " +
         "single biggest swing in this model — and the part still unfinished carries on around you." },
-    { id: "push",     section: "Saving first", keys: ["startAt", "pushMonths"],
+    { id: "save-first",     section: "Saving first", keys: ["startAt", "pushMonths"],
       title: "How much would you bank before breaking ground?",
       blurb: "The threshold you save to before starting, and how long the build takes once you do. " +
         "Under this strategy you only move in when the house is finished." },
 
     { id: "rent",     section: "Renting now", keys: ["rent"] },
-    { id: "rentgrow", section: "Renting now", keys: ["rentGrowth"] },
+    { id: "rent-growth", section: "Renting now", keys: ["rentGrowth"] },
 
-    { id: "owning",   section: "Once you move in", keys: ["ownCost", "maintPct", "inflation"],
+    { id: "running-costs",   section: "Once you move in", keys: ["ownCost", "maintPct", "inflation"],
       title: "What does owning it cost every month?",
       blurb: "The bills a rental quietly included, plus the repairs that are now yours. All three have " +
         "sensible defaults, so skip the screen if you would only be guessing." },
 
-    { id: "apprec",   section: "What it's worth", keys: ["apprec"] },
+    { id: "appreciation",   section: "What it's worth", keys: ["apprec"] },
     { id: "worth",    section: "What it's worth", keys: ["finishedValuePct", "partBuiltPct"],
       title: "What would the house actually fetch?",
       blurb: "What it cost to build and what somebody will pay for it are different numbers — and an " +
         "unfinished house is worth far less than the money standing in it." },
 
     { id: "invest",   section: "The alternative", keys: ["invest"] },
-    { id: "drag",     section: "The alternative", keys: ["investTax", "investFee"],
+    { id: "investment-costs",     section: "The alternative", keys: ["investTax", "investFee"],
       title: "What comes off that return before you see it?",
       blurb: "The investing side has to be charged its own costs, or the comparison is rigged." },
 
     { id: "horizon",  section: "Getting out", keys: ["horizon"] },
-    { id: "exit",     section: "Getting out", keys: ["sellPct", "cgt"],
+    { id: "exit-costs",     section: "Getting out", keys: ["sellPct", "cgt"],
       title: "And if you sold at the end?",
       blurb: "Both paths are cashed in on the last day so the two are compared on equal terms. Most " +
         "people building a family home never sell — read this as a scoreboard, not a plan." }

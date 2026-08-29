@@ -73,10 +73,17 @@ test.describe("guided walkthrough", () => {
     await expect(page).toHaveURL(/[?&]p=18500000/);
     await expect(page.locator(".readback")).toContainText("KSh18,500,000");
 
+    // Copied from the address bar mid-walkthrough, the link carries both the
+    // scenario and the question you were standing on.
     const shared = page.url();
+    expect(shared).toContain("#price");
     const fresh = await context.newPage();
     await fresh.goto(shared);
-    // The link is self-contained, so it says so and carries its numbers in.
+    await expect(fresh.locator("#w_price")).toHaveValue("18500000");
+
+    // Strip the fragment and it opens at the beginning, saying where the
+    // numbers came from.
+    await fresh.goto(shared.split("#")[0]);
     await expect(fresh.locator(".card p.what").last()).toContainText("This link came with numbers");
     await fresh.getByRole("button", { name: "Start" }).click();
     await fresh.getByRole("button", { name: "Next", exact: true }).click();
@@ -195,6 +202,81 @@ test.describe("guided walkthrough", () => {
     expect(text).toContain("/rent-or-buy/");
     expect(text).toContain("## How to build a link");
     expect(text).toContain("All money is Kenyan shillings");
+  });
+});
+
+/* The walkthrough's position lives in the URL fragment, so a link can drop
+   somebody on one question instead of at the beginning. The scenario is still
+   the query string; the fragment only says where to stand in it. */
+test.describe("the step in the URL", () => {
+  test("a fresh arrival has no fragment, and walking on adds one", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+    expect(new URL(page.url()).hash).toBe("");
+
+    await page.getByRole("button", { name: "Start" }).click();
+    await expect(page).toHaveURL(/#purpose$/);
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(page).toHaveURL(/#price$/);
+  });
+
+  test("a fragment opens the walkthrough on that question, scenario and all", async ({ page }) => {
+    await page.goto("/rent-or-buy/?p=21000000&h=7#deposit");
+    await expect(page.locator(".card h2.q")).toContainText("put down in cash");
+    await expect(page.locator(".wiz-meta .where")).toContainText("Question 4 of");
+    // The query string still did its job — the fragment only chose the screen.
+    await page.locator("view-switch a").click();
+    await expect(page.locator("#i_price")).toHaveValue("21000000");
+    await expect(page.locator("#i_horizon")).toHaveValue("7");
+  });
+
+  test("#answer drops you straight on the result", async ({ page }) => {
+    await page.goto("/build-or-invest/?cap=50000000#answer");
+    await expect(page.locator(".verdict-line")).not.toBeEmpty();
+    await expect(page.locator(".tile")).toHaveCount(4);
+  });
+
+  /* The mode decides which questions exist, and the mode comes from the query
+     string — so the fragment has to be resolved after it, not before. */
+  test("a mode-only fragment works with its mode and falls back without it", async ({ page }) => {
+    await page.goto("/rent-or-buy/?m=let#income");
+    await expect(page.locator(".card h2.q")).toContainText("rent would you collect");
+
+    await page.goto("/rent-or-buy/#income");
+    await expect(page.locator(".card .eyebrow")).toHaveText("Before we start");
+  });
+
+  test("a fragment naming nothing starts at the beginning rather than an empty screen", async ({ page }) => {
+    await page.goto("/brick-by-brick/#not-a-question");
+    await expect(page.locator(".card .eyebrow")).toHaveText("Before we start");
+  });
+
+  /* Editing the fragment on an open page does not reload it, so the
+     walkthrough has to follow the browser rather than ignore it. */
+  test("changing the fragment in place moves the walkthrough", async ({ page }) => {
+    await page.goto("/rent-or-buy/");
+    await page.evaluate(() => { location.hash = "#horizon"; });
+    await expect(page.locator(".card h2.q")).toContainText("How long would you stay");
+    await expect(page.locator(".wiz-meta .where")).toContainText("Your plans");
+  });
+
+  test("every fragment the spec publishes opens the question it claims", async ({ page, request }) => {
+    const doc = await (await request.get("/rent-or-buy/llms.txt")).text();
+    const rows = doc.split("\n").filter((l) => l.startsWith("| `#")).map((line) => {
+      const cells = line.replace(/^\| | \|$/g, "").split(" | ");
+      const mode = cells[1].match(/\*\(mode `(\w+)` only\)\*$/);
+      return {
+        id: cells[0].replace(/[`#]/g, ""),
+        asks: cells[1].replace(/\s*\*\(mode `\w+` only\)\*$/, ""),
+        mode: mode ? mode[1] : null
+      };
+    });
+    expect(rows.length, "llms.txt should publish a fragment table").toBeGreaterThan(10);
+
+    for (const { id, asks, mode } of rows) {
+      await page.goto(`/rent-or-buy/${mode ? "?m=" + mode : ""}#${id}`);
+      // The table's "opens on" column is the question's own heading.
+      await expect(page.locator(".card h2.q"), `#${id}`).toHaveText(asks);
+    }
   });
 });
 

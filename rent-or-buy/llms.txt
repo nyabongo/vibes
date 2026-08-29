@@ -135,6 +135,37 @@ https://vibes.obel.dev/rent-or-buy/?p=5200000&dp=40&inc=28000&h=15&m=let
 The first scenario shown in US dollars — the money in the URL is still KES:
 https://vibes.obel.dev/rent-or-buy/?p=14500000&dp=25&rent=75000&h=7&c=USD
 
+## Opening on a particular question
+
+The walkthrough also reads the URL fragment. `https://vibes.obel.dev/rent-or-buy/#term`
+opens it on that question rather than at the beginning, with everything in
+the query string still applied — so a link can put someone straight on the one
+number you want them to think about. `#answer` skips to the result.
+
+Fragments are a property of the walkthrough only. The advanced view has no
+questions to open on and ignores them. An unrecognised fragment, or one naming
+a question the chosen mode does not ask, opens at the beginning instead of
+failing — so pair a mode-only fragment with the `m` that reaches it.
+
+| fragment | opens on | sets |
+| --- | --- | --- |
+| `#purpose` | Would you live in this place, or rent it out? | `m` |
+| `#price` | What does the place cost? | `p` |
+| `#rent` | What would you pay to rent somewhere similar? *(mode `live` only)* | `rent` |
+| `#income` | What rent would you collect? *(mode `let` only)* | `inc` |
+| `#rent-collected` | How much of that rent actually reaches you? *(mode `let` only)* | `vac`, `mgmt` |
+| `#deposit` | How much of the price would you put down in cash? | `dp` |
+| `#rate` | What interest rate would the bank charge you? | `mr` |
+| `#term` | Over how many years would you repay it? | `term` |
+| `#buying-costs` | What does the act of buying cost you? | `cc` |
+| `#horizon` | How long would you stay before selling? | `h` |
+| `#invest` | What would the money earn if you invested it instead? | `inv` |
+| `#appreciation` | How fast do you expect the property's value to rise? | `appr` |
+| `#growth` | How fast do rents and prices creep up? | `rg`, `infl` |
+| `#running-costs` | What does owning it cost every year? | `tx`, `ins`, `mp`, `hoa` |
+| `#selling-costs` | What does selling cost? | `sp` |
+| `#tax` | How is all of this taxed where you are? | `tax`, `rc`, `cgt`, `icgt` |
+
 ## What the calculator does with these
 
 Both paths start with the same cash. The renter invests the deposit and purchase

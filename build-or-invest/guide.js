@@ -65,8 +65,8 @@ var GUIDE = {
     { id: "capital",  section: "What you're putting in", keys: ["capital"] },
     { id: "land",     section: "The site",  keys: ["land"] },
     { id: "units",    section: "The build", keys: ["units"] },
-    { id: "cost",     section: "The build", keys: ["costPerUnit"] },
-    { id: "softcost", section: "The build", keys: ["feesPct", "contingencyPct"],
+    { id: "build-cost",     section: "The build", keys: ["costPerUnit"] },
+    { id: "fees", section: "The build", keys: ["feesPct", "contingencyPct"],
       title: "What goes on top of the bricks?",
       blurb: "Two percentages that sit on top of the construction cost. Neither is optional in practice, " +
         "and leaving them out is the most common reason a development budget is wrong." },
@@ -76,23 +76,23 @@ var GUIDE = {
         "the drag that makes building lose to a boring index fund more often than people expect." },
 
     { id: "rent",     section: "What it earns", keys: ["rentUnit"] },
-    { id: "leakage",  section: "What it earns", keys: ["vacancy", "mgmt"],
+    { id: "rent-collected",  section: "What it earns", keys: ["vacancy", "mgmt"],
       title: "How much of that rent actually reaches you?",
       blurb: "Nobody collects twelve months of rent from twelve months of the year, and the agent takes " +
         "a cut of what does arrive." },
-    { id: "rentgrow", section: "What it earns", keys: ["rentGrowth"] },
+    { id: "rent-growth", section: "What it earns", keys: ["rentGrowth"] },
 
-    { id: "running",  section: "Cost of running it", keys: ["ratesPct", "insurance", "repairsPct", "commonCost"],
+    { id: "running-costs",  section: "Cost of running it", keys: ["ratesPct", "insurance", "repairsPct", "commonCost"],
       title: "What does the block cost to run?",
       blurb: "The bills that arrive every year whether or not the units are full. All four have sensible " +
         "defaults, so skip the screen if you would only be guessing." },
 
-    { id: "capRate",  section: "Getting out", keys: ["capRate"] },
+    { id: "exit-yield",  section: "Getting out", keys: ["capRate"] },
     { id: "horizon",  section: "Getting out", keys: ["horizon"] },
-    { id: "sell",     section: "Getting out", keys: ["sellPct"] },
+    { id: "selling-costs",     section: "Getting out", keys: ["sellPct"] },
 
     { id: "invest",   section: "The alternative", keys: ["invest"] },
-    { id: "drag",     section: "The alternative", keys: ["investTax", "investFee"],
+    { id: "investment-costs",     section: "The alternative", keys: ["investTax", "investFee"],
       title: "What comes off that return before you see it?",
       blurb: "The market side has to be charged its own costs, or the comparison is rigged. Tax on the " +
         "returns, and the fee the fund takes for holding your money." },
@@ -113,9 +113,9 @@ var GUIDE = {
           blurb: "Running costs come off first, and what is left is taxed as income. The UK, US and most of Europe work this way." }
       ]
     },
-    { id: "flat",  section: "Tax", keys: ["flatPct"] },
-    { id: "mtx",   section: "Tax", keys: ["marginal"] },
-    { id: "endtax", section: "Tax", keys: ["cgt", "inflation"],
+    { id: "flat-tax",  section: "Tax", keys: ["flatPct"] },
+    { id: "profit-tax",   section: "Tax", keys: ["marginal"] },
+    { id: "exit-tax", section: "Tax", keys: ["cgt", "inflation"],
       title: "Two last numbers",
       blurb: "The tax on the profit when you sell, and general inflation, which pushes up every running " +
         "cost over the years you hold the block." }

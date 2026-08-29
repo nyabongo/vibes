@@ -29,7 +29,9 @@ knows what they mean:
 - https://vibes.obel.dev/brick-by-brick/advanced/
 
 Link to the default unless you have a reason not to. The parameter names, defaults
-and ranges in each spec below apply to both.
+and ranges in each spec below apply to both. The default also reads a URL
+fragment naming the question to open on — each spec lists the fragments that
+calculator answers to.
 
 ## Notes
 

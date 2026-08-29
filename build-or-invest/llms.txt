@@ -153,6 +153,40 @@ https://vibes.obel.dev/build-or-invest/?u=24&cap=80000000&cpu=2600000&h=15&cr=9&
 The same 8-unit block, but the market alternative returns 16% instead of 13%:
 https://vibes.obel.dev/build-or-invest/?cap=30000000&land=6000000&u=8&cpu=1900000&r=28000&inv=16
 
+## Opening on a particular question
+
+The walkthrough also reads the URL fragment. `https://vibes.obel.dev/build-or-invest/#term`
+opens it on that question rather than at the beginning, with everything in
+the query string still applied — so a link can put someone straight on the one
+number you want them to think about. `#answer` skips to the result.
+
+Fragments are a property of the walkthrough only. The advanced view has no
+questions to open on and ignores them. An unrecognised fragment, or one naming
+a question the chosen mode does not ask, opens at the beginning instead of
+failing — so pair a mode-only fragment with the `m` that reaches it.
+
+| fragment | opens on | sets |
+| --- | --- | --- |
+| `#capital` | How much money are you putting in? | `cap` |
+| `#land` | What does the plot cost? | `land` |
+| `#units` | How many units would you build? | `u` |
+| `#build-cost` | What does one unit cost to build? | `cpu` |
+| `#fees` | What goes on top of the bricks? | `fee`, `cont` |
+| `#timing` | How long until it's earning? | `bm`, `lm` |
+| `#rent` | What rent would one unit earn? | `r` |
+| `#rent-collected` | How much of that rent actually reaches you? | `vac`, `mgmt` |
+| `#rent-growth` | How fast do rents rise? | `rg` |
+| `#running-costs` | What does the block cost to run? | `rt`, `ins`, `rep`, `cc` |
+| `#exit-yield` | What yield would a buyer want when you sell? | `cr` |
+| `#horizon` | How long would you hold the block before selling? | `h` |
+| `#selling-costs` | What does selling the block cost? | `sp` |
+| `#invest` | What would the money earn if you invested it instead? | `inv` |
+| `#investment-costs` | What comes off that return before you see it? | `itx`, `ife` |
+| `#regime` | How is rental income taxed where you are? | `m` |
+| `#flat-tax` | What flat rate is charged on the rent you collect? *(mode `gross` only)* | `flat` |
+| `#profit-tax` | What's your income tax rate on the top slice of your income? *(mode `net` only)* | `mtx` |
+| `#exit-tax` | Two last numbers | `cgt`, `infl` |
+
 ## What the calculator does with these
 
 The same lump sum takes both paths. On the build path it buys land, pays for

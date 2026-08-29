@@ -135,6 +135,25 @@ describe("validateGuide", () => {
       .toThrow(/asks about several fields but has no title and blurb/);
   });
 
+  /* Step ids became URL fragments the moment the walkthrough started tracking
+     its position in the address bar, so they have to survive being typed and
+     shared, and they cannot claim a screen the wizard adds itself. */
+  it("rejects an id that would not do as a URL fragment", () => {
+    const g = makeGuide();
+    g.steps[1].id = "The Price";
+    expect(() => Wizard.validateGuide(makeEngine(), g))
+      .toThrow(/will not do as a URL fragment/);
+  });
+
+  it("rejects a step claiming the opening or answer screen's own name", () => {
+    for (const taken of ["intro", "answer"]) {
+      const g = makeGuide();
+      g.steps[1].id = taken;
+      expect(() => Wizard.validateGuide(makeEngine(), g))
+        .toThrow(new RegExp("uses `" + taken + "`, which the walkthrough's own"));
+    }
+  });
+
   it("insists on exactly one mode question", () => {
     const g = makeGuide();
     g.steps = g.steps.filter((s) => s.kind !== "mode");

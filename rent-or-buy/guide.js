@@ -86,7 +86,7 @@ var GUIDE = {
     { id: "price",   section: "The home",        keys: ["price"] },
     { id: "rent",    section: "Renting instead", keys: ["rent"] },
     { id: "income",  section: "Letting it out",  keys: ["income"] },
-    { id: "letting", section: "Letting it out",  keys: ["vacancy", "mgmt"],
+    { id: "rent-collected", section: "Letting it out",  keys: ["vacancy", "mgmt"],
       title: "How much of that rent actually reaches you?",
       blurb: "Nobody collects twelve months of rent from twelve months of the year. Two things come off " +
         "the top before anything else: the months with no tenant, and the agent." },
@@ -94,21 +94,21 @@ var GUIDE = {
     { id: "deposit", section: "The mortgage", keys: ["downPct"] },
     { id: "rate",    section: "The mortgage", keys: ["rate"] },
     { id: "term",    section: "The mortgage", keys: ["term"] },
-    { id: "buying",  section: "Buying costs", keys: ["closingPct"] },
+    { id: "buying-costs",  section: "Buying costs", keys: ["closingPct"] },
 
     { id: "horizon", section: "Your plans",     keys: ["horizon"] },
     { id: "invest",  section: "The alternative", keys: ["invest"] },
-    { id: "appr",    section: "What the future does", keys: ["appr"] },
-    { id: "drift",   section: "What the future does", keys: ["rentGrowth", "inflation"],
+    { id: "appreciation",    section: "What the future does", keys: ["appr"] },
+    { id: "growth",   section: "What the future does", keys: ["rentGrowth", "inflation"],
       title: "How fast do rents and prices creep up?",
       blurb: "Two slow-moving numbers that decide a lot over a decade. Both already have reasonable " +
         "figures in them — nudge them if your market is unusual, or skip straight past." },
 
-    { id: "running", section: "Cost of owning it", keys: ["taxPct", "insurance", "maintPct", "hoa"],
+    { id: "running-costs", section: "Cost of owning it", keys: ["taxPct", "insurance", "maintPct", "hoa"],
       title: "What does owning it cost every year?",
       blurb: "The bills that arrive whether or not you have a mortgage, and the ones renters never see. " +
         "Each has a sensible default in it, so skip the whole screen if you would only be guessing." },
-    { id: "selling", section: "Getting out", keys: ["sellPct"] },
+    { id: "selling-costs", section: "Getting out", keys: ["sellPct"] },
 
     { id: "tax", section: "Tax", keys: ["marginal", "reliefCap", "cgt", "cgtInvest"],
       title: "How is all of this taxed where you are?",

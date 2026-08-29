@@ -160,6 +160,40 @@ https://vibes.obel.dev/brick-by-brick/?m=savefirst&sa=85&inv=16
 Construction inflation at 14% against a thin monthly budget — the house that never gets finished:
 https://vibes.obel.dev/brick-by-brick/?bi=14&sm=25000&h=30
 
+## Opening on a particular question
+
+The walkthrough also reads the URL fragment. `https://vibes.obel.dev/brick-by-brick/#term`
+opens it on that question rather than at the beginning, with everything in
+the query string still applied — so a link can put someone straight on the one
+number you want them to think about. `#answer` skips to the result.
+
+Fragments are a property of the walkthrough only. The advanced view has no
+questions to open on and ignores them. An unrecognised fragment, or one naming
+a question the chosen mode does not ask, opens at the beginning instead of
+failing — so pair a mode-only fragment with the `m` that reaches it.
+
+| fragment | opens on | sets |
+| --- | --- | --- |
+| `#strategy` | Would you build as the money comes in, or save up first and build in one go? | `m` |
+| `#savings` | How much have you got saved right now? | `sav` |
+| `#monthly` | How much can you put aside each month? | `sm` |
+| `#income-growth` | How fast does your income grow? | `ig` |
+| `#plot` | What does the land cost? | `land`, `lfee` |
+| `#house` | How big a house, and what does it cost to build? | `sqm`, `cps` |
+| `#extras` | What gets added on top? | `perm`, `wst` |
+| `#build-inflation` | How fast are construction costs rising? | `bi` |
+| `#move-in` | When would you move in, and what does waiting cost the shell? *(mode `asyougo` only)* | `mi`, `dec` |
+| `#save-first` | How much would you bank before breaking ground? *(mode `savefirst` only)* | `sa`, `pm` |
+| `#rent` | What rent do you pay now? | `r` |
+| `#rent-growth` | How fast does your rent rise? | `rg` |
+| `#running-costs` | What does owning it cost every month? | `oc`, `mnt`, `infl` |
+| `#appreciation` | How fast do land and houses appreciate where you'd build? | `app` |
+| `#worth` | What would the house actually fetch? | `fv`, `pb` |
+| `#invest` | What would the money earn if you invested it instead? | `inv` |
+| `#investment-costs` | What comes off that return before you see it? | `itx`, `ife` |
+| `#horizon` | How many years should the comparison run over? | `h` |
+| `#exit-costs` | And if you sold at the end? | `sp`, `cgt` |
+
 ## What the calculator does with these
 
 Both paths are handed the same wallet every month: the rent (`r`, growing at `rg`)

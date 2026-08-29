@@ -81,6 +81,15 @@ function mount(opts){
   });
   wiz.adoptExistingValues();
 
+  /* The fragment names the question to open on, so a link can drop somebody
+     straight into the middle of the walkthrough. Resolved AFTER the query
+     string, because the mode comes from the query string and the mode decides
+     which questions exist — `#income` is a real step under `m=let` and no step
+     at all without it. goTo() rejects anything it does not recognise, so a
+     stale or foreign fragment quietly starts at the beginning rather than
+     showing an empty screen. */
+  if(location.hash.length > 1) wiz.goTo(decodeURIComponent(location.hash.slice(1)));
+
   /* ---------- chrome ---------- */
   var progress = el("div", "wiz-progress");
   var bar = el("div", "wiz-bar");
@@ -126,6 +135,14 @@ function mount(opts){
   escape.addEventListener("click", function(){
     wiz.goTo("answer");
     draw();
+  });
+
+  /* Pasting a different fragment into the address bar on a page already open
+     does not reload it, so follow the hash when the browser reports it moved.
+     Our own writes above use replaceState, which never fires this — no loop. */
+  window.addEventListener("hashchange", function(){
+    var id = location.hash.length > 1 ? decodeURIComponent(location.hash.slice(1)) : "intro";
+    if(id !== wiz.currentId && wiz.goTo(id)) draw();
   });
 
   /* Enter moves on, the way it would in any form. Buttons, summaries and links
@@ -669,6 +686,18 @@ function mount(opts){
     escape.hidden = step.kind === "answer";
 
     drawSoFar();
+    /* Written before updateURL() rather than after, because updateURL() carries
+       location.hash through verbatim and is the one place the URL is set — so
+       the engine stays the last word on the address bar.
+
+       replaceState, not `location.hash = …`: assigning the hash would push a
+       history entry per question, leaving anyone who walked the whole thing
+       twenty presses of Back away from leaving the page. The opener gets no
+       fragment at all, so a fresh arrival keeps a clean URL. */
+    if(typeof history !== "undefined" && history.replaceState){
+      var frag = step.kind === "intro" ? "" : "#" + step.id;
+      history.replaceState(null, "", location.pathname + location.search + frag);
+    }
     engine.updateURL();
     /* The query string is the whole scenario, so the way out to the other view
        has to carry whatever the visitor has answered so far. */

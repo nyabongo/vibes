@@ -25,6 +25,18 @@
 var fs = require("fs");
 var path = require("path");
 var specText = require("../shared/spec-text.js");
+var Wizard = require("../shared/wizard.js");
+
+/* Same two helpers spec-text.js uses on its own tables. Duplicated rather than
+   exported, because they are three lines each and exporting them would make
+   spec-text.js's public surface a formatting library. */
+function cell(s){ return String(s == null ? "" : s).replace(/\|/g, "\\|"); }
+function table(header, rows){
+  var out = ["| " + header.join(" | ") + " |",
+             "| " + header.map(function(){ return "---"; }).join(" | ") + " |"];
+  rows.forEach(function(r){ out.push("| " + r.join(" | ") + " |"); });
+  return out.join("\n");
+}
 
 var ROOT = path.resolve(__dirname, "..");
 var SITE = "https://vibes.obel.dev";
@@ -67,7 +79,9 @@ var SPECS = [
       "- " + SITE + "/brick-by-brick/advanced/",
       "",
       "Link to the default unless you have a reason not to. The parameter names, defaults",
-      "and ranges in each spec below apply to both.",
+      "and ranges in each spec below apply to both. The default also reads a URL",
+      "fragment naming the question to open on — each spec lists the fragments that",
+      "calculator answers to.",
       "",
       "## Notes",
       "",
@@ -85,6 +99,7 @@ var SPECS = [
   {
     out: "rent-or-buy/llms.txt",
     mod: require("../rent-or-buy/calc.js"),
+    guide: require("../rent-or-buy/guide.js"),
     base: SITE + "/rent-or-buy/",
     title: "Rent or buy — the crossover calculator",
     summary:
@@ -133,6 +148,7 @@ var SPECS = [
   {
     out: "build-or-invest/llms.txt",
     mod: require("../build-or-invest/model.js"),
+    guide: require("../build-or-invest/guide.js"),
     base: SITE + "/build-or-invest/",
     title: "Build or invest — the development crossover calculator",
     summary:
@@ -174,6 +190,7 @@ var SPECS = [
   {
     out: "brick-by-brick/llms.txt",
     mod: require("../brick-by-brick/model.js"),
+    guide: require("../brick-by-brick/guide.js"),
     base: SITE + "/brick-by-brick/",
     title: "Brick by brick — build slowly, or rent and invest",
     summary:
@@ -229,6 +246,41 @@ var SPECS = [
   }
 ];
 
+/* The walkthrough's questions, as URL fragments. Generated from the guide's own
+   step list for the same reason the parameter tables are generated from the
+   engine's fields: a hand-written list of these would be wrong the first time
+   somebody reordered a question. */
+function stepText(spec){
+  var engine = spec.mod, guide = spec.guide;
+  var idx = Wizard.sectionIndex(engine);
+  var L = [];
+  L.push("## Opening on a particular question");
+  L.push("");
+  L.push("The walkthrough also reads the URL fragment. `" + spec.base + "#term`");
+  L.push("opens it on that question rather than at the beginning, with everything in");
+  L.push("the query string still applied — so a link can put someone straight on the one");
+  L.push("number you want them to think about. `#answer` skips to the result.");
+  L.push("");
+  L.push("Fragments are a property of the walkthrough only. The advanced view has no");
+  L.push("questions to open on and ignores them. An unrecognised fragment, or one naming");
+  L.push("a question the chosen mode does not ask, opens at the beginning instead of");
+  L.push("failing — so pair a mode-only fragment with the `" + engine.MODE_META.param +
+         "` that reaches it.");
+  L.push("");
+  var rows = guide.steps.map(function(step){
+    var asks = step.kind === "mode" ? step.question
+             : step.keys.length > 1 ? step.title
+             : guide.fields[step.keys[0]].q;
+    var sets = step.kind === "mode" ? "`" + engine.MODE_META.param + "`"
+             : step.keys.map(function(k){ return "`" + engine.PARAM_MAP[k] + "`"; }).join(", ");
+    var mode = step.kind === "mode" ? null : Wizard.stepMode(engine, step, idx);
+    return ["`#" + step.id + "`", cell(asks) + (mode ? " *(mode `" + mode + "` only)*" : ""), sets];
+  });
+  L.push(table(["fragment", "opens on", "sets"], rows));
+  L.push("");
+  return L.join("\n");
+}
+
 function render(spec){
   var L = ["# " + spec.title, "", "> " + spec.summary, ""];
 
@@ -262,6 +314,7 @@ function render(spec){
   L.push("has asked for the dense one.");
   L.push("");
   L.push(specText(spec.mod, spec.base));
+  L.push(stepText(spec));
   L.push(spec.model);
   L.push("");
   L.push("## Related");

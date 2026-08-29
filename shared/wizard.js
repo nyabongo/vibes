@@ -76,7 +76,19 @@ function validateGuide(engine, guide){
   var modeAsked = false;
   guide.steps.forEach(function(step, i){
     var where = "step " + i + " (" + (step.id || "unnamed") + ")";
-    if(!step.id) problems.push(where + " has no id");
+    /* An id is not just a key any more: it is the URL fragment that opens the
+       walkthrough on this question, so it has to survive being typed, shared
+       and read aloud — and it cannot claim one of the two screens the wizard
+       adds itself. */
+    if(!step.id){
+      problems.push(where + " has no id");
+    } else if(!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(step.id)){
+      problems.push(where + " has an id that will not do as a URL fragment; " +
+                    "use lowercase words joined by hyphens");
+    } else if(step.id === "intro" || step.id === "answer"){
+      problems.push(where + " uses `" + step.id + "`, which the walkthrough's own " +
+                    "opening and answer screens already answer to");
+    }
     if(step.kind === "mode"){
       modeSteps++;
       modeAsked = true;
