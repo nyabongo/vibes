@@ -1,6 +1,6 @@
 # vibes — small, single-purpose web tools
 
-> Three standalone browser tools at https://vibes.obel.dev. No accounts, no tracking, no server: every one is a static page that computes in the browser. Each is a financial calculator whose entire input set is encoded in the URL query string, so you can hand someone a link that opens with their scenario already filled in.
+> Four standalone browser tools at https://vibes.obel.dev. No accounts, no tracking, no server: every one is a static page that computes in the browser. Each is a financial calculator whose entire input set is encoded in the URL query string, so you can hand someone a link that opens with their scenario already filled in.
 
 ## Calculators with a URL API
 
@@ -14,6 +14,9 @@ several mean different things in each.
   apartment block or compound in the market? Spec: https://vibes.obel.dev/build-or-invest/llms.txt
 - [Brick by brick](https://vibes.obel.dev/brick-by-brick/): should you build a home for yourself a
   bit at a time while you rent, or rent and invest instead? Spec: https://vibes.obel.dev/brick-by-brick/llms.txt
+- [Airbnb or invest](https://vibes.obel.dev/airbnb-or-invest/): should a property earn as a short let,
+  or should the money sit in a unit trust or government securities? Covers buying,
+  building and a place you already own. Spec: https://vibes.obel.dev/airbnb-or-invest/llms.txt
 
 ## Two ways into each calculator
 
@@ -27,6 +30,7 @@ knows what they mean:
 - https://vibes.obel.dev/rent-or-buy/advanced/
 - https://vibes.obel.dev/build-or-invest/advanced/
 - https://vibes.obel.dev/brick-by-brick/advanced/
+- https://vibes.obel.dev/airbnb-or-invest/advanced/
 
 Link to the default unless you have a reason not to. The parameter names, defaults
 and ranges in each spec below apply to both.
@@ -34,7 +38,8 @@ and ranges in each spec below apply to both.
 ## Notes
 
 - Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens
-  on Ugandan ones. Nothing is hardcoded to either. Every tax, rate and transaction
+  on Ugandan ones; Airbnb or invest sits between the two, with notes citing both.
+  Nothing is hardcoded to either. Every tax, rate and transaction
   cost is an input, so set them for whatever market your reader is actually in.
 - Money in every URL is Kenyan shillings regardless of which calculator it is, and
   regardless of the currency the page displays. Convert before building a link.

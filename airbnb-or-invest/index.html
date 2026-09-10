@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Airbnb or invest — the short-let calculator</title>
+<meta name="description" content="Should a property earn its keep as an Airbnb, or should the money sit in a unit trust or government securities? A guided calculator for buying, building or a place you already own, one question at a time.">
+<link rel="canonical" href="https://vibes.obel.dev/airbnb-or-invest/">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="../shared/tool.css">
+<link rel="stylesheet" href="../shared/wizard.css">
+<link rel="alternate" type="text/plain" href="llms.txt" title="Parameter spec for AI assistants">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibes.obel.dev/airbnb-or-invest/">
+<meta property="og:title" content="Airbnb or invest — the short-let calculator">
+<meta property="og:description" content="A guided Airbnb-vs-unit-trust calculator: empty nights, cleaning, the platform's cut and the sale at the end, against the same money compounding.">
+<meta property="og:image" content="https://vibes.obel.dev/airbnb-or-invest/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Airbnb or invest — the short-let calculator">
+<meta name="twitter:description" content="A guided Airbnb-vs-unit-trust calculator: empty nights, cleaning, the platform's cut and the sale at the end, against the same money compounding.">
+<meta name="twitter:image" content="https://vibes.obel.dev/airbnb-or-invest/og.png">
+</head>
+<body>
+<div class="wrap wiz">
+
+  <div class="wiz-mast">
+    <a class="backlink" href="../">&larr; vibes</a>
+    <div class="mast-actions">
+      <currency-select id="cur"></currency-select>
+    </div>
+  </div>
+
+  <div class="wiz-id">
+    <h1>Airbnb or invest</h1>
+    <p>Should the place earn as a short let, or should the money sit in a unit trust or government securities? One question at a time — skip anything you don't know.</p>
+    <view-switch current="guided" other="advanced/"></view-switch>
+  </div>
+
+  <noscript>
+    <p style="margin-top:22px">This walkthrough needs JavaScript. The
+       <a href="advanced/">advanced view</a> does too; the complete parameter reference — every input,
+       its range and its default — is published as plain text at <a href="llms.txt">llms.txt</a>.</p>
+  </noscript>
+
+  <div id="wiz"></div>
+</div>
+
+<script src="../shared/components/currency-select.js"></script>
+<script src="../shared/components/view-switch.js"></script>
+<script src="../shared/components/crossover-chart.js"></script>
+<script src="../shared/components/key-tiles.js"></script>
+<script src="../shared/clipboard.js"></script>
+<script src="../shared/spec-text.js"></script>
+<script src="../shared/wizard.js"></script>
+<script src="../shared/wizard-ui.js"></script>
+<script src="model.js"></script>
+<script src="guide.js"></script>
+<script>
+"use strict";
+WizardUI.mount({
+  engine: Airbnb,
+  guide: AirbnbOrInvestGuide,
+  mount: document.getElementById("wiz"),
+  currency: document.getElementById("cur"),
+  calcHref: "advanced/",
+  specHref: "llms.txt"
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+# Airbnb or invest — the short-let calculator
+
+> A browser calculator at https://vibes.obel.dev/airbnb-or-invest/ that models running a property as a short let (Airbnb, Booking.com) against putting the same money into a unit trust, money market fund or government securities. It reports the return each earns, which is ahead after a chosen number of years, and the occupancy at which they tie. It covers buying a place, buying land and building, and a place you already own. Every input is encoded in the URL query string, so a link opens with the whole scenario already filled in.
+
+This file is the complete parameter reference for building a link to this
+calculator. The tables are generated from the calculator's own field
+definitions — if this file and the app disagree, the app is right and this is a
+bug.
+
+There are two pages for this calculator, and they take exactly the same
+parameters:
+
+- https://vibes.obel.dev/airbnb-or-invest/
+  The default. One question at a time, in plain language. Each explains what the
+  input is, why it moves the answer, and what it typically runs to in developed
+  and in developing markets, and any of them can be skipped.
+- https://vibes.obel.dev/airbnb-or-invest/advanced/
+  Every input on one screen, for someone who already knows what they mean.
+
+Everything after the `?` is identical, so build the query string once and put
+either base in front of it. Use the default unless the person you are helping
+has asked for the dense one.
+
+## How to build a link
+
+1. Start from `https://vibes.obel.dev/airbnb-or-invest/`.
+2. Append `?` then `&`-joined `name=value` pairs from the tables below.
+3. **Only include parameters you are changing.** Anything you leave out falls
+   back to its default — provided the link carries at least one parameter this
+   file documents. A link carrying none is not a defaults link; see rule 4.
+4. A link carrying at least one parameter the calculator recognises — `m`, `c`,
+   or any name from the tables below — is self-contained. Opening it resets
+   every parameter you left out back to its default, ignores whatever scenario
+   the visitor had saved, and does not overwrite it. A URL with nothing
+   recognisable in it does the opposite. A bare `https://vibes.obel.dev/airbnb-or-invest/`,
+   or one carrying only unrecognised parameters such as `utm_source=x`,
+   restores whatever scenario that visitor last had — so a bare link is not a
+   link to the defaults. To send the default scenario, pass one parameter
+   explicitly, such as the mode at its own default, `m=buy`.
+5. Values are plain decimal numbers — no thousands separators, no currency
+   symbol, no `%`. Negatives are fine where the range allows.
+6. **All money is Kenyan shillings (KES), always.** The `c` parameter changes
+   the display currency only. It does not convert the numbers you pass and it
+   does not change the model, so convert to KES yourself before building the
+   link.
+7. Out-of-range values are never rejected, only clamped — a link stays valid
+   while quietly meaning something else. Money is clamped to 0 to 1000000000000;
+   everything else to the range in its table.
+8. The on-screen sliders move in fixed steps, but **URL values do not have to
+   be multiples of those steps.** Pass the real figure.
+9. Percentages are whole-number percents: `50` means 50%, not 0.5.
+10. Output the finished URL as raw text on its own line. Do not wrap it in a
+    markdown link, do not percent-encode it, and do not write `&` as `&amp;`.
+11. These parameter names are specific to this calculator. Do not reuse them on
+    another vibes calculator — several short names mean different things there.
+
+## Modes
+
+`m` chooses where you're starting from. Default `buy`. Case-sensitive, and any value other than `build` or `own` or `keep` is treated as `buy`.
+
+| value | shown as | means |
+| --- | --- | --- |
+| `buy` | Buying a place | Buy a finished flat or house and furnish it. The money at stake is `pr` plus `bfee` plus `furn`. |
+| `build` | Buying land and building | Buy a plot and build, then furnish. Nothing is earned during the `bm` build months. The money at stake is `land`, `bc` with `fee` and `cont`, plus `furn`. |
+| `own` | I own it — or I could sell | You own the place already. The alternative is selling it today, less `sp`, and investing that plus the furnishing money. Uses `val`. |
+| `keep` | I own it and I'm keeping it | You own the place and would keep it either way, so only `furn` is at stake. Its value, growth, fixed costs and sale are the same on both paths and left out. |
+
+`pr` and `bfee` apply only under `buy`; `land`, `bc`, `fee`, `cont`, `bm` and `wv` only under `build`; `val` only under `own`. `fix`, `app`, `sp` and `cgt` are ignored under `keep`. Setting a parameter the mode doesn't use does nothing.
+
+## Display currency
+
+`c` sets the currency results are *displayed* in. Default `KES`. Accepted values: `KES`, `UGX`, `USD`, `GBP`, `EUR`, `ZAR`, `NGN`, `INR`, `AED`. An unrecognised code is ignored entirely. Display only — see rule 6.
+
+## Parameters
+
+### Buying it — mode `buy` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `pr` | Purchase price | 9000000 | KES | What the flat or house costs, before any fees. |
+| `bfee` | Stamp duty, legal & valuation | 5 | 0 to 15 % | Transfer costs on top of the price, as a share of it. None of it comes back when you sell. |
+
+### Building it — mode `build` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `land` | Plot price | 3000000 | KES | Paid on day one. Set to 0 if the plot is already yours. |
+| `bc` | Build cost | 6000000 | KES | Shell, finishes and services — construction only. Fees and contingency go on top. |
+| `fee` | Design, approvals & supervision | 8 | 0 to 25 % | Architect, engineer and local-authority approvals. A share of build cost. |
+| `cont` | Contingency | 10 | 0 to 30 % | Spare money for overruns, which are the norm. A share of build cost plus fees. |
+| `bm` | Months to build | 12 | 1 to 48 months | No guests while it goes up. The build cost is drawn evenly over these months. |
+| `wv` | Finished place is worth | 110 | 50 to 200 % | A share of everything it cost, land included. Above 100 means you built for less than buyers would pay. |
+
+### The place you own — mode `own` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `val` | What it would sell for today | 9000000 | KES | Selling it and investing the proceeds is the alternative, so this is the money the Airbnb keeps tied up. |
+
+### Getting it guest-ready
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `furn` | Furnishing & setup | 800000 | KES | Furniture, appliances, linen, kitchenware, a smart lock, photos. Paid once the place is ready. |
+| `ref` | Replacing worn furnishings | 15 | 0 to 50 % | Per year, as a share of the setup cost. Guests wear things out far faster than a tenant would. |
+| `ramp` | Months to get fully booked | 4 | 0 to 24 months | A new listing has no reviews. Bookings climb from nothing to your figure over these months. |
+
+### What it earns
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `rate` | Nightly rate | 6000 | KES | What a guest pays per night, before the platform's cut. |
+| `occ` | Nights booked | 55 | 0 to 100 % | Share of the year with a guest in, once the listing is established. 55% is about 200 nights. |
+| `stay` | Average stay | 3 | 1 to 30 nights | Nights per booking. Every checkout means a clean and fresh linen. |
+| `rg` | Nightly rate growth | 5 | -5 to 20 % | Per year. |
+
+### Cost of running it
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `plat` | Platform fee | 3 | 0 to 20 % | What Airbnb or Booking.com keeps from each booking. |
+| `mgmt` | Co-host or manager | 15 | 0 to 35 % | A share of bookings, if someone else runs it for you. 0 if you do it yourself. |
+| `cln` | Cleaning & laundry per stay | 1200 | KES | Per checkout, including soap, toilet paper and coffee. |
+| `util` | Utilities & internet | 12000 | KES | Per month, booked or not: power, water, Wi-Fi, TV, security, service charge. |
+| `rep` | Repairs & upkeep | 60000 | KES | Per year. Short lets wear a place faster than long ones. |
+| `itax` | Tax on bookings | 10 | 0 to 40 % | A share of everything you collect, before costs come off. |
+
+### Holding the property — modes `buy`, `build`, `own` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `fix` | Rates, insurance & ground rent | 40000 | KES | Per year. What it costs to own the place at all, whether or not anyone stays. |
+| `app` | Property value growth | 4 | -5 to 20 % | Per year. |
+
+### Getting out — modes `buy`, `build`, `own` only
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `sp` | Selling costs | 3 | 0 to 15 % | Agent and legal fees when you sell — at the end, and under "I own it" if you sold today instead. |
+| `cgt` | Capital gains tax | 15 | 0 to 40 % | Charged on what you sell for above what the place cost you. Only the gain is taxed. |
+
+### The alternative
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `inv` | Return if invested instead | 12 | 0 to 30 % | Per year, compounding. A unit trust, money market fund, T-bills or a government bond. |
+| `itx` | Tax on those returns | 15 | 0 to 40 % | Withholding tax taken off interest before you're paid. |
+| `ife` | Annual management fee | 1 | 0 to 5 % | Charged on the balance every year. Unit trusts charge one; T-bills bought directly don't. |
+
+### Time & inflation
+
+| param | means | default | range | notes |
+| --- | --- | --- | --- | --- |
+| `h` | Years to compare over | 10 | 1 to 30 years | The whole comparison is measured at this year, with the place sold. |
+| `infl` | Inflation | 6 | 0 to 20 % | Per year. Pushes up cleaning, utilities, repairs and the fixed costs. |
+
+## Worked examples
+
+Buying a KES 12M two-bed at KES 9,000 a night, booked 60% of the year:
+https://vibes.obel.dev/airbnb-or-invest/?pr=12000000&rate=9000&occ=60
+
+Building on a plot you already own: KES 8M to build over 14 months:
+https://vibes.obel.dev/airbnb-or-invest/?m=build&land=0&bc=8000000&bm=14
+
+A flat you own and could sell for KES 12.2M (about UGX 350M), managed yourself, shown in shillings of Uganda:
+https://vibes.obel.dev/airbnb-or-invest/?m=own&val=12200000&mgmt=0&c=UGX
+
+Keeping a flat you own either way — is KES 1M of furnishing worth it at KES 5,000 a night?:
+https://vibes.obel.dev/airbnb-or-invest/?m=keep&furn=1000000&rate=5000
+
+## What the calculator does with these
+
+`m` sets what is at stake. Under `buy` it is the price plus `bfee` plus `furn`; under
+`build`, the plot plus `bc` with `fee` and `cont`, plus `furn`; under `own`, what a sale
+today would bring (`val` less `sp`) plus `furn`; under `keep`, only `furn`. The market
+path is handed that whole amount on day one and compounds at `inv`, net of `itx` and
+`ife`.
+
+On the Airbnb path, a build draws `bc` evenly over `bm` months earning nothing, while
+whatever hasn't been drawn keeps compounding at the market rate. Once the place is
+ready, bookings climb from nothing to `occ` over `ramp` months. Each month earns
+`occ` of the nights at `rate` (growing at `rg`), less `plat`, `mgmt` and `itax` as
+shares of bookings, `cln` per stay of `stay` nights, `util`, `rep`, and `ref` of the
+furnishing cost — all but the shares inflating at `infl`. `fix` is paid from day one.
+What it makes is reinvested at the market rate, and a loss is charged at it.
+
+At the end the property is sold: its value (the price, `val`, or the build's cost
+times `wv`) grown at `app`, less `sp` and `cgt` on the gain over what it cost.
+Furnishings are worth nothing. Under `keep` the property is held on both paths, so
+its value, growth, fixed costs and sale cancel and are left out.
+
+The page reports which path wins, the crossover year, the Airbnb's IRR against the
+market's net rate, the occupancy at which the two tie, and which single input would
+flip the verdict.
+
+The defaults sit between Nairobi and Kampala, but nothing is hardcoded to either.
+Every tax, rate and cost is a plain input.
+
+Not modelled: mortgages or construction loans — this compares cash against cash.
+Nor are seasonality (`occ` is a year-round average), minimum-stay rules, licensing and
+tourism levies, building rules that ban short lets, or the owner's own time. It is a
+model, not advice.
+
+## Related
+
+- https://vibes.obel.dev/llms.txt — index of the other tools
+- https://vibes.obel.dev/build-or-invest/llms.txt — a whole block let by the month rather than one unit by the night
+- https://vibes.obel.dev/rent-or-buy/llms.txt — buy a home to live in or let, with a mortgage

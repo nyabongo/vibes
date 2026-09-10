@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import Calc from "../rent-or-buy/calc.js";
 import Model from "../build-or-invest/model.js";
 import Brick from "../brick-by-brick/model.js";
+import Airbnb from "../airbnb-or-invest/model.js";
 
 const BASE = "https://vibes.obel.dev/x/";
 const specTextSource = readFileSync(fileURLToPath(new URL("./spec-text.js", import.meta.url)), "utf8");
@@ -35,8 +36,19 @@ const flat = (s) => s.replace(/\s+/g, " ");
 const TOOLS = [
   ["rent-or-buy", Calc],
   ["build-or-invest", Model],
-  ["brick-by-brick", Brick]
+  ["brick-by-brick", Brick],
+  ["airbnb-or-invest", Airbnb]
 ];
+
+describe("a section gated to several modes", () => {
+  it("names every one of them in its heading, and a single mode as before", () => {
+    Airbnb.resetToDefaults();
+    const text = specText(Airbnb, BASE);
+    expect(text).toContain("### Getting out — modes `buy`, `build`, `own` only");
+    expect(text).toContain("### Buying it — mode `buy` only");
+    expect(text).toContain("### What it earns\n");
+  });
+});
 
 describe.each(TOOLS)("specText for %s", (_name, calc) => {
   let text, rows;

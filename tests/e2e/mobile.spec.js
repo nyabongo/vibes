@@ -10,7 +10,7 @@ import { test, expect } from "@playwright/test";
    off. Without it every touch-target assertion below passes vacuously. */
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-const TOOLS = ["rent-or-buy", "build-or-invest", "brick-by-brick"];
+const TOOLS = ["rent-or-buy", "build-or-invest", "brick-by-brick", "airbnb-or-invest"];
 
 async function ready(page, path) {
   await page.goto(path);
@@ -40,9 +40,11 @@ test.describe("mobile", () => {
     ["rent-or-buy", ""],
     ["build-or-invest", ""],
     ["brick-by-brick", ""],
+    ["airbnb-or-invest", ""],
     ["rent-or-buy", "?p=900000000&m=let&h=40&c=UGX"],
     ["build-or-invest", "?cap=900000000&cpu=90000000&u=200&c=UGX"],
-    ["brick-by-brick", "?sv=900000000&sm=90000000&h=40"]
+    ["brick-by-brick", "?sv=900000000&sm=90000000&h=40"],
+    ["airbnb-or-invest", "?m=build&land=900000000&bc=900000000&rate=900000&h=30&c=UGX"]
   ];
   for (const width of [320, 390]) {
     for (const [tool, qs] of OVERFLOW_CASES) {

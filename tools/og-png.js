@@ -37,7 +37,7 @@ var ROOT = path.resolve(__dirname, "..");
 var WIDTH = 1200;
 var HEIGHT = 630;
 
-var DIRS = ["rent-or-buy", "build-or-invest", "brick-by-brick"];
+var DIRS = ["rent-or-buy", "build-or-invest", "brick-by-brick", "airbnb-or-invest"];
 
 /* Only the families og.svg actually names, at the weights shared/tool.css
  * imports. Fraunces is in that stylesheet too, for the site's headings, but the

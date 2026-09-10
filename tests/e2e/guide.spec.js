@@ -9,7 +9,8 @@ import { test, expect } from "@playwright/test";
 const TOOLS = [
   { slug: "rent-or-buy", engine: "Calc", firstQuestion: /live in this place, or rent it out/i },
   { slug: "build-or-invest", engine: "Model", firstQuestion: /money are you putting in/i },
-  { slug: "brick-by-brick", engine: "Brick", firstQuestion: /build as the money comes in/i }
+  { slug: "brick-by-brick", engine: "Brick", firstQuestion: /build as the money comes in/i },
+  { slug: "airbnb-or-invest", engine: "Airbnb", firstQuestion: /where are you starting from/i }
 ];
 
 async function start(page, slug, qs = "") {
@@ -243,7 +244,8 @@ test.describe("the Guided / Advanced switch", () => {
    has one job, and it includes the query string — a bare meta refresh would
    drop the scenario and hand back the defaults. */
 test.describe("the old /guide/ address", () => {
-  for (const { slug } of TOOLS) {
+  // airbnb-or-invest launched after the move, so it never had a /guide/ address to keep.
+  for (const { slug } of TOOLS.filter((t) => t.slug !== "airbnb-or-invest")) {
     test(`${slug}: forwards to the walkthrough, scenario and all`, async ({ page }) => {
       await page.goto(`/${slug}/guide/?h=7`);
       await expect(page).toHaveURL(new RegExp(`/${slug}/\\?h=7$`));

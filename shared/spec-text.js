@@ -134,7 +134,12 @@ return function specText(calc, base){
   Object.keys(calc.FIELDS).forEach(function(id){
     var meta = calc.SECTION_META[id];
     var heading = "### " + meta.legend;
-    if(meta.mode) heading += " — mode `" + meta.mode + "` only";
+    if(meta.mode){
+      var ms = [].concat(meta.mode);
+      heading += ms.length === 1
+        ? " — mode `" + ms[0] + "` only"
+        : " — modes " + ms.map(function(v){ return "`" + v + "`"; }).join(", ") + " only";
+    }
     L.push(heading);
     L.push("");
     L.push(table(["param", "means", "default", "range", "notes"], calc.FIELDS[id].map(function(f){

@@ -3,7 +3,7 @@ Allow: /
 
 Sitemap: https://vibes.obel.dev/sitemap.xml
 
-# The three calculators take their whole input set from the URL query string,
+# The four calculators take their whole input set from the URL query string,
 # so a link can carry a filled-in scenario. Each answers at two addresses over
 # one engine: /<tool>/ asks a question at a time, /<tool>/advanced/ puts every
 # input on one screen, and both read exactly the same parameters. The specs —
@@ -12,3 +12,4 @@ Sitemap: https://vibes.obel.dev/sitemap.xml
 #   https://vibes.obel.dev/rent-or-buy/llms.txt
 #   https://vibes.obel.dev/build-or-invest/llms.txt
 #   https://vibes.obel.dev/brick-by-brick/llms.txt
+#   https://vibes.obel.dev/airbnb-or-invest/llms.txt
