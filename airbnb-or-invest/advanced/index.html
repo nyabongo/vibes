@@ -181,6 +181,7 @@
 <script src="../../shared/components/key-tiles.js"></script>
 <script src="../../shared/clipboard.js"></script>
 <script src="../../shared/spec-text.js"></script>
+<script src="../../shared/wizard.js"></script>
 <script src="../model.js"></script>
 <script src="../guide.js"></script>
 <script>
@@ -199,11 +200,11 @@ function scheduleRender(){
   else setTimeout(run, 16);
 }
 
-/* A section names one mode, a list of them, or none (every mode). Same rule
-   as Wizard.modeIncludes in shared/wizard.js, which this page doesn't load. */
+/* A section names one mode, a list of them, or none (every mode). The rule
+   lives in shared/wizard.js so the walkthrough and this page can't disagree
+   about which inputs a scenario uses. */
 function sectionShown(id){
-  var m = Airbnb.SECTION_META[id].mode;
-  return m == null || [].concat(m).indexOf(Airbnb.mode) >= 0;
+  return Wizard.modeIncludes(Airbnb.SECTION_META[id].mode, Airbnb.mode);
 }
 
 function fieldDisplay(f){
