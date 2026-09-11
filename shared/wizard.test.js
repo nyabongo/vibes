@@ -250,6 +250,53 @@ describe("the walkthrough", () => {
   });
 });
 
+/* Airbnb or invest has four scenarios, and its holding and exit questions
+   apply to three of them. A section can name a list of modes for that. */
+describe("a section that belongs to several modes", () => {
+  function threeModes(){
+    const engine = makeEngine();
+    engine.MODE_META.values.push({ value: "sell", label: "Sell it" });
+    engine.SECTION_META.fLet.mode = ["let", "sell"];
+    return engine;
+  }
+  function threeModeGuide(){
+    const g = makeGuide();
+    g.steps[0].options.push({ value: "sell", label: "Sell it", blurb: "b" });
+    return g;
+  }
+
+  it("is accepted by the contract check", () => {
+    expect(Wizard.validateGuide(threeModes(), threeModeGuide())).toBe(true);
+  });
+
+  it("shows its questions in every mode it names, and in no other", () => {
+    const engine = threeModes();
+    const wiz = Wizard.create({ engine: engine, guide: threeModeGuide() });
+    const ids = () => wiz.steps().map((s) => s.id);
+    expect(ids()).not.toContain("let");
+    engine.mode = "let";
+    expect(ids()).toContain("let");
+    engine.mode = "sell";
+    expect(ids()).toContain("let");
+    expect(ids()).not.toContain("rent");
+  });
+
+  it("rejects a section gated to a mode the calculator does not have", () => {
+    const engine = threeModes();
+    engine.SECTION_META.fLet.mode = ["let", "lease"];
+    expect(() => Wizard.validateGuide(engine, threeModeGuide()))
+      .toThrow(/section `fLet` belongs to mode `lease`, which the calculator does not have/);
+  });
+
+  it("treats a single mode and a list the same way in modeIncludes", () => {
+    expect(Wizard.modeIncludes("let", "let")).toBe(true);
+    expect(Wizard.modeIncludes("let", "live")).toBe(false);
+    expect(Wizard.modeIncludes(["let", "sell"], "sell")).toBe(true);
+    expect(Wizard.modeIncludes(["let", "sell"], "live")).toBe(false);
+    expect(Wizard.modeIncludes(null, "live")).toBe(true);
+  });
+});
+
 describe("stepMode", () => {
   it("reads a step's mode off the engine's section, not off the step", () => {
     const engine = makeEngine();

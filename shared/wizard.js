@@ -61,6 +61,13 @@ function stepMode(engine, step, idx){
   return modes.reduce(function(a, b){ return a === null ? b : a; }, null);
 }
 
+/* A section belongs to one mode ("let") or to several (["own", "buy"]) — a
+   question can apply to three scenarios out of four. null means every mode. */
+function modeIncludes(m, mode){
+  if(m == null) return true;
+  return [].concat(m).indexOf(mode) >= 0;
+}
+
 function validateGuide(engine, guide){
   var problems = [];
   var idx = sectionIndex(engine);
@@ -70,6 +77,17 @@ function validateGuide(engine, guide){
     if(guide == null || guide[k] == null) problems.push("the guide has no `" + k + "`");
   });
   if(problems.length) throw contractError(problems);
+
+  /* A section gated to a mode the calculator doesn't offer would never be
+     shown, and its fields would silently keep their defaults forever. */
+  var known = engine.MODE_META.values.map(function(v){ return v.value; });
+  Object.keys(engine.SECTION_META).forEach(function(sid){
+    var m = engine.SECTION_META[sid].mode;
+    if(m == null) return;
+    [].concat(m).forEach(function(v){
+      if(known.indexOf(v) < 0) problems.push("section `" + sid + "` belongs to mode `" + v + "`, which the calculator does not have");
+    });
+  });
 
   var seen = {};
   var modeSteps = 0;
@@ -110,7 +128,7 @@ function validateGuide(engine, guide){
     var modes = {};
     step.keys.forEach(function(k){
       var sid = idx[k];
-      var m = sid && engine.SECTION_META[sid] ? engine.SECTION_META[sid].mode || "" : "";
+      var m = sid && engine.SECTION_META[sid] ? [].concat(engine.SECTION_META[sid].mode || []).join(",") : "";
       modes[m] = true;
     });
     if(Object.keys(modes).length > 1) problems.push(where + " mixes fields from more than one mode");
@@ -196,7 +214,7 @@ class Walkthrough {
     this.guide.steps.forEach(function(step){
       if(step.kind === "mode"){ out.push(assign(step, { kind:"mode", keys:[] })); return; }
       var m = stepMode(engine, step, idx);
-      if(m && m !== engine.mode) return;
+      if(!modeIncludes(m, engine.mode)) return;
       out.push(assign(step, { kind: step.keys.length > 1 ? "group" : "question" }));
     });
     out.push({ id:"answer", kind:"answer", section:"The answer", keys:[] });
@@ -323,6 +341,7 @@ return {
   create: function(opts){ return new Walkthrough(opts); },
   validateGuide: validateGuide,
   sectionIndex: sectionIndex,
-  stepMode: stepMode
+  stepMode: stepMode,
+  modeIncludes: modeIncludes
 };
 });

@@ -1,5 +1,5 @@
-/* The nine currencies are declared four times: once in the picker component
-   here, and once more as a `CURRENCIES` array in each of the three engines.
+/* The nine currencies are declared five times: once in the picker component
+   here, and once more as a `CURRENCIES` array in each of the four engines.
    Nothing but a "keep in sync" comment held them together (issue #18).
 
    Drift is silent in both directions. A currency the picker offers but an
@@ -9,7 +9,7 @@
    amounts are stored in KES and only converted for display, so a shared link
    means one thing to the sender and another to the recipient.
 
-   These tests pin the four lists to each other. They don't deduplicate them;
+   These tests pin the five lists to each other. They don't deduplicate them;
    see the issue for why that's a separate change. */
 
 import { describe, it, expect, afterEach } from "vitest";
@@ -20,11 +20,13 @@ import CurrencySelect from "./currency-select.js";
 import Calc from "../../rent-or-buy/calc.js";
 import Model from "../../build-or-invest/model.js";
 import Brick from "../../brick-by-brick/model.js";
+import Airbnb from "../../airbnb-or-invest/model.js";
 
 const ENGINES = [
   ["rent-or-buy/calc.js", Calc],
   ["build-or-invest/model.js", Model],
-  ["brick-by-brick/model.js", Brick]
+  ["brick-by-brick/model.js", Brick],
+  ["airbnb-or-invest/model.js", Airbnb]
 ];
 
 /* The picker stores [code, symbol, rate, display name]; the engines store

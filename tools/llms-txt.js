@@ -34,7 +34,7 @@ var SPECS = [
     out: "llms.txt",
     title: "vibes — small, single-purpose web tools",
     summary:
-      "Three standalone browser tools at " + SITE + ". No accounts, no " +
+      "Four standalone browser tools at " + SITE + ". No accounts, no " +
       "tracking, no server: every one is a static page that computes in the " +
       "browser. Each is a financial calculator whose entire input set is " +
       "encoded in the URL query string, so you can hand someone a link that " +
@@ -52,6 +52,9 @@ var SPECS = [
       "  apartment block or compound in the market? Spec: " + SITE + "/build-or-invest/llms.txt",
       "- [Brick by brick](" + SITE + "/brick-by-brick/): should you build a home for yourself a",
       "  bit at a time while you rent, or rent and invest instead? Spec: " + SITE + "/brick-by-brick/llms.txt",
+      "- [Airbnb or invest](" + SITE + "/airbnb-or-invest/): should a property earn as a short let,",
+      "  or should the money sit in a unit trust or government securities? Covers buying,",
+      "  building and a place you already own. Spec: " + SITE + "/airbnb-or-invest/llms.txt",
       "",
       "## Two ways into each calculator",
       "",
@@ -65,6 +68,7 @@ var SPECS = [
       "- " + SITE + "/rent-or-buy/advanced/",
       "- " + SITE + "/build-or-invest/advanced/",
       "- " + SITE + "/brick-by-brick/advanced/",
+      "- " + SITE + "/airbnb-or-invest/advanced/",
       "",
       "Link to the default unless you have a reason not to. The parameter names, defaults",
       "and ranges in each spec below apply to both.",
@@ -72,7 +76,8 @@ var SPECS = [
       "## Notes",
       "",
       "- Rent or buy and Build or invest default to Kenyan figures; Brick by brick opens",
-      "  on Ugandan ones. Nothing is hardcoded to either. Every tax, rate and transaction",
+      "  on Ugandan ones; Airbnb or invest sits between the two, with notes citing both.",
+      "  Nothing is hardcoded to either. Every tax, rate and transaction",
       "  cost is an input, so set them for whatever market your reader is actually in.",
       "- Money in every URL is Kenyan shillings regardless of which calculator it is, and",
       "  regardless of the currency the page displays. Convert before building a link.",
@@ -167,7 +172,8 @@ var SPECS = [
     related: [
       [SITE + "/llms.txt", "index of the other tools"],
       [SITE + "/rent-or-buy/llms.txt", "the same comparison for a single home you'd live in"],
-      [SITE + "/brick-by-brick/llms.txt", "a home built out of salary rather than a lump sum"]
+      [SITE + "/brick-by-brick/llms.txt", "a home built out of salary rather than a lump sum"],
+      [SITE + "/airbnb-or-invest/llms.txt", "one unit let by the night rather than a block let by the month"]
     ]
   },
 
@@ -225,6 +231,59 @@ var SPECS = [
       [SITE + "/llms.txt", "index of the other tools"],
       [SITE + "/rent-or-buy/llms.txt", "the same question where a mortgage is on the table"],
       [SITE + "/build-or-invest/llms.txt", "building to let rather than to live in"]
+    ]
+  },
+
+  {
+    out: "airbnb-or-invest/llms.txt",
+    mod: require("../airbnb-or-invest/model.js"),
+    base: SITE + "/airbnb-or-invest/",
+    title: "Airbnb or invest — the short-let calculator",
+    summary:
+      "A browser calculator at " + SITE + "/airbnb-or-invest/ that models running a property as a " +
+      "short let (Airbnb, Booking.com) against putting the same money into a unit trust, money " +
+      "market fund or government securities. It reports the return each earns, which is ahead " +
+      "after a chosen number of years, and the occupancy at which they tie. It covers buying a " +
+      "place, buying land and building, and a place you already own. Every input is encoded in " +
+      "the URL query string, so a link opens with the whole scenario already filled in.",
+    model: [
+      "## What the calculator does with these",
+      "",
+      "`m` sets what is at stake. Under `buy` it is the price plus `bfee` plus `furn`; under",
+      "`build`, the plot plus `bc` with `fee` and `cont`, plus `furn`; under `own`, what a sale",
+      "today would bring (`val` less `sp`) plus `furn`; under `keep`, only `furn`. The market",
+      "path is handed that whole amount on day one and compounds at `inv`, net of `itx` and",
+      "`ife`.",
+      "",
+      "On the Airbnb path, a build draws `bc` evenly over `bm` months earning nothing, while",
+      "whatever hasn't been drawn keeps compounding at the market rate. Once the place is",
+      "ready, bookings climb from nothing to `occ` over `ramp` months. Each month earns",
+      "`occ` of the nights at `rate` (growing at `rg`), less `plat`, `mgmt` and `itax` as",
+      "shares of bookings, `cln` per stay of `stay` nights, `util`, `rep`, and `ref` of the",
+      "furnishing cost — all but the shares inflating at `infl`. `fix` is paid from day one.",
+      "What it makes is reinvested at the market rate, and a loss is charged at it.",
+      "",
+      "At the end the property is sold: its value (the price, `val`, or the build's cost",
+      "times `wv`) grown at `app`, less `sp` and `cgt` on the gain over what it cost.",
+      "Furnishings are worth nothing. Under `keep` the property is held on both paths, so",
+      "its value, growth, fixed costs and sale cancel and are left out.",
+      "",
+      "The page reports which path wins, the crossover year, the Airbnb's IRR against the",
+      "market's net rate, the occupancy at which the two tie, and which single input would",
+      "flip the verdict.",
+      "",
+      "The defaults sit between Nairobi and Kampala, but nothing is hardcoded to either.",
+      "Every tax, rate and cost is a plain input.",
+      "",
+      "Not modelled: mortgages or construction loans — this compares cash against cash.",
+      "Nor are seasonality (`occ` is a year-round average), minimum-stay rules, licensing and",
+      "tourism levies, building rules that ban short lets, or the owner's own time. It is a",
+      "model, not advice."
+    ].join("\n"),
+    related: [
+      [SITE + "/llms.txt", "index of the other tools"],
+      [SITE + "/build-or-invest/llms.txt", "a whole block let by the month rather than one unit by the night"],
+      [SITE + "/rent-or-buy/llms.txt", "buy a home to live in or let, with a mortgage"]
     ]
   }
 ];

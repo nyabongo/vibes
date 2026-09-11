@@ -12,8 +12,9 @@ Small tools, vibe-coded. A monorepo of standalone browser tools, live at
 | [Rent or buy](https://vibes.obel.dev/rent-or-buy/) | Should you buy a home, or rent and put the same money in the market? Models what you'd be worth on each path, and shows the exact year buying overtakes renting — or doesn't. | [all on one page](https://vibes.obel.dev/rent-or-buy/advanced/) | [`rent-or-buy/`](rent-or-buy/) | [llms.txt](rent-or-buy/llms.txt) |
 | [Build or invest](https://vibes.obel.dev/build-or-invest/) | Should your money build a rental block, or just sit in the market? Models the construction drag, lease-up, and what the finished building is actually worth. | [all on one page](https://vibes.obel.dev/build-or-invest/advanced/) | [`build-or-invest/`](build-or-invest/) | [llms.txt](build-or-invest/llms.txt) |
 | [Brick by brick](https://vibes.obel.dev/brick-by-brick/) | Should you build a home a bit at a time, or rent and invest instead? Builds it out of salary while you rent. Works out when you move in and whether construction costs outrun you before the house is finished. | [all on one page](https://vibes.obel.dev/brick-by-brick/advanced/) | [`brick-by-brick/`](brick-by-brick/) | [llms.txt](brick-by-brick/llms.txt) |
+| [Airbnb or invest](https://vibes.obel.dev/airbnb-or-invest/) | Should the place earn as a short let, or should the money sit in a unit trust or government securities? Covers buying, building, and a place you already own — prices the empty nights, cleaning, the platform's cut and the sale at the end. | [all on one page](https://vibes.obel.dev/airbnb-or-invest/advanced/) | [`airbnb-or-invest/`](airbnb-or-invest/) | [llms.txt](airbnb-or-invest/llms.txt) |
 
-All three calculators take their whole input set from the URL query string, so a
+All four calculators take their whole input set from the URL query string, so a
 link opens with the scenario already filled in. The specs above document that URL
 API — they are generated from the code, and
 [how that works](#how-a-calculator-is-put-together) is worth reading before you
@@ -72,7 +73,7 @@ shared/
   tool.css                 house style for the calculators (design tokens at the top)
   wizard.css               the walkthrough's own furniture, on top of tool.css
   wizard.js                the walkthrough's state machine + guide contract (UMD)
-  wizard-ui.js             the walkthrough's view layer, shared by all three
+  wizard-ui.js             the walkthrough's view layer, shared by all four
   spec-text.js             renders a calculator's URL API as markdown (UMD)
   clipboard.js             copyWithFeedback() — copy, then report on the button itself
   components/              the five custom elements the calculators use
@@ -202,7 +203,7 @@ it, a question for a field that no longer exists, a preset outside the slider's
 own range, a mode-only question asked before the mode itself. Add a field to an
 engine and the walkthrough's test goes red until someone writes the words.
 
-**One view layer, three tools.** [`shared/wizard.js`](shared/wizard.js) is the
+**One view layer, four tools.** [`shared/wizard.js`](shared/wizard.js) is the
 state machine — which question you are on, which answers are the visitor's own,
 how far through you are — with no DOM in it, so it unit tests under Node like the
 engines do. [`shared/wizard-ui.js`](shared/wizard-ui.js) draws it. A tool's

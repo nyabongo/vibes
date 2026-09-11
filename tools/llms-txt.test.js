@@ -5,6 +5,7 @@ import docs from "./llms-txt.js";
 import Calc from "../rent-or-buy/calc.js";
 import Model from "../build-or-invest/model.js";
 import Brick from "../brick-by-brick/model.js";
+import Airbnb from "../airbnb-or-invest/model.js";
 
 const { SPECS, render, ROOT, SITE } = docs;
 
@@ -18,7 +19,8 @@ const read = (p) => norm(readFileSync(join(ROOT, p), "utf8"));
 const TOOL_BY_PATH = {
   "rent-or-buy": Calc,
   "build-or-invest": Model,
-  "brick-by-brick": Brick
+  "brick-by-brick": Brick,
+  "airbnb-or-invest": Airbnb
 };
 
 describe("the committed llms.txt files are current", () => {

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Airbnb or invest — advanced view</title>
+<meta name="description" content="Every input to the Airbnb-vs-invest calculator on one page: buying, building or a place you own, against a unit trust or government securities.">
+<link rel="canonical" href="https://vibes.obel.dev/airbnb-or-invest/advanced/">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../../shared/tool.css">
+<link rel="alternate" type="text/plain" href="../llms.txt" title="Parameter spec for AI assistants">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vibes.obel.dev/airbnb-or-invest/advanced/">
+<meta property="og:title" content="Airbnb or invest — advanced view">
+<meta property="og:description" content="Every input to the Airbnb-vs-invest calculator on one page, for someone who already knows what they mean.">
+<meta property="og:image" content="https://vibes.obel.dev/airbnb-or-invest/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Airbnb or invest — advanced view">
+<meta name="twitter:description" content="Every input to the Airbnb-vs-invest calculator on one page, for someone who already knows what they mean.">
+<meta name="twitter:image" content="https://vibes.obel.dev/airbnb-or-invest/og.png">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <a class="backlink" href="../../">&larr; vibes</a>
+    <div class="mast-actions">
+      <button class="linkbtn" id="printBtn" type="button" title="Opens the print dialog — choose &quot;Save as PDF&quot; as the destination">Save as PDF</button>
+      <button class="linkbtn" id="copyLink" type="button">Copy link</button>
+      <currency-select id="cur"></currency-select>
+    </div>
+  </div>
+
+  <div class="tool-id">
+    <h1 class="tool-name">Airbnb or invest</h1>
+    <p class="tool-what">Every input on one page, live. Set your numbers. The page picks.</p>
+    <view-switch current="advanced" other="../"></view-switch>
+  </div>
+  <div class="rule"></div>
+
+  <div class="verdict">
+    <!-- Not a heading: a computed result that changes on every slider frame has
+         no business in the document outline. role="status" implies
+         aria-live="polite" + aria-atomic; do not also write those. -->
+    <div class="verdict-line" id="headline" role="status"></div>
+    <p id="subline"></p>
+  </div>
+
+  <div class="warn hidden" id="warn"></div>
+
+  <div class="print-summary" id="printSummary"></div>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <div class="controls">
+      <details class="aihelp">
+        <summary>Don't know your numbers? Ask an AI</summary>
+        <div class="body">
+          <p>Copy the prompt below into ChatGPT, Claude or any chatbot that can search
+             the web. It explains every input on this page and asks for a link back that
+             opens the calculator with your numbers already filled in.</p>
+          <button class="linkbtn" id="copyPrompt" type="button">Copy prompt</button>
+          <p class="fineprint">The same spec is published at <a href="../llms.txt">llms.txt</a>,
+             if you'd rather point the chatbot straight at it.</p>
+        </div>
+      </details>
+      <noscript>
+        <p>This calculator needs JavaScript. The full parameter reference —
+           every input, its range and its default — is published as plain text at
+           <a href="../llms.txt">llms.txt</a>.</p>
+      </noscript>
+      <div class="panel">
+        <div class="panel-hd"><h2>Your numbers</h2><span class="hint" id="curhint">KES</span></div>
+
+        <div class="mode" role="group" aria-label="Where you're starting from">
+          <button id="m_buy" data-mode="buy" aria-pressed="true">Buying a place</button>
+          <button id="m_build" data-mode="build" aria-pressed="false">Buying land &amp; building</button>
+          <button id="m_own" data-mode="own" aria-pressed="false">Own it — could sell</button>
+          <button id="m_keep" data-mode="keep" aria-pressed="false">Own it — keeping it</button>
+        </div>
+
+        <fieldset data-sec="fBuy">
+          <legend>Buying it</legend>
+          <field-group id="fBuy"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fBuild" class="hidden">
+          <legend>Building it</legend>
+          <field-group id="fBuild"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fOwn" class="hidden">
+          <legend>The place you own</legend>
+          <field-group id="fOwn"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fSetup">
+          <legend>Getting it guest-ready</legend>
+          <field-group id="fSetup"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fNights">
+          <legend>What it earns</legend>
+          <field-group id="fNights"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fCosts">
+          <legend>Cost of running it</legend>
+          <field-group id="fCosts"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fHold">
+          <legend>Holding the property</legend>
+          <field-group id="fHold"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fExit">
+          <legend>Getting out</legend>
+          <field-group id="fExit"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fInvest">
+          <legend>The alternative</legend>
+          <field-group id="fInvest"></field-group>
+        </fieldset>
+
+        <fieldset data-sec="fTime">
+          <legend>Time &amp; inflation</legend>
+          <field-group id="fTime"></field-group>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="panel">
+        <div class="panel-hd"><h2>What you'd be worth if you sold that year</h2><span class="hint" id="chartHint"></span></div>
+        <div class="chartbox"><crossover-chart id="chart" role="img" aria-label="Net worth over time for running an Airbnb versus investing the money"></crossover-chart></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i> Run it as an Airbnb</span>
+          <span><i style="background:var(--accent2)"></i> Invest the money instead</span>
+          <span><i style="background:var(--line);height:1px;border-top:2px dashed var(--muted)"></i> Crossover — where the Airbnb overtakes the market</span>
+          <span id="legendBuild"><i style="background:var(--muted);opacity:.25;height:10px"></i> Under construction</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Key figures</h2><span class="hint" id="horizonHint"></span></div>
+        <key-tiles class="tiles" id="tiles"></key-tiles>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>Where the money goes</h2><span class="hint">Setting it up, then a year of running it</span></div>
+        <div class="cf" id="cf"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-hd"><h2>What would change the answer</h2><span class="hint">One change at a time, everything else held still</span></div>
+        <div class="flip" id="flip"></div>
+      </div>
+
+      <footer>
+        <b>How this works.</b> Both paths start with the same money. On the Airbnb path it buys the place (or, if you own it, the sale you pass up), or buys the plot and draws the build cost evenly over the construction months while the rest keeps earning. Then it pays for the furnishing, fills up gradually over the months it takes to earn reviews, and collects bookings net of the platform's cut, management, cleaning per stay, bills, repairs, wear on the furnishings and tax. Every shilling it makes goes into the same investment the other path holds. Net worth at year <span id="fnH">10</span> is the property's value less selling costs and capital gains tax, plus that pot. The market path compounds at your return, net of tax and fees.
+        <br><br>
+        <b>If you own the place and would keep it anyway,</b> the house is the same on both paths and cancels out — its value, growth, fixed costs and sale are left out, and only the furnishing is weighed against the market.
+        <br><br>
+        <b>Not modelled:</b> mortgages or construction loans — this compares cash against cash. Nor are seasonality (occupancy is a year-round average), minimum-stay rules, licensing and tourism levies, building rules that ban short lets, or the value of your own time if you run it yourself. Furnishings are worth nothing at the end. Returns and growth rates are steady averages here; real ones arrive in lumps.
+        <br><br>
+        <b>This is a model, not advice.</b> It does what you tell it to. The numbers you put in matter far more than the arithmetic it does with them.
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="../../shared/components/currency-select.js"></script>
+<script src="../../shared/components/view-switch.js"></script>
+<script src="../../shared/components/field-group.js"></script>
+<script src="../../shared/components/crossover-chart.js"></script>
+<script src="../../shared/components/key-tiles.js"></script>
+<script src="../../shared/clipboard.js"></script>
+<script src="../../shared/spec-text.js"></script>
+<script src="../../shared/wizard.js"></script>
+<script src="../model.js"></script>
+<script src="../guide.js"></script>
+<script>
+"use strict";
+
+/* ===================== rendering ===================== */
+/* Dragging a slider fires `input` faster than the browser paints, so bursts
+   coalesce into one render per frame. Discrete events — the mode buttons, the
+   currency select — still call render() directly. */
+var renderQueued = false;
+function scheduleRender(){
+  if(renderQueued) return;
+  renderQueued = true;
+  function run(){ renderQueued = false; render(); }
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+  else setTimeout(run, 16);
+}
+
+/* A section names one mode, a list of them, or none (every mode). The rule
+   lives in shared/wizard.js so the walkthrough and this page can't disagree
+   about which inputs a scenario uses. */
+function sectionShown(id){
+  return Wizard.modeIncludes(Airbnb.SECTION_META[id].mode, Airbnb.mode);
+}
+
+function fieldDisplay(f){
+  var v = Airbnb.V[f.k];
+  if(f.type==="money") return Airbnb.fmt(v);
+  if(f.type==="num")   return v + (f.unit || "");
+  return Airbnb.pctS(v);
+}
+
+function buildFields(){
+  Object.keys(Airbnb.FIELDS).forEach(function(id){
+    document.getElementById(id).configure({
+      fields: Airbnb.FIELDS[id],
+      get: function(k){ return Airbnb.V[k]; },
+      set: function(k, v){ Airbnb.V[k] = v; },
+      onInput: scheduleRender
+    });
+  });
+}
+
+function syncFields(){
+  Object.keys(Airbnb.FIELDS).forEach(function(id){
+    document.getElementById(id).refresh(Airbnb.cur.rate);
+  });
+}
+
+function drawChart(s, out){
+  document.getElementById("chart").draw({
+    series: out.series,
+    colorA: "var(--accent)",
+    colorB: "var(--accent2)",
+    formatY: function(v){ return Airbnb.fmtC(v); },
+    zeroFloor: Airbnb.mode === "keep",
+    breakEven: s.breakEven,
+    band: {to: s.completionYear},
+    bandMarker: s.completionYear > 0 ? {at: s.completionYear, label: "READY"} : null
+  });
+  document.getElementById("legendBuild").classList.toggle("hidden", s.completionYear === 0);
+}
+
+function block(title, parts, total, extraHTML){
+  var scale = Math.max(total, 1);
+  var bar = parts.map(function(p){
+    return '<div style="width:'+(Math.max(0,p.v)/scale*100)+'%;background:'+p.c+'" title="'+p.n+'"></div>';
+  }).join("");
+  var keys = parts.map(function(p){
+    return '<span><i style="background:'+p.c+'"></i>'+p.n+' '+Airbnb.fmt(p.v)+'</span>';
+  }).join("");
+  return '<div class="cfrow"><div class="cfhead"><span class="who">'+title+'</span>'+
+         '<span class="amt num">'+Airbnb.fmt(total)+'</span></div>'+
+         '<div class="bar">'+bar+'</div><div class="keys">'+keys+'</div>'+
+         (extraHTML||'')+'</div>';
+}
+
+function drawCashflow(s){
+  var c = s.costs;
+  var start = {
+    buy: [
+      {n:"Price", v:c.price, c:"var(--accent)"},
+      {n:"Transfer costs", v:c.buyFees, c:"#4C6B4A"}
+    ],
+    build: [
+      {n:"Plot", v:c.land, c:"var(--accent)"},
+      {n:"Construction", v:c.buildCost, c:"#7EA3CC"},
+      {n:"Fees & approvals", v:c.softCost, c:"#4C6B4A"},
+      {n:"Contingency", v:c.contingency, c:"#B3A98C"}
+    ],
+    own: [
+      {n:"The sale you pass up", v:c.saleNow, c:"var(--accent)"}
+    ],
+    keep: []
+  }[s.mode].concat([{n:"Furnishing", v:c.furnish, c:"var(--accent2)"}]);
+  var startExtra = s.mode === "keep"
+    ? '<div class="credit">The house is yours on both paths, so only the furnishing is weighed against the market.</div>'
+    : '<div class="credit">The market path gets all <b class="num">'+Airbnb.fmt(s.stake)+'</b> on day one instead.</div>';
+  var html = block("What it takes to start", start, s.stake, startExtra);
+
+  var y = s.stabYear;
+  if(y){
+    var runParts = [
+      {n:"Platform",   v:y.platform,  c:"var(--accent2)"},
+      {n:"Co-host",    v:y.mgmt,      c:"#C99A6B"},
+      {n:"Cleaning",   v:y.cleaning,  c:"#7EA3CC"},
+      {n:"Bills",      v:y.utilities, c:"#4C6B4A"},
+      {n:"Repairs",    v:y.repairs,   c:"#B3A98C"},
+      {n:"Wear & tear",v:y.refresh,   c:"#8A9B7E"},
+      {n:"Rates & insurance", v:y.fixed, c:"#6B7069"},
+      {n:"Tax",        v:y.tax,       c:"#3A3F45"}
+    ].filter(function(p){ return p.v > 0; });
+    var outgoings = runParts.reduce(function(a,b){ return a+b.v; }, 0);
+    var extra = '<div class="credit">Out of <b class="num">'+Airbnb.fmt(y.gross)+'</b> in bookings, about '+
+                Math.round(y.nights)+' nights → <b class="num">'+Airbnb.fmt(y.net)+'</b> in your pocket for the year.</div>';
+    html += block("A year once it's fully booked", runParts, outgoings, extra);
+  } else {
+    html += '<div class="cfrow"><div class="cfhead"><span class="who">A year once it\'s fully booked</span></div>'+
+            '<div class="credit">It isn\'t ready and fully booked within your '+Airbnb.V.horizon+
+            '-year horizon, so there\'s no settled year to show.</div></div>';
+  }
+  document.getElementById("cf").innerHTML = html;
+}
+
+function drawFlip(s){
+  var winning = s.finalAirbnb >= s.finalInvest;
+  var V = Airbnb.V;
+  function lever(ifWinning, ifLosing){ return winning ? "The Airbnb stops winning if " + ifWinning
+                                                      : "The Airbnb starts winning if " + ifLosing; }
+  var items = [];
+
+  var occ = Airbnb.solve("occupancy", 0, 100);
+  items.push({ lever: lever("fewer nights are booked than", "more nights are booked than"),
+    target: occ===null ? null : Airbnb.pctS(occ)+" of the year", now: "now "+Airbnb.pctS(V.occupancy) });
+
+  var nr = Airbnb.solve("nightly", 0, Math.max(50000, V.nightly*5));
+  items.push({ lever: lever("a night costs a guest less than", "a night costs a guest more than"),
+    target: nr===null ? null : Airbnb.fmt(nr), now: "now "+Airbnb.fmt(V.nightly) });
+
+  var iv = Airbnb.solve("invest", 0, 30);
+  items.push({ lever: lever("the market returns more than", "the market returns less than"),
+    target: iv===null ? null : Airbnb.pctS(iv)+" a year", now: "now "+Airbnb.pctS(V.invest) });
+
+  var special = {
+    buy:   { key:"price", lo:0, hi:Math.max(1000000, V.price*4), fmt:Airbnb.fmt.bind(Airbnb),
+             w:"the place costs more than", l:"the place costs less than" },
+    build: { key:"worthPct", lo:50, hi:200, fmt:function(x){ return Airbnb.pctS(x)+" of its cost"; },
+             w:"the finished place is worth less than", l:"the finished place is worth more than" },
+    own:   { key:"apprec", lo:-5, hi:20, fmt:function(x){ return Airbnb.pctS(x)+" a year"; },
+             w:"the property grows slower than", l:"the property grows faster than" },
+    keep:  { key:"furnish", lo:0, hi:Math.max(1000000, V.furnish*10), fmt:Airbnb.fmt.bind(Airbnb),
+             w:"setting it up costs more than", l:"setting it up costs less than" }
+  }[Airbnb.mode];
+  var sp = Airbnb.solve(special.key, special.lo, special.hi);
+  var nowV = Airbnb.FIELD_BY_KEY[special.key].type === "money" ? Airbnb.fmt(V[special.key]) : Airbnb.pctS(V[special.key]);
+  items.push({ lever: lever(special.w, special.l), target: sp===null ? null : special.fmt(sp), now: "now "+nowV });
+
+  document.getElementById("flip").innerHTML = items.map(function(i){
+    var tg = i.target ? '<span class="target">'+i.target+'</span>'
+                      : '<span class="target na">nothing in range flips it</span>';
+    return '<div class="item"><span class="lever">'+i.lever+
+           ' <b style="color:var(--muted);font-weight:400">('+i.now+')</b></span>'+tg+'</div>';
+  }).join("");
+}
+
+function drawWarning(out){
+  var el = document.getElementById("warn");
+  if(out.warn){
+    el.classList.remove("hidden");
+    el.innerHTML = out.warn;
+  } else {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+  }
+}
+
+function buildPrintSummary(){
+  var groups = [
+    { name:"The place", ids:["fBuy","fBuild","fOwn","fSetup"] },
+    { name:"Bookings & running costs", ids:["fNights","fCosts"] },
+    { name:"Holding & selling", ids:["fHold","fExit"] },
+    { name:"Alternative & time", ids:["fInvest","fTime"] }
+  ];
+  var modeLabel = Airbnb.MODE_META.values.filter(function(v){ return v.value === Airbnb.mode; })[0].label;
+  var today = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  var html = '<div class="ps-head"><h2>Airbnb vs invest report</h2><span>'+
+    modeLabel+" &middot; "+Airbnb.cur.code+" &middot; generated "+today+'</span></div>';
+  html += '<div class="ps-grid">';
+  groups.forEach(function(g){
+    var rows = "";
+    g.ids.filter(sectionShown).forEach(function(id){
+      Airbnb.FIELDS[id].forEach(function(f){
+        rows += '<div class="ps-row"><span>'+f.label+'</span><span class="num">'+fieldDisplay(f)+'</span></div>';
+      });
+    });
+    if(rows) html += '<div class="ps-col"><h3>'+g.name+'</h3>'+rows+'</div>';
+  });
+  html += '</div>';
+  document.getElementById("printSummary").innerHTML = html;
+}
+
+function render(){
+  syncFields();
+  var s = Airbnb.simulate();
+  /* The verdict and the tiles come from the walkthrough's own outcome(), so
+     the two views can never describe one scenario two different ways. */
+  var out = AirbnbOrInvestGuide.outcome(Airbnb, s);
+  document.getElementById("headline").innerHTML = out.headline;
+  document.getElementById("subline").innerHTML = out.sub;
+  drawWarning(out);
+  drawChart(s, out);
+  drawCashflow(s);
+  document.getElementById("tiles").render(out.tiles);
+  drawFlip(s);
+  buildPrintSummary();
+  document.getElementById("chartHint").textContent = "Years 0–"+Airbnb.V.horizon;
+  document.getElementById("horizonHint").textContent = Airbnb.V.horizon+"-year horizon";
+  document.getElementById("fnH").textContent = Airbnb.V.horizon;
+  document.getElementById("curhint").textContent = Airbnb.cur.code;
+  Airbnb.updateURL();
+  /* The query string is the whole scenario, so the way out to the guided
+     view has to carry whatever is set here. */
+  document.querySelector("view-switch").sync();
+}
+
+/* ===================== wiring ===================== */
+var modeButtons = Array.prototype.slice.call(document.querySelectorAll(".mode [data-mode]"));
+modeButtons.forEach(function(b){
+  b.addEventListener("click", function(){ setMode(b.getAttribute("data-mode")); });
+});
+function applyModeUI(){
+  modeButtons.forEach(function(b){
+    b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === Airbnb.mode));
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("fieldset[data-sec]"), function(fs){
+    fs.classList.toggle("hidden", !sectionShown(fs.getAttribute("data-sec")));
+  });
+}
+function setMode(m){
+  Airbnb.mode = m;
+  applyModeUI();
+  render();
+}
+function syncCurrencySelect(){
+  document.getElementById("cur").setCode(Airbnb.cur.code);
+}
+document.getElementById("cur").addEventListener("currencychange", function(e){
+  Airbnb.applyCurrency(e.detail.code);
+  render();
+});
+
+document.getElementById("copyLink").addEventListener("click", function(){
+  copyWithFeedback(this, location.href, "Copy link");
+});
+
+/* The chatbot gets the spec plus wherever the visitor has already got to, so
+   it refines their scenario instead of starting from the defaults. */
+function aiPrompt(){
+  var base = location.origin + location.pathname;
+  var lines = [
+    "I'm deciding whether to run a property as an Airbnb or put the same money into a",
+    "unit trust or government securities. Help me fill in this calculator:",
+    base,
+    ""
+  ];
+  if(location.search){
+    lines.push("I've already set some of it up: " + location.href);
+    lines.push("Treat those as a starting point and correct any you can research.");
+    lines.push("");
+  }
+  return lines.concat([
+    "Ask me whether I'm buying, building or already own the place, and where it is.",
+    "Then look up current figures for that market — prices, nightly rates and occupancy",
+    "for similar short lets, cleaning and management costs, and what unit trusts,",
+    "money market funds, T-bills and government bonds are paying after tax. Tell me",
+    "where each number came from and how confident you are.",
+    "",
+    "Then give me one link, built to the rules below.",
+    "",
+    specText(Airbnb, base)
+  ]).join("\n");
+}
+document.getElementById("copyPrompt").addEventListener("click", function(){
+  var prompt;
+  try{
+    prompt = aiPrompt();
+  }catch(e){
+    var btn = this;
+    btn.textContent = e.name === "StaleEngineError" ? "Reload the page" : "Copy failed";
+    setTimeout(function(){ btn.textContent = "Copy prompt"; }, 2500);
+    throw e;
+  }
+  copyWithFeedback(this, prompt, "Copy prompt");
+});
+document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+
+buildFields();
+if(Airbnb.hasScenarioParams()){
+  Airbnb.resetToDefaults();
+  Airbnb.loadFromURL();
+  Airbnb.suppressPersist = true;
+} else {
+  Airbnb.loadFromStorage();
+}
+syncCurrencySelect();
+applyModeUI();
+render();
+Airbnb.suppressPersist = false;
+</script>
+</body>
+</html>
